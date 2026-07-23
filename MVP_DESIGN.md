@@ -8,18 +8,18 @@ This document outlines the system architecture, data models, mobile client desig
 
 ```mermaid
 graph TD
-    subgraph Web Admin Dashboard (Lori)
+    subgraph web_admin["Web Admin Dashboard (Lori)"]
         W1[React / HTML5 Admin Web App] -->|HTTPS / Firebase Auth| W2[Firestore DB]
     end
 
-    subgraph Firebase Backend
+    subgraph firebase_backend["Firebase Backend"]
         W2 -->|Triggers & Scheduled Crons| F1[Cloud Function: Schedule Generator]
         W2 -->|Triggers & Scheduled Crons| F2[Cloud Function: Escalation Watchdog]
         F2 -->|POST /Messages.json| T1[Twilio SMS API]
         T1 -->|SMS| L1[Lori's Phone]
     end
 
-    subgraph Apple iOS / watchOS App (Steve)
+    subgraph apple_app["Apple iOS / watchOS App (Steve)"]
         W2 <-->|Firestore Realtime Listener / APNs| M1[Swift App / UserNotifications]
         M1 -->|Action: YES_I_WILL| M2[Snooze Handler & Local Re-nag]
         M1 -->|Action: YES_I_DID| M3[Firestore Completion Log]
