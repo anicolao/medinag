@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="MediNag advisor dashboard for medication schedules, compliance, and escalation."
+    />
+    <title>MediNag Admin</title>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="site-header" aria-label="MediNag dashboard header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40" role="img">
+              <path d="M12 20a8 8 0 0 1 8-8h8a8 8 0 0 1 0 16h-8a8 8 0 0 1-8-8Z" />
+              <path d="M20 12v16" />
+            </svg>
+          </span>
+          <span class="brand-name">MediNag</span>
+        </div>
+        <span class="workspace-label">Advisor workspace</span>
+      </header>
+
+      <main class="welcome-layout">
+        <section class="welcome-card" data-testid="welcome-card">
+          <div class="welcome-copy">
+            <p class="eyebrow">Admin dashboard</p>
+            <h1>Welcome, Lori.</h1>
+            <p class="lead">
+              Medication adherence, without ambiguity.
+            </p>
+            <p class="supporting-copy">
+              Your dashboard foundation is ready. Soon, this is where you’ll
+              manage Steve’s schedules, follow dose confirmations, and oversee
+              safety escalations.
+            </p>
+            <div class="foundation-status" aria-label="Dashboard foundation status">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>Dashboard foundation online</span>
+            </div>
+          </div>
+
+          <aside class="preview-panel" aria-label="Upcoming dashboard capabilities">
+            <p class="panel-kicker">Built for a clear daily picture</p>
+            <ul class="capability-list">
+              <li>
+                <span class="capability-icon schedule-icon" aria-hidden="true"></span>
+                <span>
+                  <strong>Medication schedules</strong>
+                  <small>One source of truth for every dose</small>
+                </span>
+              </li>
+              <li>
+                <span class="capability-icon pulse-icon" aria-hidden="true"></span>
+                <span>
+                  <strong>Live compliance</strong>
+                  <small>See confirmations as they happen</small>
+                </span>
+              </li>
+              <li>
+                <span class="capability-icon shield-icon" aria-hidden="true"></span>
+                <span>
+                  <strong>Safety escalation</strong>
+                  <small>Know when a dose needs attention</small>
+                </span>
+              </li>
+            </ul>
+          </aside>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>High-assurance medication support</span>
+        <span class="footer-separator" aria-hidden="true"></span>
+        <span>iPhone · Apple Watch · Web</span>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

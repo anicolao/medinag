@@ -1,0 +1,107 @@
+name: Deploy Admin Dashboard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: admin-dashboard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and publish GitHub Pages preview
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine Pages path
+        id: pages
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "base=/medinag/pr${{ github.event.pull_request.number }}/" >> "$GITHUB_OUTPUT"
+            echo "destination=pr${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=/medinag/" >> "$GITHUB_OUTPUT"
+            echo "destination=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build dashboard
+        run: npm run build
+        env:
+          PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base }}
+
+      - name: Publish production site
+        if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          keep_files: true
+
+      - name: Publish PR preview
+        if: github.event_name == 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          destination_dir: ${{ steps.pages.outputs.destination }}
+          keep_files: true
+
+      - name: Comment with preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- medinag-pages-preview -->';
+            const previewUrl =
+              `https://anicolao.github.io/medinag/pr${context.payload.pull_request.number}/`;
+            const body = `${marker}\n🚀 Admin dashboard preview: ${previewUrl}`;
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number
+              }
+            );
+            const existing = comments.find(
+              (comment) =>
+                comment.user?.login === 'github-actions[bot]' &&
+                comment.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body
+              });
+            }

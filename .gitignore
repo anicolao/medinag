@@ -3,4 +3,7 @@
 node_modules/
 .firebase/
 .build/
+build/
+playwright-report/
+test-results/
 *.DS_Store
