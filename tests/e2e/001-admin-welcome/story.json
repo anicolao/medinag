@@ -1,0 +1,18 @@
+{
+  "id": "US-001",
+  "title": "Admin dashboard welcome",
+  "narrative": "As Lori, I want to open the MediNag dashboard so that I know my advisor workspace is ready.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "not-applicable",
+      "reason": "This story introduces only Lori's web dashboard scaffold."
+    },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "This story introduces only Lori's web dashboard scaffold."
+    }
+  }
+}

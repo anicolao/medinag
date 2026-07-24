@@ -12,6 +12,7 @@ Detailed project documentation is available in the repository:
 
 - 🎯 **[VISION.md](file:///home/svorkoetter/medinag/VISION.md)**: Product vision, user personas, core philosophy, and future roadmap.
 - 📐 **[MVP_DESIGN.md](file:///home/svorkoetter/medinag/MVP_DESIGN.md)**: Technical architecture, data schemas, Swift iOS/watchOS client design, Firebase Cloud Functions escalation engine, and Web Admin dashboard specs.
+- 🧪 **[E2E_GUIDE.md](E2E_GUIDE.md)**: Cross-platform user-story walkthrough, screenshot, and synchronization requirements.
 
 ---
 
@@ -57,5 +58,16 @@ graph TD
 ├── MVP_DESIGN.md       # Full technical architecture & specifications
 ├── apps/               # (Future) Swift iOS & watchOS codebase
 ├── backend/            # (Future) Firebase Cloud Functions & Firestore security rules
-└── web/                # (Future) Web Admin Dashboard for Lori
+├── tests/e2e/          # Playwright stories, walkthroughs, and screenshots
+└── web/                # Web Admin Dashboard for Lori
 ```
+
+## Run the Web Dashboard
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
+`npm run test:e2e` to run the same validations used by CI.
