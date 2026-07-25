@@ -6,4 +6,7 @@ node_modules/
 build/
 playwright-report/
 test-results/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 *.DS_Store

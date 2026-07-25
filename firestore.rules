@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function validSchedule() {
+      return request.resource.data.keys().hasOnly([
+          'medicationName',
+          'scheduledTime',
+          'daysOfWeek',
+          'active',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.medicationName is string
+        && request.resource.data.medicationName.size() > 0
+        && request.resource.data.medicationName.size() <= 100
+        && request.resource.data.scheduledTime is string
+        && request.resource.data.scheduledTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && request.resource.data.daysOfWeek is list
+        && request.resource.data.daysOfWeek.size() > 0
+        && request.resource.data.daysOfWeek.size() <= 7
+        && request.resource.data.daysOfWeek.hasOnly([1, 2, 3, 4, 5, 6, 7])
+        && request.resource.data.active is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    match /schedules/{scheduleId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && validSchedule();
+      allow update: if isAdmin()
+        && validSchedule()
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+  }
+}

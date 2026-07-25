@@ -125,8 +125,7 @@ export class TestStepHelper {
       '',
       ...coverage,
       '',
-      ...sections,
-      ''
+      ...sections.flatMap((section) => [section, ''])
     ].join('\n');
     const docPath = join(storyDirectory, 'README.md');
 
