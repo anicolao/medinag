@@ -71,3 +71,22 @@ npm run dev
 
 Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
 `npm run test:e2e` to run the same validations used by CI.
+
+### Firebase Development
+
+Firebase CLI `15.24.0` and the Firebase Web SDK are pinned in `package.json`.
+The repository is initialized with the safe `demo-medinag` project ID, Firestore
+rules and indexes, and the local Firestore emulator:
+
+```bash
+npm run firebase:emulators
+npm run firebase:validate
+```
+
+The emulator requires Java 21, which is included in the Nix development shell.
+Copy `.env.example` to `.env.local` and provide the production Firebase web-app
+configuration when a production project is chosen. Without that configuration,
+the dashboard uses browser-local preview data; Firestore access remains protected
+by an authenticated `admin` custom claim. The Pages workflow accepts the same
+values through repository variables named `FIREBASE_API_KEY`,
+`FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID`.

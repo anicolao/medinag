@@ -18,6 +18,7 @@
             gh
             nodejs_22
             firebase-tools
+            jdk21_headless
             jq
             curl
           ];

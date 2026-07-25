@@ -1,0 +1,18 @@
+{
+  "id": "US-002",
+  "title": "Manage medication schedules",
+  "narrative": "As Lori, I want to create, edit, and pause Steve's medication schedules so that his reminders match the daily plan.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "not-applicable",
+      "reason": "This story configures schedules in Lori's web dashboard."
+    },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "This story configures schedules in Lori's web dashboard."
+    }
+  }
+}

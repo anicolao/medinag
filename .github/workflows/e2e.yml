@@ -25,8 +25,17 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate Firebase configuration
+        run: npm run firebase:validate
 
       - name: Install Chromium
         run: npx playwright install chromium

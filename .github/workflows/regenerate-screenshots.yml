@@ -1,0 +1,47 @@
+name: Regenerate E2E Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/regenerate-screenshots.yml
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    name: Generate pinned visual baselines
+    runs-on: macos-14
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install chromium
+
+      - name: Regenerate walkthroughs and screenshots
+        run: npm run test:e2e:update-snapshots
+        env:
+          CI: true
+
+      - name: Upload baselines for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-baselines
+          path: |
+            tests/e2e/**/README.md
+            tests/e2e/**/screenshots/*.png
+          retention-days: 7

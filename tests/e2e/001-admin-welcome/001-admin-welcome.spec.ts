@@ -38,6 +38,11 @@ test('US-001: Lori opens the admin dashboard', async ({ page }, testInfo) => {
         spec: 'The upcoming dashboard capabilities are visible',
         check: async () =>
           await expect(page.getByLabel('Upcoming dashboard capabilities')).toBeVisible()
+      },
+      {
+        spec: 'Lori can continue to schedule management',
+        check: async () =>
+          await expect(page.getByRole('link', { name: 'Manage schedules' })).toBeVisible()
       }
     ]
   });

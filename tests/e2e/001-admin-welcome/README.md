@@ -19,3 +19,4 @@
 - [x] The welcome heading addresses Lori
 - [x] The dashboard reports that its foundation is online
 - [x] The upcoming dashboard capabilities are visible
+- [x] Lori can continue to schedule management
