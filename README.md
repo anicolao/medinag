@@ -75,18 +75,27 @@ Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
 ### Firebase Development
 
 Firebase CLI `15.24.0` and the Firebase Web SDK are pinned in `package.json`.
-The repository is initialized with the safe `demo-medinag` project ID, Firestore
-rules and indexes, and the local Firestore emulator:
+The repository is connected to the production Firebase project `medinag`.
+Firestore rules and indexes, anonymous preview authentication, and the local
+Auth and Firestore emulators are managed as code:
 
 ```bash
 npm run firebase:emulators
 npm run firebase:validate
+npm run firebase:deploy
 ```
 
 The emulator requires Java 21, which is included in the Nix development shell.
-Copy `.env.example` to `.env.local` and provide the production Firebase web-app
-configuration when a production project is chosen. Without that configuration,
-the dashboard uses browser-local preview data; Firestore access remains protected
-by an authenticated `admin` custom claim. The Pages workflow accepts the same
-values through repository variables named `FIREBASE_API_KEY`,
-`FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID`.
+Copy `.env.example` to `.env.local` and provide the Firebase web-app
+configuration to exercise the production backend locally. Without configuration,
+the dashboard deliberately uses browser-local preview data so deterministic E2E
+tests never mutate production.
+
+GitHub Pages builds receive every Firebase web-app configuration field through
+Actions secrets named `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+`VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,
+`VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`,
+`VITE_FIREBASE_PROJECT_NUMBER`, and `VITE_FIREBASE_CONFIG_VERSION`. The dashboard
+signs each preview browser into Firebase anonymously and stores schedules beneath
+that account's UID. Firestore rules prevent one preview session from reading or
+changing another session's schedules.

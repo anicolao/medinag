@@ -141,7 +141,7 @@ function pageTemplate(
             <span class="summary-dot" aria-hidden="true"></span>
             ${
               repositoryMode === 'firestore'
-                ? 'Firebase connected · America/Toronto'
+                ? 'Firebase connected · private preview session'
                 : 'Preview data · saved in this browser'
             }
           </p>

@@ -2,8 +2,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+    function ownsPreviewWorkspace(adminId) {
+      return request.auth != null && request.auth.uid == adminId;
     }
 
     function validSchedule() {
@@ -29,10 +29,10 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
     }
 
-    match /schedules/{scheduleId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin() && validSchedule();
-      allow update: if isAdmin()
+    match /admins/{adminId}/schedules/{scheduleId} {
+      allow read: if ownsPreviewWorkspace(adminId);
+      allow create: if ownsPreviewWorkspace(adminId) && validSchedule();
+      allow update: if ownsPreviewWorkspace(adminId)
         && validSchedule()
         && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if false;

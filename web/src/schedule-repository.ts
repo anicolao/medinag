@@ -1,4 +1,15 @@
-import { getApp, getApps, initializeApp } from 'firebase/app';
+import {
+  getApp,
+  getApps,
+  initializeApp,
+  type FirebaseApp
+} from 'firebase/app';
+import {
+  connectAuthEmulator,
+  getAuth,
+  signInAnonymously,
+  type Auth
+} from 'firebase/auth';
 import {
   addDoc,
   collection,
@@ -92,14 +103,21 @@ class BrowserScheduleRepository implements ScheduleRepository {
 class FirestoreScheduleRepository implements ScheduleRepository {
   readonly mode = 'firestore' as const;
 
-  constructor(private readonly database: Firestore) {}
+  constructor(
+    private readonly database: Firestore,
+    private readonly adminId: string
+  ) {}
+
+  private schedulesCollection() {
+    return collection(this.database, 'admins', this.adminId, 'schedules');
+  }
 
   subscribe(
     listener: (schedules: MedicationSchedule[]) => void,
     onError?: (error: Error) => void
   ): () => void {
     const schedulesQuery = query(
-      collection(this.database, 'schedules'),
+      this.schedulesCollection(),
       orderBy('scheduledTime')
     );
     return onSnapshot(
@@ -120,7 +138,7 @@ class FirestoreScheduleRepository implements ScheduleRepository {
   }
 
   async create(input: ScheduleInput): Promise<void> {
-    await addDoc(collection(this.database, 'schedules'), {
+    await addDoc(this.schedulesCollection(), {
       ...input,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -128,14 +146,14 @@ class FirestoreScheduleRepository implements ScheduleRepository {
   }
 
   async update(id: string, input: ScheduleInput): Promise<void> {
-    await updateDoc(doc(this.database, 'schedules', id), {
+    await updateDoc(doc(this.schedulesCollection(), id), {
       ...input,
       updatedAt: serverTimestamp()
     });
   }
 
   async setActive(id: string, active: boolean): Promise<void> {
-    await updateDoc(doc(this.database, 'schedules', id), {
+    await updateDoc(doc(this.schedulesCollection(), id), {
       active,
       updatedAt: serverTimestamp()
     });
@@ -144,11 +162,13 @@ class FirestoreScheduleRepository implements ScheduleRepository {
 
 let emulatorConnected = false;
 
-function createFirestore(): Firestore | null {
+function createFirebase(): { app: FirebaseApp; auth: Auth; database: Firestore } | null {
   const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID
   };
   if (Object.values(config).some((value) => !value)) {
@@ -156,17 +176,28 @@ function createFirestore(): Firestore | null {
   }
 
   const app = getApps().length > 0 ? getApp() : initializeApp(config);
+  const auth = getAuth(app);
   const database = getFirestore(app);
   if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true' && !emulatorConnected) {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
+      disableWarnings: true
+    });
     connectFirestoreEmulator(database, '127.0.0.1', 8080);
     emulatorConnected = true;
   }
-  return database;
+  return { app, auth, database };
 }
 
-export function createScheduleRepository(): ScheduleRepository {
-  const database = createFirestore();
-  return database
-    ? new FirestoreScheduleRepository(database)
-    : new BrowserScheduleRepository();
+export async function createScheduleRepository(): Promise<ScheduleRepository> {
+  const firebase = createFirebase();
+  if (!firebase) {
+    return new BrowserScheduleRepository();
+  }
+
+  await firebase.auth.authStateReady();
+  const user =
+    firebase.auth.currentUser ??
+    (await signInAnonymously(firebase.auth)).user;
+
+  return new FirestoreScheduleRepository(firebase.database, user.uid);
 }
