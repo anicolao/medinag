@@ -29,7 +29,11 @@ const renderRoute = async (): Promise<void> => {
   await document.fonts.ready;
   if (window.location.hash === '#/schedules') {
     root.classList.add('is-dashboard');
-    unmountPage = mountSchedulesPage(root, repository, () => markReady(version));
+    unmountPage = mountSchedulesPage(
+      root,
+      await repository,
+      () => markReady(version)
+    );
     return;
   }
 

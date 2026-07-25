@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "demo-medinag"
+    "default": "medinag",
+    "demo": "demo-medinag",
+    "production": "medinag"
   }
 }
