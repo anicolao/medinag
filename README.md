@@ -99,3 +99,23 @@ Actions secrets named `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
 signs each preview browser into Firebase anonymously and stores schedules beneath
 that account's UID. Firestore rules prevent one preview session from reading or
 changing another session's schedules.
+
+### Linking Lori's Google Account
+
+An anonymous dashboard shows a **Continue with Google** action above Lori's
+schedules. Firebase links the Google credential to the current anonymous user,
+which normally preserves the UID, then migrates schedules from
+`admins/{uid}/schedules` to `households/{uid}/schedules`. If the Gmail credential
+already belongs to another Firebase user, the dashboard signs into that account
+and copies the schedules captured before sign-in. Existing legacy documents are
+left intact as rollback evidence; all subsequent reads and writes use the
+household path.
+
+Household membership records assign `advisor` or `subject` roles. Advisors can
+manage schedules, subjects have read-only schedule access, and subject writes to
+medication events are restricted to valid snooze and completion transitions.
+Run the complete Auth/Firestore rules suite with:
+
+```bash
+nix develop -c npm run firebase:validate
+```

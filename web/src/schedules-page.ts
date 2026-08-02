@@ -5,19 +5,13 @@ import {
   type MedicationSchedule
 } from './schedule-types';
 import type { ScheduleRepository } from './schedule-repository';
-
-const escapeHtml = (value: string): string =>
-  value.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      })[character] ?? character
-  );
+import type { AdvisorAccount } from './account-types';
+import {
+  accountLinkBanner,
+  connectionLabel,
+  dashboardSidebar,
+  escapeHtml
+} from './dashboard-markup';
 
 function scheduleCard(schedule: MedicationSchedule): string {
   const name = escapeHtml(schedule.medicationName);
@@ -51,7 +45,8 @@ function scheduleCard(schedule: MedicationSchedule): string {
 function pageTemplate(
   schedules: MedicationSchedule[],
   notice: string,
-  repositoryMode: ScheduleRepository['mode']
+  repositoryMode: ScheduleRepository['mode'],
+  account: AdvisorAccount
 ): string {
   const activeCount = schedules.filter(({ active }) => active).length;
   const scheduleMarkup =
@@ -76,46 +71,10 @@ function pageTemplate(
 
   return `
     <div class="dashboard-shell">
-      <aside class="dashboard-sidebar">
-        <a class="dashboard-brand" href="#" aria-label="MediNag welcome">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 40 40">
-              <path d="M12 20a8 8 0 0 1 8-8h8a8 8 0 0 1 0 16h-8a8 8 0 0 1-8-8Z"></path>
-              <path d="M20 12v16"></path>
-            </svg>
-          </span>
-          <span class="brand-name">MediNag</span>
-        </a>
-
-        <nav class="dashboard-nav" aria-label="Admin dashboard">
-          <span class="nav-item" aria-disabled="true">
-            <span class="nav-icon overview-nav-icon" aria-hidden="true"></span>
-            Today
-          </span>
-          <a class="active" href="#/schedules" aria-current="page">
-            <span class="nav-icon schedule-nav-icon" aria-hidden="true"></span>
-            Schedules
-          </a>
-          <span class="nav-item" aria-disabled="true">
-            <span class="nav-icon rules-nav-icon" aria-hidden="true"></span>
-            Nag & escalation
-          </span>
-          <span class="nav-item" aria-disabled="true">
-            <span class="nav-icon history-nav-icon" aria-hidden="true"></span>
-            Compliance history
-          </span>
-        </nav>
-
-        <div class="advisor-card">
-          <span class="advisor-avatar" aria-hidden="true">L</span>
-          <span>
-            <strong>Lori</strong>
-            <small>Advisor</small>
-          </span>
-        </div>
-      </aside>
+      ${dashboardSidebar(account, 'schedules')}
 
       <main class="schedule-main">
+        ${accountLinkBanner(account)}
         <header class="schedule-header">
           <div>
             <p class="eyebrow">Steve’s daily plan</p>
@@ -139,11 +98,7 @@ function pageTemplate(
           </div>
           <p>
             <span class="summary-dot" aria-hidden="true"></span>
-            ${
-              repositoryMode === 'firestore'
-                ? 'Firebase connected · private preview session'
-                : 'Preview data · saved in this browser'
-            }
+            ${connectionLabel(account, repositoryMode)}
           </p>
         </section>
 
@@ -202,14 +157,15 @@ function pageTemplate(
 export function mountSchedulesPage(
   root: HTMLElement,
   repository: ScheduleRepository,
+  account: AdvisorAccount,
   onReady: () => void
 ): () => void {
   let schedules: MedicationSchedule[] = [];
-  let notice = '';
+  let notice = account.notice;
   let ready = false;
 
   const render = (): void => {
-    root.innerHTML = pageTemplate(schedules, notice, repository.mode);
+    root.innerHTML = pageTemplate(schedules, notice, repository.mode, account);
     const dialog = root.querySelector<HTMLDialogElement>('.schedule-dialog');
     const form = root.querySelector<HTMLFormElement>('.schedule-form');
     if (!dialog || !form) {
@@ -272,6 +228,22 @@ export function mountSchedulesPage(
     root
       .querySelectorAll<HTMLElement>('[data-action="close"], [data-action="cancel"]')
       .forEach((button) => button.addEventListener('click', closeDialog));
+
+    const linkGoogle = root.querySelector<HTMLButtonElement>(
+      '[data-action="link-google"]'
+    );
+    linkGoogle?.addEventListener('click', async () => {
+      linkGoogle.disabled = true;
+      linkGoogle.textContent = 'Opening Google…';
+      try {
+        await account.linkGoogle();
+      } catch (error) {
+        notice = error instanceof Error
+          ? `Google account was not linked: ${error.message}`
+          : 'Google account was not linked.';
+        render();
+      }
+    });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();

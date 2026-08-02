@@ -2,8 +2,80 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function ownsPreviewWorkspace(adminId) {
-      return request.auth != null && request.auth.uid == adminId;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsLegacyWorkspace(adminId) {
+      return signedIn() && request.auth.uid == adminId;
+    }
+
+    function household(householdId) {
+      return get(/databases/$(database)/documents/households/$(householdId));
+    }
+
+    function membership(householdId) {
+      return get(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+    }
+
+    function ownsHousehold(householdId) {
+      return signedIn()
+        && household(householdId).data.advisorUid == request.auth.uid;
+    }
+
+    function isMember(householdId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+    }
+
+    function hasRole(householdId, role) {
+      return isMember(householdId)
+        && membership(householdId).data.role == role;
+    }
+
+    function isAdvisor(householdId) {
+      return ownsHousehold(householdId) || hasRole(householdId, 'advisor');
+    }
+
+    function validHousehold() {
+      return request.resource.data.keys().hasOnly([
+          'advisorUid',
+          'name',
+          'subjectName',
+          'migrationVersion',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.advisorUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.subjectName is string
+        && request.resource.data.subjectName.size() > 0
+        && request.resource.data.subjectName.size() <= 100
+        && request.resource.data.migrationVersion in [0, 1]
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validMember(memberId) {
+      return request.resource.data.keys().hasOnly([
+          'uid',
+          'role',
+          'displayName',
+          'email',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == memberId
+        && request.resource.data.role in ['advisor', 'subject']
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
     }
 
     function validSchedule() {
@@ -29,13 +101,113 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
     }
 
+    function validMedicationEvent() {
+      return request.resource.data.keys().hasOnly([
+          'scheduleId',
+          'medicationName',
+          'scheduledTime',
+          'status',
+          'snoozeCount',
+          'lastSnoozedAt',
+          'completedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.scheduleId is string
+        && request.resource.data.scheduleId.size() > 0
+        && request.resource.data.medicationName is string
+        && request.resource.data.medicationName.size() > 0
+        && request.resource.data.medicationName.size() <= 100
+        && request.resource.data.scheduledTime is timestamp
+        && request.resource.data.status in ['pending', 'snoozed', 'completed']
+        && request.resource.data.snoozeCount is int
+        && request.resource.data.snoozeCount >= 0
+        && (request.resource.data.lastSnoozedAt == null
+          || request.resource.data.lastSnoozedAt is timestamp)
+        && (request.resource.data.completedAt == null
+          || request.resource.data.completedAt is timestamp)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function subjectChangedOnlyResponseFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'status',
+        'snoozeCount',
+        'lastSnoozedAt',
+        'completedAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validSubjectResponse() {
+      return resource.data.status in ['pending', 'snoozed']
+        && subjectChangedOnlyResponseFields()
+        && validMedicationEvent()
+        && (
+          (request.resource.data.status == 'snoozed'
+            && request.resource.data.snoozeCount == resource.data.snoozeCount + 1
+            && request.resource.data.lastSnoozedAt is timestamp
+            && request.resource.data.completedAt == resource.data.completedAt)
+          ||
+          (request.resource.data.status == 'completed'
+            && request.resource.data.snoozeCount == resource.data.snoozeCount
+            && request.resource.data.lastSnoozedAt == resource.data.lastSnoozedAt
+            && request.resource.data.completedAt is timestamp)
+        );
+    }
+
+    // Temporary compatibility path. Linking preserves the anonymous UID, so
+    // Lori can read her existing schedules and migrate them to her household.
     match /admins/{adminId}/schedules/{scheduleId} {
-      allow read: if ownsPreviewWorkspace(adminId);
-      allow create: if ownsPreviewWorkspace(adminId) && validSchedule();
-      allow update: if ownsPreviewWorkspace(adminId)
+      allow read: if ownsLegacyWorkspace(adminId);
+      allow create: if ownsLegacyWorkspace(adminId) && validSchedule();
+      allow update: if ownsLegacyWorkspace(adminId)
         && validSchedule()
         && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if false;
+    }
+
+    match /households/{householdId} {
+      allow create: if signedIn()
+        && householdId == request.auth.uid
+        && validHousehold();
+      allow read: if ownsHousehold(householdId) || isMember(householdId);
+      allow update: if isAdvisor(householdId)
+        && validHousehold()
+        && request.resource.data.advisorUid == resource.data.advisorUid
+        && request.resource.data.migrationVersion >= resource.data.migrationVersion
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow read: if request.auth.uid == memberId || isAdvisor(householdId);
+        allow create: if isAdvisor(householdId) && validMember(memberId);
+        allow update: if isAdvisor(householdId)
+          && validMember(memberId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+
+      match /schedules/{scheduleId} {
+        allow read: if isAdvisor(householdId) || isMember(householdId);
+        allow create: if isAdvisor(householdId) && validSchedule();
+        allow update: if isAdvisor(householdId)
+          && validSchedule()
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+
+      match /medicationEvents/{eventId} {
+        allow read: if isAdvisor(householdId) || isMember(householdId);
+        allow create: if isAdvisor(householdId) && validMedicationEvent();
+        allow update: if (isAdvisor(householdId)
+            && validMedicationEvent()
+            && request.resource.data.createdAt == resource.data.createdAt)
+          || (hasRole(householdId, 'subject') && validSubjectResponse());
+        allow delete: if false;
+      }
     }
   }
 }

@@ -1,0 +1,17 @@
+{
+  "title": "Link Lori's Google account",
+  "narrative": "As Lori, I want to link my existing schedules to my Google account so that my work is preserved and ready to sync with Steve's devices.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "not-applicable",
+      "reason": "Phase 1 establishes the shared Firebase contract before the iOS client is implemented."
+    },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "The watchOS client is explicitly deferred until after the iOS MVP."
+    }
+  }
+}
