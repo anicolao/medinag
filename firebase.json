@@ -8,7 +8,14 @@
   },
   "auth": {
     "providers": {
-      "anonymous": true
+      "anonymous": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "MediNag",
+        "supportEmail": "alex@boardgamescafe.org",
+        "authorizedRedirectUris": [
+          "https://anicolao.github.io/medinag/"
+        ]
+      }
     }
   },
   "emulators": {

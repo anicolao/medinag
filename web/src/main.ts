@@ -1,7 +1,8 @@
 import '@fontsource-variable/inter';
 import './styles.css';
-import { createScheduleRepository } from './schedule-repository';
+import { createApplicationServices } from './application-services';
 import { mountSchedulesPage } from './schedules-page';
+import { mountTodayPage } from './today-page';
 
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) {
@@ -9,7 +10,7 @@ if (!root) {
 }
 
 const welcomeMarkup = root.innerHTML;
-const repository = createScheduleRepository();
+const services = createApplicationServices();
 let unmountPage: (() => void) | undefined;
 let routeVersion = 0;
 
@@ -27,11 +28,23 @@ const renderRoute = async (): Promise<void> => {
   unmountPage = undefined;
 
   await document.fonts.ready;
+  const application = await services;
+  if (window.location.hash === '#/today') {
+    root.classList.add('is-dashboard');
+    unmountPage = mountTodayPage(
+      root,
+      application.today,
+      application.account,
+      () => markReady(version)
+    );
+    return;
+  }
   if (window.location.hash === '#/schedules') {
     root.classList.add('is-dashboard');
     unmountPage = mountSchedulesPage(
       root,
-      await repository,
+      application.schedules,
+      application.account,
       () => markReady(version)
     );
     return;

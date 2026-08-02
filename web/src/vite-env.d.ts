@@ -18,4 +18,5 @@ interface ImportMeta {
 
 interface Window {
   __MEDINAG_E2E__?: boolean;
+  __MEDINAG_E2E_ACCOUNT_LINK__?: boolean;
 }
