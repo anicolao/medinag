@@ -14,6 +14,8 @@
     "firebase:deploy": "firebase deploy --project medinag --only auth,firestore:rules,firestore:indexes",
     "firebase:emulators": "firebase emulators:start --project demo-medinag --only auth,firestore",
     "firebase:validate": "firebase emulators:exec --project demo-medinag --only auth,firestore \"npm run check && npm run test:rules\"",
+    "ios:core:check": "swift run --package-path apps/ios/Core MediNagCoreChecks",
+    "ios:generate": "apps/ios/scripts/generate-project.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:update-snapshots": "playwright test --update-snapshots"

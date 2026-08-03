@@ -1,0 +1,51 @@
+name: iOS MVP
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/ios/**
+      - .github/workflows/ios.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/ios/**
+      - .github/workflows/ios.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Core checks and iOS build
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.2.app
+
+      - name: Confirm toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Run deterministic core checks
+        run: npm run ios:core:check
+
+      - name: Generate Xcode project
+        run: npm run ios:generate
+
+      - name: Build app and unit tests
+        run: |
+          xcodebuild test \
+            -project apps/ios/MediNag.xcodeproj \
+            -scheme MediNag \
+            -configuration E2E \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' \
+            -derivedDataPath apps/ios/DerivedData \
+            -only-testing:MediNagTests \
+            CODE_SIGNING_ALLOWED=NO

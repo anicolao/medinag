@@ -56,7 +56,7 @@ graph TD
 ├── README.md           # Project overview & quick reference
 ├── VISION.md           # Product philosophy & roadmap
 ├── MVP_DESIGN.md       # Full technical architecture & specifications
-├── apps/               # (Future) Swift iOS & watchOS codebase
+├── apps/ios/           # SwiftUI iOS MVP, deterministic core, and native tests
 ├── backend/            # (Future) Firebase Cloud Functions & Firestore security rules
 ├── tests/e2e/          # Playwright stories, walkthroughs, and screenshots
 └── web/                # Web Admin Dashboard for Lori
@@ -71,6 +71,18 @@ npm run dev
 
 Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
 `npm run test:e2e` to run the same validations used by CI.
+
+## Run the iOS MVP
+
+The iOS project, its pinned toolchain, Firebase configuration boundary, and
+native testing instructions are documented in
+[apps/ios/README.md](apps/ios/README.md). The portable core checks run without
+Xcode:
+
+```bash
+npm run ios:core:check
+npm run ios:generate
+```
 
 ### Firebase Development
 
