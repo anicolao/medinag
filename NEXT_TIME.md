@@ -2,9 +2,10 @@
 
 ## Current State
 
-PR #5 is merged. Phase 1 of the iOS MVP plan is being implemented on
-`agent/link-lori-google-account` for the next pull request. The detailed plan is
-recorded in [IOS_MVP_PLAN.md](IOS_MVP_PLAN.md).
+PR #5 is merged. Phase 1 of the iOS MVP plan is in draft
+[PR #6](https://github.com/anicolao/medinag/pull/6) on
+`agent/link-lori-google-account`. The detailed plan is recorded in
+[IOS_MVP_PLAN.md](IOS_MVP_PLAN.md).
 
 The phase establishes a shared household data model before an Apple client is
 added:
@@ -15,6 +16,21 @@ households/{householdId}
 ├── schedules/{scheduleId}
 └── medicationEvents/{eventId}
 ```
+
+## Account-Linking Recovery
+
+The first production linking attempts successfully attached Lori's and Alex's
+Google credentials, but the migration stopped before creating either household.
+The application checked whether `households/{uid}` existed before creating it,
+while the original rules denied that read until the household existed. All seven
+legacy schedules remained intact under their now-Google-linked owner UIDs.
+
+PR #6 now permits a signed-in user to read only their own household path during
+bootstrap. The production rule is deployed, and an emulator regression test
+covers the exact missing-document read, creation, membership, and migration-
+version sequence with server timestamps. The dashboard also falls back to the
+legacy schedule path with a retry banner if any future migration step fails,
+instead of failing application initialization.
 
 ## Completed Before This Phase
 

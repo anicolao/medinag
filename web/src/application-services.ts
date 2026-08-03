@@ -223,6 +223,26 @@ function linkedAccount(
   };
 }
 
+function migrationErrorAccount(
+  database: Firestore,
+  user: User,
+  legacySchedules: LegacySchedule[],
+  notice: string
+): AdvisorAccount {
+  return {
+    kind: 'migration-error',
+    displayName: user.displayName || 'Lori',
+    email: user.email || '',
+    notice,
+    async linkGoogle(): Promise<void> {
+      const count = await ensureHousehold(database, user, legacySchedules);
+      reloadWithNotice(
+        `Migration complete. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
+      );
+    }
+  };
+}
+
 function anonymousAccount(
   auth: Auth,
   database: Firestore,
@@ -254,10 +274,16 @@ function anonymousAccount(
         }
       }
 
-      const count = await ensureHousehold(database, linkedUser, legacySchedules);
-      reloadWithNotice(
-        `Google account linked. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
-      );
+      try {
+        const count = await ensureHousehold(database, linkedUser, legacySchedules);
+        reloadWithNotice(
+          `Google account linked. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
+        );
+      } catch {
+        reloadWithNotice(
+          'Google account linked. Your existing schedules are safe, but migration needs another attempt.'
+        );
+      }
     }
   };
 }
@@ -292,11 +318,29 @@ export async function createApplicationServices(): Promise<ApplicationServices> 
     };
   }
 
-  const migratedCount = await ensureHousehold(
-    firebase.database,
-    user,
-    legacySchedules
-  );
+  let migratedCount: number;
+  try {
+    migratedCount = await ensureHousehold(
+      firebase.database,
+      user,
+      legacySchedules
+    );
+  } catch {
+    return {
+      account: migrationErrorAccount(
+        firebase.database,
+        user,
+        legacySchedules,
+        notice || 'Google is linked, but the household migration needs another attempt.'
+      ),
+      schedules: new FirestoreScheduleRepository(firebase.database, [
+        'admins',
+        user.uid,
+        'schedules'
+      ]),
+      today: new BrowserTodayRepository()
+    };
+  }
   const migrationNotice = migratedCount > 0
     ? `${migratedCount} existing ${migratedCount === 1 ? 'schedule was' : 'schedules were'} moved safely.`
     : notice;

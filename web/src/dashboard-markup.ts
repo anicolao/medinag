@@ -20,9 +20,11 @@ export function dashboardSidebar(
   const displayName = escapeHtml(account.displayName || 'Lori');
   const subtitle = account.kind === 'google'
     ? 'Google account linked'
-    : account.kind === 'anonymous'
-      ? 'Guest advisor'
-      : 'Advisor';
+    : account.kind === 'migration-error'
+      ? 'Google linked · action needed'
+      : account.kind === 'anonymous'
+        ? 'Guest advisor'
+        : 'Advisor';
   const initial = escapeHtml(displayName.slice(0, 1).toUpperCase() || 'L');
   return `
     <aside class="dashboard-sidebar">
@@ -67,6 +69,21 @@ export function dashboardSidebar(
 }
 
 export function accountLinkBanner(account: AdvisorAccount): string {
+  if (account.kind === 'migration-error') {
+    return `
+      <section class="account-link-card migration-error" aria-labelledby="account-link-title">
+        <span class="google-mark" aria-hidden="true">G</span>
+        <div>
+          <p class="eyebrow">Google account linked</p>
+          <h2 id="account-link-title">Your schedules are safe</h2>
+          <p>We could not finish moving them into the shared household. You can keep using the original schedules here and retry the migration safely.</p>
+        </div>
+        <button class="google-link-button" type="button" data-action="link-google">
+          Retry migration
+        </button>
+      </section>
+    `;
+  }
   if (account.kind !== 'anonymous') {
     return '';
   }
@@ -91,6 +108,9 @@ export function connectionLabel(
 ): string {
   if (account.kind === 'google') {
     return 'Google account linked · Firebase synced';
+  }
+  if (account.kind === 'migration-error') {
+    return 'Google linked · migration needs attention';
   }
   if (account.kind === 'anonymous') {
     return 'Firebase connected · guest workspace';

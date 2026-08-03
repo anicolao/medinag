@@ -172,7 +172,12 @@ service cloud.firestore {
       allow create: if signedIn()
         && householdId == request.auth.uid
         && validHousehold();
-      allow read: if ownsHousehold(householdId) || isMember(householdId);
+      // A user must be able to observe that their own household does not exist
+      // before bootstrapping it. This reveals no other user's data because the
+      // household ID must match the authenticated UID.
+      allow read: if (signedIn() && householdId == request.auth.uid)
+        || ownsHousehold(householdId)
+        || isMember(householdId);
       allow update: if isAdvisor(householdId)
         && validHousehold()
         && request.resource.data.advisorUid == resource.data.advisorUid

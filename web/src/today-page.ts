@@ -106,9 +106,12 @@ export function mountTodayPage(
       try {
         await account.linkGoogle();
       } catch (error) {
+        const action = account.kind === 'migration-error'
+          ? 'Migration could not be completed'
+          : 'Google account was not linked';
         notice = error instanceof Error
-          ? `Google account was not linked: ${error.message}`
-          : 'Google account was not linked.';
+          ? `${action}: ${error.message}`
+          : `${action}.`;
         render();
       }
     });

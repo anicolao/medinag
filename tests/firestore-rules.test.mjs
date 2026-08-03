@@ -9,6 +9,7 @@ import {
   Timestamp,
   doc,
   getDoc,
+  serverTimestamp,
   setDoc,
   updateDoc
 } from 'firebase/firestore';
@@ -102,14 +103,19 @@ test('an anonymous owner can read only their legacy schedules', async () => {
 test('a signed-in user can establish their own household and advisor membership', async () => {
   const alex = environment.authenticatedContext('alex').firestore();
   const alexHousehold = doc(alex, 'households', 'alex');
+  const missingHousehold = await assertSucceeds(getDoc(alexHousehold));
+  assert.equal(missingHousehold.exists(), false);
+  await assertFails(
+    getDoc(doc(alex, 'households', 'someone-elses-id'))
+  );
   await assertSucceeds(
     setDoc(alexHousehold, {
       advisorUid: 'alex',
       name: "Alex's household",
       subjectName: 'Steve',
       migrationVersion: 0,
-      createdAt: now,
-      updatedAt: now
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     })
   );
   await assertSucceeds(
@@ -118,14 +124,14 @@ test('a signed-in user can establish their own household and advisor membership'
       role: 'advisor',
       displayName: 'Alex',
       email: 'alex@example.com',
-      createdAt: now,
-      updatedAt: now
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     })
   );
   await assertSucceeds(
     updateDoc(alexHousehold, {
       migrationVersion: 1,
-      updatedAt: now
+      updatedAt: serverTimestamp()
     })
   );
   await assertFails(
