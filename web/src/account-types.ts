@@ -1,4 +1,8 @@
-export type AdvisorAccountKind = 'preview' | 'anonymous' | 'google';
+export type AdvisorAccountKind =
+  | 'preview'
+  | 'anonymous'
+  | 'google'
+  | 'migration-error';
 
 export interface AdvisorAccount {
   readonly kind: AdvisorAccountKind;

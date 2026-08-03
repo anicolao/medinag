@@ -59,3 +59,15 @@ I'm usign glow to view this in another terminal but it seems that bullets aren't
 ```text
 the plan looks reasonable. the PR is merged but the local repo is on the branch still, you can pull main and do phase 1 of the plan. Can we easily migrate/link Lori's existing data into the new schema? Let's put that up as our next PR (a way for her to log in/link the existing data she has entered into her gmail account)
 ```
+
+## Prompt 11
+
+```text
+Lori tried to link her account and it returned her to the schedule page but still had the banner saying she needs to link it. I tried doing the same in my account/brwoser profile and saw the same behaviour. Then I reloaded, and now I acn't seem to get back to my schedule. Inspect the firestore data and see if things have gone awry? This doesn't seem to be the desired otucome
+```
+
+## Prompt 12
+
+```text
+Fix what needs fixing and tell us what the next steps are after updating the PR
+```
