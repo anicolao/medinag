@@ -34,8 +34,8 @@ final class FirebaseSubjectRepository: MedicationEventStore, @unchecked Sendable
           handler(.failure(error))
           return
         }
-        let schedules =
-          snapshot?.documents.compactMap { document in
+        let schedules: [MedicationSchedule] =
+          snapshot?.documents.compactMap { document -> MedicationSchedule? in
             let data = document.data()
             guard
               let medicationName = data["medicationName"] as? String,
