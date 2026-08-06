@@ -39,9 +39,19 @@ jobs:
       - name: Generate Xcode project
         run: npm run ios:generate
 
-      - name: Build app and unit tests
+      - name: Build app and test bundles
         run: |
-          xcodebuild test \
+          xcodebuild build-for-testing \
+            -project apps/ios/MediNag.xcodeproj \
+            -scheme MediNag \
+            -configuration E2E \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' \
+            -derivedDataPath apps/ios/DerivedData \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run unit tests
+        run: |
+          xcodebuild test-without-building \
             -project apps/ios/MediNag.xcodeproj \
             -scheme MediNag \
             -configuration E2E \
