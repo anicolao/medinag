@@ -310,6 +310,7 @@ private struct EventRow: View {
         Text(statusText)
           .font(.caption)
           .foregroundStyle(MediNagColor.muted)
+          .accessibilityIdentifier("event-\(event.id)-status")
       }
       Spacer()
       Image(systemName: statusIcon)

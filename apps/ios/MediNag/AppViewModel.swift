@@ -273,7 +273,7 @@ final class AppViewModel: ObservableObject {
       id: "morning-dose",
       scheduleID: "morning-schedule",
       medicationName: "Morning Prescription Doses",
-      scheduledTime: Date(timeIntervalSince1970: 1_785_715_200),
+      scheduledTime: Date(timeIntervalSince1970: 1_785_758_400),
       status: .pending,
       snoozeCount: 0
     )

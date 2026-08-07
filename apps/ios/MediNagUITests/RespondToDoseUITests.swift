@@ -61,7 +61,9 @@ final class RespondToDoseUITests: XCTestCase {
       description: "Steve chooses Yes, I did and further nags are cancelled",
       verifications: [
         .labelContains(
-          app.otherElements["event-morning-dose"], "Completed", "The dose is completed"),
+          app.staticTexts["event-morning-dose-status"],
+          "Completed",
+          "The dose is completed"),
         .labelContains(
           app.staticTexts["action-notice"], "cancelled", "The app confirms cancellation"),
       ]
