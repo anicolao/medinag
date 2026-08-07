@@ -1,0 +1,98 @@
+name: MediNag
+
+options:
+  minimumXcodeGenVersion: 2.46.0
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  E2E: debug
+  Release: release
+
+packages:
+  MediNagCore:
+    path: Core
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    exactVersion: 12.17.0
+
+targets:
+  MediNag:
+    type: application
+    platform: iOS
+    sources:
+      - path: MediNag
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNag/Info.plist
+        PRODUCT_NAME: MediNag
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+
+  MediNagTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MediNagTests
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.tests
+    dependencies:
+      - target: MediNag
+      - package: MediNagCore
+        product: MediNagCore
+
+  MediNagUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MediNagUITests
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.uitests
+        TEST_TARGET_NAME: MediNag
+    dependencies:
+      - target: MediNag
+
+schemes:
+  MediNag:
+    build:
+      targets:
+        MediNag: all
+        MediNagTests: [test]
+        MediNagUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      gatherCoverageData: true
+      targets:
+        - MediNagTests
+        - MediNagUITests
+    archive:
+      config: Release

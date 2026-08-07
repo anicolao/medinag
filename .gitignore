@@ -10,3 +10,10 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 *.DS_Store
+
+# Generated Apple tooling and local Firebase configuration
+apps/ios/.tools/
+apps/ios/DerivedData/
+apps/ios/MediNag.xcodeproj/project.xcworkspace/xcuserdata/
+apps/ios/MediNag.xcodeproj/xcuserdata/
+apps/ios/MediNag/Resources/GoogleService-Info.plist
