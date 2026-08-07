@@ -3,6 +3,7 @@ import XCTest
 final class RespondToDoseUITests: XCTestCase {
   override func setUp() {
     continueAfterFailure = false
+    XCUIDevice.shared.orientation = .portrait
   }
 
   func testSteveSnoozesThenCompletesScheduledDose() throws {
@@ -13,8 +14,10 @@ final class RespondToDoseUITests: XCTestCase {
       "scheduled-dose-pending",
       "-AppleLanguages", "(en)",
       "-AppleLocale", "en_CA",
+      "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryM",
       "-NSTreatUnknownArgumentsAsOpen", "NO",
     ]
+    app.launchEnvironment["TZ"] = "America/Toronto"
     let tester = TestStepHelper(
       testCase: self,
       application: app,

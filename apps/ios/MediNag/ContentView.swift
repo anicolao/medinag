@@ -268,6 +268,7 @@ private struct NextDoseCard: View {
         .stroke(MediNagColor.teal.opacity(0.18), lineWidth: 1)
     }
     .shadow(color: .black.opacity(0.07), radius: 26, y: 12)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("next-dose-card")
   }
 }
@@ -316,6 +317,7 @@ private struct EventRow: View {
     }
     .padding(16)
     .background(.white, in: RoundedRectangle(cornerRadius: 16))
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("event-\(event.id)")
   }
 
