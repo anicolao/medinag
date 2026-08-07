@@ -1,0 +1,19 @@
+{
+  "id": "US-004",
+  "title": "Steve responds to a scheduled dose",
+  "narrative": "As Steve, I want to snooze and then complete a medication reminder so Lori can see an accurate response.",
+  "fixture": "scheduled-dose-pending",
+  "surfaces": {
+    "web": {
+      "status": "not-applicable",
+      "reason": "This story exercises Steve's local iOS response loop."
+    },
+    "ios": {
+      "status": "covered"
+    },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "watchOS is deferred until after the iOS MVP."
+    }
+  }
+}

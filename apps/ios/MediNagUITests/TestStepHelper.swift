@@ -88,7 +88,6 @@ final class TestStepHelper {
   }
 
   func generateDocs() throws {
-    guard recording else { return }
     let readme = """
       # Test: \(title)
 
@@ -100,6 +99,13 @@ final class TestStepHelper {
       - **iOS:** covered
       - **watchOS:** not-applicable — watchOS is deferred until after the iOS MVP.
 
+      ## Deterministic preconditions
+
+      - Fixture: `scheduled-dose-pending`
+      - Clock: 2026-08-03 08:00 America/Toronto
+      - Device: iPhone 17 on iOS 26.2, portrait, light appearance, standard Dynamic Type
+      - Status bar: 9:41, full Wi-Fi and cellular signal, charged battery at 100%
+
       \(steps.map(markdown).joined(separator: "\n\n"))
       """
     let attachment = XCTAttachment(
@@ -109,10 +115,6 @@ final class TestStepHelper {
     attachment.name = "README.md"
     attachment.lifetime = .keepAlways
     testCase.add(attachment)
-  }
-
-  private var recording: Bool {
-    ProcessInfo.processInfo.environment["MEDINAG_RECORD_SCREENSHOTS"] == "1"
   }
 
   private func markdown(_ step: Step) -> String {

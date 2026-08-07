@@ -23,12 +23,18 @@ copy_attachment() {
   local attachment_name="$1"
   local destination="$2"
   local exported_name
+  local attachment_stem="${attachment_name%.*}"
 
   exported_name="$(
-    jq -r --arg attachment_name "$attachment_name" '
+    jq -r \
+      --arg attachment_name "$attachment_name" \
+      --arg attachment_stem "$attachment_stem" '
       [
         .[]?.attachments[]?
-        | select(.suggestedHumanReadableName == $attachment_name)
+        | select(
+            .suggestedHumanReadableName == $attachment_name
+            or (.suggestedHumanReadableName | startswith($attachment_stem + "_"))
+          )
         | .exportedFileName
       ][0] // empty
     ' "$manifest"
@@ -46,6 +52,6 @@ copy_attachment "000-pending-dose.png" "$screenshot_directory/000-pending-dose.p
 copy_attachment "001-dose-snoozed.png" "$screenshot_directory/001-dose-snoozed.png"
 copy_attachment "002-dose-completed.png" "$screenshot_directory/002-dose-completed.png"
 
-if jq -e '[.[]?.attachments[]? | select(.suggestedHumanReadableName == "README.md")] | length > 0' "$manifest" >/dev/null; then
+if jq -e '[.[]?.attachments[]? | select(.suggestedHumanReadableName | startswith("README"))] | length > 0' "$manifest" >/dev/null; then
   copy_attachment "README.md" "$story_directory/README.md"
 fi

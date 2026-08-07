@@ -86,8 +86,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Run iOS user-story walkthrough
-        env:
-          MEDINAG_RECORD_SCREENSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots && '1' || '0' }}
         run: |
           xcodebuild test-without-building \
             -project apps/ios/MediNag.xcodeproj \
