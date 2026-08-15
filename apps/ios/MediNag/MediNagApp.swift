@@ -16,6 +16,7 @@ struct MediNagApp: App {
     WindowGroup {
       ContentView(viewModel: viewModel)
         .preferredColorScheme(.light)
+        .statusBarHidden(ProcessInfo.processInfo.arguments.contains("-e2e"))
     }
   }
 }

@@ -2,7 +2,10 @@
   "id": "US-004",
   "title": "Steve responds to a scheduled dose",
   "narrative": "As Steve, I want to snooze and then complete a medication reminder so Lori can see an accurate response.",
-  "fixture": "scheduled-dose-pending",
+  "fixtures": [
+    "scheduled-dose-first-reminder",
+    "scheduled-dose-repeat-due"
+  ],
   "surfaces": {
     "web": {
       "status": "not-applicable",

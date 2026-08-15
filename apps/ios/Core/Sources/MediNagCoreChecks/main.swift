@@ -7,9 +7,33 @@ struct MediNagCoreChecks {
 
   static func main() async throws {
     try await checkYesIWill()
+    try await checkDefaultSnoozeInterval()
     try await checkYesIDid()
     try await checkNotificationReadiness()
-    print("MediNagCoreChecks: 3 passed")
+    print("MediNagCoreChecks: 4 passed")
+  }
+
+  private static func checkDefaultSnoozeInterval() async throws {
+    let event = pendingEvent()
+    let store = RecordingEventStore(event: event)
+    let notifications = RecordingNotifications()
+    let coordinator = DoseCoordinator(
+      clock: FixedClock(now: now),
+      eventStore: store,
+      notifications: notifications
+    )
+
+    _ = try await coordinator.respond(.yesIWill, to: event)
+
+    try await expect(
+      await notifications.repeats == [
+        .init(
+          eventID: event.id,
+          date: now.addingTimeInterval(DoseCoordinator.defaultSnoozeInterval)
+        )
+      ],
+      "The current default must schedule the repeat 10 minutes later"
+    )
   }
 
   private static func checkYesIWill() async throws {
@@ -79,8 +103,10 @@ struct MediNagCoreChecks {
 
     try await expect(ready, "Authorized notifications must report ready")
     try await expect(
-      await notifications.scheduledEventIDs == [pending.id],
-      "Only unfinished events may be scheduled"
+      await notifications.scheduled == [
+        .init(eventID: pending.id, date: pending.scheduledTime)
+      ],
+      "Only unfinished events may be scheduled, at the medication time"
     )
   }
 
@@ -134,19 +160,24 @@ private actor RecordingEventStore: MedicationEventStore {
 }
 
 private actor RecordingNotifications: NotificationScheduling {
+  struct Scheduled: Equatable {
+    let eventID: String
+    let date: Date
+  }
+
   struct Repeat: Equatable {
     let eventID: String
     let date: Date
   }
 
-  private(set) var scheduledEventIDs: [String] = []
+  private(set) var scheduled: [Scheduled] = []
   private(set) var repeats: [Repeat] = []
   private(set) var cancelledEventIDs: [String] = []
 
   func requestAuthorization() async throws -> Bool { true }
 
   func schedule(event: MedicationEvent) async throws {
-    scheduledEventIDs.append(event.id)
+    scheduled.append(.init(eventID: event.id, date: event.scheduledTime))
   }
 
   func scheduleRepeat(for event: MedicationEvent, at date: Date) async throws {

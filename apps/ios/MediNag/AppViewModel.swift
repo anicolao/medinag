@@ -7,6 +7,13 @@ import UserNotifications
 
 @MainActor
 final class AppViewModel: ObservableObject {
+  struct ReminderPresentation: Equatable {
+    let eventID: String
+    let medicationName: String
+    let scheduledTime: Date
+    let reminderNumber: Int
+  }
+
   enum State: Equatable {
     case starting
     case signedOut
@@ -28,17 +35,35 @@ final class AppViewModel: ObservableObject {
   @Published private(set) var notificationReadiness: NotificationReadiness = .unknown
   @Published private(set) var actionNotice = ""
   @Published private(set) var isWorking = false
+  @Published private(set) var activeReminder: ReminderPresentation?
 
   private var listeners: [ListenerRegistration] = []
   private var coordinator: DoseCoordinator?
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
   private let fixture: Bool
+  private let snoozeInterval: TimeInterval
 
   static func make() -> AppViewModel {
     let fixtureName = ProcessInfo.processInfo.arguments.value(after: "-e2e-fixture")
-    if fixtureName == "scheduled-dose-pending" {
-      return AppViewModel(fixture: Self.pendingDoseFixture())
+    if fixtureName == "scheduled-dose-first-reminder" {
+      let event = Self.pendingDoseFixture()
+      return AppViewModel(
+        fixture: event,
+        now: event.scheduledTime,
+        reminderTime: event.scheduledTime,
+        reminderNumber: 1
+      )
+    }
+    if fixtureName == "scheduled-dose-repeat-due" {
+      let event = Self.snoozedDoseFixture()
+      let repeatTime = event.scheduledTime.addingTimeInterval(Self.fixtureSnoozeInterval)
+      return AppViewModel(
+        fixture: event,
+        now: repeatTime,
+        reminderTime: repeatTime,
+        reminderNumber: 2
+      )
     }
     return AppViewModel()
   }
@@ -48,16 +73,23 @@ final class AppViewModel: ObservableObject {
     self.notifications = notifications
     self.liveNotifications = notifications
     self.fixture = false
+    self.snoozeInterval = Self.fixtureSnoozeInterval
     installNotificationRouter()
     Task { await boot() }
   }
 
-  private init(fixture: MedicationEvent) {
+  private init(
+    fixture: MedicationEvent,
+    now: Date,
+    reminderTime: Date,
+    reminderNumber: Int
+  ) {
     let eventStore = FixtureEventStore(event: fixture)
     let notifications = FixtureNotificationScheduler()
     self.notifications = notifications
     self.liveNotifications = nil
     self.fixture = true
+    self.snoozeInterval = Self.fixtureSnoozeInterval
     self.events = [fixture]
     self.schedules = [
       MedicationSchedule(
@@ -70,9 +102,16 @@ final class AppViewModel: ObservableObject {
     ]
     self.notificationReadiness = .ready
     self.coordinator = DoseCoordinator(
-      clock: FixedFixtureClock(now: fixture.scheduledTime),
+      clock: FixedFixtureClock(now: now),
       eventStore: eventStore,
-      notifications: notifications
+      notifications: notifications,
+      snoozeInterval: snoozeInterval
+    )
+    self.activeReminder = ReminderPresentation(
+      eventID: fixture.id,
+      medicationName: fixture.medicationName,
+      scheduledTime: reminderTime,
+      reminderNumber: reminderNumber
     )
     self.state = .ready
     installNotificationRouter()
@@ -154,6 +193,7 @@ final class AppViewModel: ObservableObject {
   func respond(_ response: DoseResponse, to event: MedicationEvent) async {
     guard let coordinator else { return }
     isWorking = true
+    activeReminder = nil
     defer { isWorking = false }
     do {
       let updated = try await coordinator.respond(response, to: event)
@@ -162,11 +202,16 @@ final class AppViewModel: ObservableObject {
       }
       actionNotice =
         response == .yesIWill
-        ? "Okay. We will remind you again in 10 minutes."
+        ? "Okay. We will remind you again in \(snoozeMinutes) minutes."
         : "Dose complete. Further reminders are cancelled."
     } catch {
       actionNotice = "Could not record that response: \(error.localizedDescription)"
     }
+  }
+
+  func respond(_ response: DoseResponse, toEventID eventID: String) async {
+    guard let event = events.first(where: { $0.id == eventID }) else { return }
+    await respond(response, to: event)
   }
 
   private func boot() async {
@@ -279,7 +324,20 @@ final class AppViewModel: ObservableObject {
     )
   }
 
+  private static func snoozedDoseFixture() -> MedicationEvent {
+    var event = pendingDoseFixture()
+    event.status = .snoozed
+    event.snoozeCount = 1
+    event.lastSnoozedAt = event.scheduledTime
+    return event
+  }
+
+  private var snoozeMinutes: Int {
+    Int(snoozeInterval / 60)
+  }
+
   private static let householdDefaultsKey = "medinag.subject.household-id"
+  private static let fixtureSnoozeInterval = DoseCoordinator.defaultSnoozeInterval
 }
 
 private struct FixedFixtureClock: Clock {

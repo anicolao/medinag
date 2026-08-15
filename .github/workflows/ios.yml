@@ -50,7 +50,6 @@ jobs:
           xcrun simctl bootstatus "$device_id" -b
           xcrun simctl ui "$device_id" appearance light
           xcrun simctl status_bar "$device_id" override \
-            --time '9:41' \
             --batteryState charged \
             --batteryLevel 100 \
             --wifiMode active \
@@ -85,7 +84,7 @@ jobs:
             -only-testing:MediNagTests \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Run iOS user-story walkthrough
+      - name: Run first-reminder story phase
         run: |
           xcodebuild test-without-building \
             -project apps/ios/MediNag.xcodeproj \
@@ -93,24 +92,45 @@ jobs:
             -configuration E2E \
             -destination "platform=iOS Simulator,id=$MEDINAG_SIMULATOR_ID" \
             -derivedDataPath apps/ios/DerivedData \
-            -only-testing:MediNagUITests/RespondToDoseUITests/testSteveSnoozesThenCompletesScheduledDose \
-            -resultBundlePath apps/ios/DerivedData/MediNagUITests.xcresult \
+            -only-testing:MediNagUITests/RespondToDoseUITests/testFirstReminderSchedulesRepeat \
+            -resultBundlePath apps/ios/DerivedData/FirstReminder.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Export XCTest attachments
+      - name: Run repeat-reminder story phase
+        run: |
+          xcodebuild test-without-building \
+            -project apps/ios/MediNag.xcodeproj \
+            -scheme MediNag \
+            -configuration E2E \
+            -destination "platform=iOS Simulator,id=$MEDINAG_SIMULATOR_ID" \
+            -derivedDataPath apps/ios/DerivedData \
+            -only-testing:MediNagUITests/RespondToDoseUITests/testRepeatReminderCompletesDose \
+            -resultBundlePath apps/ios/DerivedData/RepeatReminder.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export first-reminder attachments
         if: always()
         run: |
-          mkdir -p apps/ios/DerivedData/MediNagUITestAttachments
+          mkdir -p apps/ios/DerivedData/FirstReminderAttachments
           xcrun xcresulttool export attachments \
-            --path apps/ios/DerivedData/MediNagUITests.xcresult \
-            --output-path apps/ios/DerivedData/MediNagUITestAttachments
+            --path apps/ios/DerivedData/FirstReminder.xcresult \
+            --output-path apps/ios/DerivedData/FirstReminderAttachments
+
+      - name: Export repeat-reminder attachments
+        if: always()
+        run: |
+          mkdir -p apps/ios/DerivedData/RepeatReminderAttachments
+          xcrun xcresulttool export attachments \
+            --path apps/ios/DerivedData/RepeatReminder.xcresult \
+            --output-path apps/ios/DerivedData/RepeatReminderAttachments
 
       - name: Materialize walkthrough screenshots
         if: always()
         run: |
           apps/ios/scripts/export-walkthrough.sh \
-            apps/ios/DerivedData/MediNagUITestAttachments \
-            apps/ios/DerivedData/ActualWalkthrough
+            apps/ios/DerivedData/FirstReminderAttachments \
+            apps/ios/DerivedData/ActualWalkthrough \
+            apps/ios/DerivedData/RepeatReminderAttachments
 
       - name: Enforce zero-pixel tolerance
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.record_screenshots) }}
@@ -126,8 +146,10 @@ jobs:
           name: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots && 'ios-walkthrough-recording' || 'ios-walkthrough-actual' }}
           path: |
             apps/ios/DerivedData/ActualWalkthrough/
-            apps/ios/DerivedData/MediNagUITestAttachments/
-            apps/ios/DerivedData/MediNagUITests.xcresult/
+            apps/ios/DerivedData/FirstReminderAttachments/
+            apps/ios/DerivedData/RepeatReminderAttachments/
+            apps/ios/DerivedData/FirstReminder.xcresult/
+            apps/ios/DerivedData/RepeatReminder.xcresult/
           if-no-files-found: error
           retention-days: 7
 

@@ -23,6 +23,8 @@ public protocol NotificationScheduling: Sendable {
 }
 
 public actor DoseCoordinator {
+  public static let defaultSnoozeInterval: TimeInterval = 10 * 60
+
   private let clock: any Clock
   private let eventStore: any MedicationEventStore
   private let notifications: any NotificationScheduling
@@ -32,7 +34,7 @@ public actor DoseCoordinator {
     clock: any Clock,
     eventStore: any MedicationEventStore,
     notifications: any NotificationScheduling,
-    snoozeInterval: TimeInterval = 10 * 60
+    snoozeInterval: TimeInterval = DoseCoordinator.defaultSnoozeInterval
   ) {
     self.clock = clock
     self.eventStore = eventStore

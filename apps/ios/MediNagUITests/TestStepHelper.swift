@@ -30,6 +30,19 @@ struct StepVerification {
       ) == .completed
     }
   }
+
+  static func sameSize(
+    _ first: XCUIElement,
+    _ second: XCUIElement,
+    _ spec: String
+  ) -> StepVerification {
+    StepVerification(spec: spec) {
+      let firstSize = first.frame.size
+      let secondSize = second.frame.size
+      return abs(firstSize.width - secondSize.width) < 0.5
+        && abs(firstSize.height - secondSize.height) < 0.5
+    }
+  }
 }
 
 final class TestStepHelper {
@@ -39,15 +52,35 @@ final class TestStepHelper {
   private var title = ""
   private var narrative = ""
   private var steps: [Step] = []
+  private var nextScreenshotIndex: Int
 
   init(
     testCase: XCTestCase,
     application: XCUIApplication,
-    storyID: String
+    storyID: String,
+    startingStepIndex: Int = 0
   ) {
     self.testCase = testCase
+    self.nextScreenshotIndex = startingStepIndex
     _ = application
     _ = storyID
+  }
+
+  func documentPriorStep(
+    _ identifier: String,
+    index: Int,
+    description: String,
+    verifications: [String]
+  ) {
+    steps.append(
+      Step(
+        identifier: identifier,
+        description: description,
+        filename: String(format: "%03d-%@.png", index, identifier),
+        verifications: verifications,
+        durationMilliseconds: 0
+      )
+    )
   }
 
   func setMetadata(title: String, narrative: String) {
@@ -69,7 +102,8 @@ final class TestStepHelper {
         line: #line
       )
     }
-    let filename = String(format: "%03d-%@.png", steps.count, identifier)
+    let filename = String(format: "%03d-%@.png", nextScreenshotIndex, identifier)
+    nextScreenshotIndex += 1
     let screenshot = XCUIScreen.main.screenshot()
     let attachment = XCTAttachment(screenshot: screenshot)
     attachment.name = filename
@@ -101,10 +135,11 @@ final class TestStepHelper {
 
       ## Deterministic preconditions
 
-      - Fixture: `scheduled-dose-pending`
-      - Clock: 2026-08-03 08:00 America/Toronto
+      - Fixtures: `scheduled-dose-first-reminder` and `scheduled-dose-repeat-due`
+      - Clock: 2026-08-03 08:00 America/Toronto, advanced directly to 08:10 for the repeat
       - Device: iPhone 17 on iOS 26.2, portrait, light appearance, standard Dynamic Type
-      - Status bar: 9:41, full Wi-Fi and cellular signal, charged battery at 100%
+      - Status bar: hidden in E2E so the runner's real wall clock cannot contradict the fixture
+      - Snooze interval: 10 minutes from `DoseCoordinator.defaultSnoozeInterval`
 
       \(steps.map(markdown).joined(separator: "\n\n"))
       """

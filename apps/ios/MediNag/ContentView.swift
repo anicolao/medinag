@@ -5,29 +5,104 @@ struct ContentView: View {
   @ObservedObject var viewModel: AppViewModel
 
   var body: some View {
-    Group {
-      switch viewModel.state {
-      case .starting:
-        ProgressView("Preparing MediNag…")
-          .accessibilityIdentifier("app-starting")
+    ZStack {
+      Group {
+        switch viewModel.state {
+        case .starting:
+          ProgressView("Preparing MediNag…")
+            .accessibilityIdentifier("app-starting")
 
-      case .signedOut:
-        SubjectSignInView(viewModel: viewModel)
+        case .signedOut:
+          SubjectSignInView(viewModel: viewModel)
 
-      case .ready:
-        TodayView(viewModel: viewModel)
+        case .ready:
+          TodayView(viewModel: viewModel)
 
-      case .configurationMissing:
-        SetupRequiredView()
+        case .configurationMissing:
+          SetupRequiredView()
 
-      case .failed(let message):
-        FailureView(message: message) {
-          viewModel.returnToSignIn()
+        case .failed(let message):
+          FailureView(message: message) {
+            viewModel.returnToSignIn()
+          }
         }
+      }
+      .accessibilityHidden(viewModel.activeReminder != nil)
+
+      if let reminder = viewModel.activeReminder {
+        ReminderAlertView(reminder: reminder, viewModel: viewModel)
       }
     }
     .fontDesign(.rounded)
     .tint(MediNagColor.teal)
+  }
+}
+
+private struct ReminderAlertView: View {
+  let reminder: AppViewModel.ReminderPresentation
+  @ObservedObject var viewModel: AppViewModel
+
+  var body: some View {
+    VStack(spacing: 24) {
+      Spacer()
+
+      Image(systemName: "bell.and.waves.left.and.right.fill")
+        .font(.system(size: 58))
+        .foregroundStyle(MediNagColor.warning)
+
+      VStack(spacing: 8) {
+        Text(reminder.reminderNumber == 1 ? "FIRST REMINDER" : "REMINDER 2")
+          .font(.caption.bold())
+          .tracking(1.5)
+          .foregroundStyle(MediNagColor.teal)
+          .accessibilityIdentifier("reminder-sequence")
+        Text(reminder.scheduledTime.formatted(date: .omitted, time: .shortened))
+          .font(.system(size: 52, weight: .bold, design: .rounded))
+          .foregroundStyle(MediNagColor.ink)
+          .accessibilityIdentifier("reminder-time")
+        Text(reminder.medicationName)
+          .font(.title2.bold())
+          .multilineTextAlignment(.center)
+          .foregroundStyle(MediNagColor.ink)
+          .accessibilityIdentifier("reminder-medication")
+      }
+
+      Text(
+        reminder.reminderNumber == 1
+          ? "It is time for this scheduled dose."
+          : "The 10-minute snooze has ended. Did you take this dose?"
+      )
+      .font(.body)
+      .multilineTextAlignment(.center)
+      .foregroundStyle(MediNagColor.muted)
+
+      VStack(spacing: 12) {
+        Button("Yes, I did") {
+          Task { await viewModel.respond(.yesIDid, toEventID: reminder.eventID) }
+        }
+        .buttonStyle(ResponseButtonStyle())
+        .disabled(viewModel.isWorking)
+        .accessibilityIdentifier("reminder-yes-i-did")
+
+        Button("Yes, I will") {
+          Task { await viewModel.respond(.yesIWill, toEventID: reminder.eventID) }
+        }
+        .buttonStyle(ResponseButtonStyle())
+        .disabled(viewModel.isWorking)
+        .accessibilityIdentifier("reminder-yes-i-will")
+      }
+
+      Text("Neither response is selected by default.")
+        .font(.caption)
+        .foregroundStyle(MediNagColor.muted)
+
+      Spacer()
+    }
+    .padding(28)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(MediNagColor.background)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("dose-reminder-alert")
   }
 }
 
@@ -249,14 +324,14 @@ private struct NextDoseCard: View {
         Button("Yes, I did") {
           Task { await viewModel.respond(.yesIDid, to: event) }
         }
-        .buttonStyle(PrimaryButtonStyle())
+        .buttonStyle(ResponseButtonStyle())
         .disabled(viewModel.isWorking)
         .accessibilityIdentifier("yes-i-did")
 
         Button("Yes, I will") {
           Task { await viewModel.respond(.yesIWill, to: event) }
         }
-        .buttonStyle(SecondaryButtonStyle())
+        .buttonStyle(ResponseButtonStyle())
         .disabled(viewModel.isWorking)
         .accessibilityIdentifier("yes-i-will")
       }
@@ -464,15 +539,19 @@ private struct PrimaryButtonStyle: ButtonStyle {
   }
 }
 
-private struct SecondaryButtonStyle: ButtonStyle {
+private struct ResponseButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
       .font(.headline)
       .foregroundStyle(MediNagColor.teal)
-      .padding(.vertical, 15)
       .padding(.horizontal, 20)
       .frame(maxWidth: .infinity)
-      .background(MediNagColor.teal.opacity(0.09), in: RoundedRectangle(cornerRadius: 15))
+      .frame(height: 54)
+      .background(.white, in: RoundedRectangle(cornerRadius: 15))
+      .overlay {
+        RoundedRectangle(cornerRadius: 15)
+          .stroke(MediNagColor.teal.opacity(0.45), lineWidth: 1)
+      }
       .opacity(configuration.isPressed ? 0.75 : 1)
   }
 }

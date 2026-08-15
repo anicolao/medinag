@@ -10,34 +10,51 @@
 
 ## Deterministic preconditions
 
-- Fixture: `scheduled-dose-pending`
-- Clock: 2026-08-03 08:00 America/Toronto
+- Fixtures: `scheduled-dose-first-reminder` and `scheduled-dose-repeat-due`
+- Clock: 2026-08-03 08:00 America/Toronto, advanced directly to 08:10 for the repeat
 - Device: iPhone 17 on iOS 26.2, portrait, light appearance, standard Dynamic Type
-- Status bar: 9:41, full Wi-Fi and cellular signal, charged battery at 100%
+- Status bar: hidden in E2E so the runner's real wall clock cannot contradict the fixture
+- Snooze interval: 10 minutes from `DoseCoordinator.defaultSnoozeInterval`
 
-## Steve sees the pending morning dose and both clear response choices
+## The first medication reminder arrives exactly at 8:00 AM
 
-![Steve sees the pending morning dose and both clear response choices](./screenshots/ios/000-pending-dose.png)
+![The first medication reminder arrives exactly at 8:00 AM](./screenshots/ios/000-first-reminder.png)
 
 **Verifications:**
 
-- [x] The iOS Today screen is ready
-- [x] The medication label is visible
+- [x] The first alert is visible
+- [x] This is the first reminder
+- [x] The first reminder arrives at 8:00 AM
 - [x] The snooze response is available
 - [x] The completion response is available
+- [x] Neither response has greater visual weight
 
-## Steve chooses Yes, I will and sees one scheduled repeat
+## Steve chooses Yes, I will and the dose is snoozed for 10 minutes
 
-![Steve chooses Yes, I will and sees one scheduled repeat](./screenshots/ios/001-dose-snoozed.png)
+![Steve chooses Yes, I will and the dose is snoozed for 10 minutes](./screenshots/ios/001-dose-snoozed.png)
 
 **Verifications:**
 
 - [x] The snooze count increments
-- [x] The repeat interval is confirmed
+- [x] The configured repeat interval is confirmed
+- [x] The dose remains unfinished
+
+## At 8:10 AM the expired snooze presents the next reminder
+
+![At 8:10 AM the expired snooze presents the next reminder](./screenshots/ios/002-repeat-reminder.png)
+
+**Verifications:**
+
+- [x] The repeat alert is visible
+- [x] This is reminder 2
+- [x] The repeat arrives at 8:10 AM
+- [x] Yes, I will is offered after the repeat
+- [x] Yes, I did is offered after the repeat
+- [x] Neither response has greater visual weight
 
 ## Steve chooses Yes, I did and further nags are cancelled
 
-![Steve chooses Yes, I did and further nags are cancelled](./screenshots/ios/002-dose-completed.png)
+![Steve chooses Yes, I did and further nags are cancelled](./screenshots/ios/003-dose-completed.png)
 
 **Verifications:**
 

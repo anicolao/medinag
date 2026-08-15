@@ -28,6 +28,9 @@ uses GitHub's pinned macOS 26 image for that verification.
 - Ten-minute repeat scheduling, completion cancellation, and Firestore updates.
 - Firestore's local persistence and queued writes for offline reconciliation.
 - Injected clock, event store, and notification scheduler in `MediNagCore`.
+- A currently hard-coded 10-minute snooze default in
+  `DoseCoordinator.defaultSnoozeInterval`; the coordinator accepts an injected
+  interval so a future schedule setting can replace the default.
 - Accessibility identifiers and a two-second, event-driven UI walkthrough.
 - Exact native RGBA screenshot comparison with zero differing pixels.
 
