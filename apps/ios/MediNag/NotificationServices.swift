@@ -94,6 +94,11 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     for event: MedicationEvent,
     at date: Date
   ) async throws {
+    // Never turn a missed medication time into an immediate, misleading first
+    // reminder. Events must be scheduled ahead of time and fire at their
+    // absolute medication or snooze-expiry date.
+    guard date > Date() else { return }
+
     let content = UNMutableNotificationContent()
     content.title = "Medication time"
     content.body = event.medicationName
@@ -103,12 +108,15 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     content.categoryIdentifier = MediNagNotification.category
     content.userInfo = [MediNagNotification.eventID: event.id]
 
-    let interval = max(1, date.timeIntervalSinceNow)
+    let dateComponents = Calendar.current.dateComponents(
+      [.calendar, .timeZone, .year, .month, .day, .hour, .minute, .second],
+      from: date
+    )
     let request = UNNotificationRequest(
       identifier: notificationIdentifier(eventID: event.id),
       content: content,
-      trigger: UNTimeIntervalNotificationTrigger(
-        timeInterval: interval,
+      trigger: UNCalendarNotificationTrigger(
+        dateMatching: dateComponents,
         repeats: false
       )
     )
