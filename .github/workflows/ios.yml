@@ -1,0 +1,117 @@
+name: Connected iOS E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      record_screenshots:
+        description: Export new walkthrough candidates instead of comparing iOS pixels
+        required: true
+        default: false
+        type: boolean
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/ios/**
+      - web/**
+      - scripts/**
+      - tests/e2e/004-ios-respond-to-dose/**
+      - firebase.json
+      - firestore.rules
+      - package.json
+      - package-lock.json
+      - .github/workflows/ios.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/ios/**
+      - web/**
+      - scripts/**
+      - tests/e2e/004-ios-respond-to-dose/**
+      - firebase.json
+      - firestore.rules
+      - package.json
+      - package-lock.json
+      - .github/workflows/ios.yml
+
+permissions:
+  contents: read
+
+jobs:
+  connected-e2e:
+    name: Dashboard → Firebase → iOS notification → Firebase
+    runs-on: macos-26
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.6.app
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install chromium
+
+      - name: Run portable core checks
+        run: npm run ios:core:check
+
+      - name: Run connected user story
+        run: npm run ios:e2e:connected
+        env:
+          CI: true
+          MEDINAG_E2E_DERIVED_DATA: apps/ios/DerivedData
+          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+          MEDINAG_E2E_UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots }}
+
+      - name: Export system-notification attachments
+        if: always()
+        run: |
+          mkdir -p apps/ios/DerivedData/SystemNotificationAttachments
+          xcrun xcresulttool export attachments \
+            --path apps/ios/DerivedData/SystemNotification.xcresult \
+            --output-path apps/ios/DerivedData/SystemNotificationAttachments
+
+      - name: Materialize complete walkthrough
+        if: always()
+        run: |
+          apps/ios/scripts/export-walkthrough.sh \
+            apps/ios/DerivedData/SystemNotificationAttachments \
+            apps/ios/DerivedData/ActualWalkthrough
+          mkdir -p apps/ios/DerivedData/ActualWalkthrough/screenshots/web
+          cp tests/e2e/004-ios-respond-to-dose/screenshots/web/*.png \
+            apps/ios/DerivedData/ActualWalkthrough/screenshots/web/
+
+      - name: Enforce zero-pixel iOS tolerance
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.record_screenshots) }}
+        run: |
+          swift apps/ios/scripts/compare-walkthrough.swift \
+            tests/e2e/004-ios-respond-to-dose/screenshots/ios \
+            apps/ios/DerivedData/ActualWalkthrough/screenshots/ios
+
+      - name: Upload reviewable walkthrough
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots && 'connected-walkthrough-recording' || 'connected-walkthrough-actual' }}
+          path: |
+            apps/ios/DerivedData/ActualWalkthrough/
+            apps/ios/DerivedData/SystemNotificationAttachments/
+            apps/ios/DerivedData/SystemNotification.xcresult/
+            playwright-report/
+          if-no-files-found: error
+          retention-days: 7

@@ -17,7 +17,7 @@
 - [x] The schedule page reports deterministic rendering is ready
 - [x] The medication schedule heading is visible
 - [x] No schedules are present
-- [x] The preview identifies browser-local data
+- [x] The dashboard is connected to the isolated Firebase environment
 
 ## Lori opens the new schedule form
 
@@ -38,9 +38,18 @@
 - [x] The schedule repeats every day at 8:00 AM
 - [x] The schedule is active
 
+## The schedule produces a pending medication event in Firestore
+
+![The schedule produces a pending medication event in Firestore](./screenshots/003-medication-event-created.png)
+
+**Verifications:**
+
+- [x] The Today route receives the medication event through a Firestore listener
+- [x] The event is pending for Steve
+
 ## Lori updates the medication label and dose time
 
-![Lori updates the medication label and dose time](./screenshots/003-schedule-edited.png)
+![Lori updates the medication label and dose time](./screenshots/004-schedule-edited.png)
 
 **Verifications:**
 
@@ -50,7 +59,7 @@
 
 ## Lori pauses the medication schedule
 
-![Lori pauses the medication schedule](./screenshots/004-schedule-paused.png)
+![Lori pauses the medication schedule](./screenshots/005-schedule-paused.png)
 
 **Verifications:**
 

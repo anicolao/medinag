@@ -14,9 +14,18 @@
     "firebase:deploy": "firebase deploy --project medinag --only auth,firestore:rules,firestore:indexes",
     "firebase:emulators": "firebase emulators:start --project demo-medinag --only auth,firestore",
     "firebase:validate": "firebase emulators:exec --project demo-medinag --only auth,firestore \"npm run check && npm run test:rules\"",
+    "e2e:environment:setup": "node scripts/setup-e2e-environment.mjs",
+    "e2e:local": "scripts/run-local-e2e.sh",
+    "ios:core:check": "swift run --package-path apps/ios/Core MediNagCoreChecks",
+    "ios:generate": "apps/ios/scripts/generate-project.sh",
+    "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
-    "test:e2e": "playwright test",
-    "test:e2e:update-snapshots": "playwright test --update-snapshots"
+    "test:e2e": "npm run test:e2e:connected",
+    "test:e2e:connected": "scripts/run-connected-web-e2e.sh tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts && MEDINAG_E2E_AUTH_MODE=anonymous scripts/run-connected-web-e2e.sh tests/e2e/003-link-lori-google-account/003-link-lori-google-account.spec.ts",
+    "test:e2e:connected:update-snapshots": "MEDINAG_E2E_UPDATE_SNAPSHOTS=true scripts/run-connected-web-e2e.sh tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts && MEDINAG_E2E_AUTH_MODE=anonymous MEDINAG_E2E_UPDATE_SNAPSHOTS=true scripts/run-connected-web-e2e.sh tests/e2e/003-link-lori-google-account/003-link-lori-google-account.spec.ts",
+    "test:e2e:update-snapshots": "npm run test:e2e:connected:update-snapshots",
+    "test:ui:preview": "playwright test tests/e2e/001-admin-welcome/001-admin-welcome.spec.ts",
+    "test:ui:preview:update-snapshots": "playwright test tests/e2e/001-admin-welcome/001-admin-welcome.spec.ts --update-snapshots"
   },
   "dependencies": {
     "firebase": "12.16.0"

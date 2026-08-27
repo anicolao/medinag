@@ -8,34 +8,23 @@
 - **iOS:** not-applicable — Phase 1 establishes the shared Firebase contract before the iOS client is implemented.
 - **watchOS:** not-applicable — The watchOS client is explicitly deferred until after the iOS MVP.
 
-## Lori sees that her guest schedules can move with her
+## Lori sees the schedule she entered in her anonymous Firebase workspace
 
-![Lori sees that her guest schedules can move with her](./screenshots/000-existing-guest-schedules.png)
-
-**Verifications:**
-
-- [x] The dashboard is deterministically ready
-- [x] The Google linking explanation is visible
-- [x] Lori can see her existing medication schedule before linking
-
-## Lori links Gmail without losing the schedule she already entered
-
-![Lori links Gmail without losing the schedule she already entered](./screenshots/001-google-account-linked.png)
+![Lori sees the schedule she entered in her anonymous Firebase workspace](./screenshots/000-existing-guest-schedules.png)
 
 **Verifications:**
 
-- [x] The linked dashboard finishes rendering
-- [x] The dashboard confirms that Google and Firebase are connected
-- [x] The migration confirmation reports one preserved schedule
-- [x] The existing schedule remains available after linking
+- [x] The dashboard is connected as an anonymous Firebase user
+- [x] The real Google linking action is available
+- [x] The schedule written through the UI is visible before linking
 
-## Lori sees Steve's latest dose status in the shared household
+## Lori links a Google-provider identity and Firestore migrates her schedule
 
-![Lori sees Steve's latest dose status in the shared household](./screenshots/002-today-status-visible.png)
+![Lori links a Google-provider identity and Firestore migrates her schedule](./screenshots/001-google-account-linked.png)
 
 **Verifications:**
 
-- [x] The Today route finishes rendering
-- [x] The completed morning dose is visible
-- [x] The dose status is completed
-- [x] The confirmation time is shown in Toronto time
+- [x] The linked dashboard finishes rendering after the real Auth callback
+- [x] The dashboard reports the linked Firebase identity
+- [x] The migration confirms one preserved Firestore schedule
+- [x] The migrated schedule arrives from the household Firestore collection
