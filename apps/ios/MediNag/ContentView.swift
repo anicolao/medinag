@@ -203,7 +203,7 @@ private struct TodayView: View {
           NotificationReadinessCard(viewModel: viewModel)
 
           if let next = viewModel.nextEvent {
-            NextDoseCard(event: next, viewModel: viewModel)
+            NextDoseCard(event: next)
           } else if let schedule = viewModel.schedules.first {
             ScheduleWaitingCard(schedule: schedule)
           } else {
@@ -262,6 +262,7 @@ private struct NotificationReadinessCard: View {
             : "Allow medication reminders"
         )
         .font(.headline)
+        .accessibilityIdentifier("notification-readiness")
         Text(
           viewModel.notificationReadiness == .ready
             ? "This iPhone can present scheduled dose alerts."
@@ -282,13 +283,11 @@ private struct NotificationReadinessCard: View {
     }
     .padding(18)
     .background(.white, in: RoundedRectangle(cornerRadius: 18))
-    .accessibilityIdentifier("notification-readiness")
   }
 }
 
 private struct NextDoseCard: View {
   let event: MedicationEvent
-  @ObservedObject var viewModel: AppViewModel
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -320,21 +319,14 @@ private struct NextDoseCard: View {
           .accessibilityIdentifier("snooze-count")
       }
 
-      VStack(spacing: 12) {
-        Button("Yes, I did") {
-          Task { await viewModel.respond(.yesIDid, to: event) }
-        }
-        .buttonStyle(ResponseButtonStyle())
-        .disabled(viewModel.isWorking)
-        .accessibilityIdentifier("yes-i-did")
-
-        Button("Yes, I will") {
-          Task { await viewModel.respond(.yesIWill, to: event) }
-        }
-        .buttonStyle(ResponseButtonStyle())
-        .disabled(viewModel.isWorking)
-        .accessibilityIdentifier("yes-i-will")
-      }
+      Text(
+        event.status == .snoozed
+          ? "You can leave MediNag. The next reminder will appear as a notification."
+          : "When the reminder notification appears, tap it to respond."
+      )
+      .font(.subheadline)
+      .foregroundStyle(MediNagColor.muted)
+      .accessibilityIdentifier("notification-instruction")
     }
     .padding(24)
     .background(.white, in: RoundedRectangle(cornerRadius: 24))

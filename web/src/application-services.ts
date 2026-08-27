@@ -12,6 +12,7 @@ import {
   linkWithPopup,
   signInAnonymously,
   signInWithCredential,
+  signInWithEmailAndPassword,
   type Auth,
   type AuthError,
   type User
@@ -53,7 +54,6 @@ export interface ApplicationServices {
 }
 
 const ACCOUNT_NOTICE_KEY = 'medinag:account-notice';
-const E2E_LINKED_KEY = 'medinag:e2e-google-linked';
 let emulatorsConnected = false;
 
 function consumeNotice(): string {
@@ -183,22 +183,13 @@ async function ensureHousehold(
 
 function browserServices(): ApplicationServices {
   const schedules = new BrowserScheduleRepository();
-  const e2eLinking = Boolean(window.__MEDINAG_E2E_ACCOUNT_LINK__);
-  const linked = localStorage.getItem(E2E_LINKED_KEY) === 'true';
   const account: AdvisorAccount = {
-    kind: e2eLinking ? (linked ? 'google' : 'anonymous') : 'preview',
-    displayName: linked ? 'Lori Medina' : 'Lori',
-    email: linked ? 'lori@gmail.com' : '',
+    kind: 'preview',
+    displayName: 'Lori',
+    email: '',
     notice: consumeNotice(),
     async linkGoogle(): Promise<void> {
-      if (!e2eLinking) {
-        throw new Error('Google linking requires Firebase configuration.');
-      }
-      localStorage.setItem(E2E_LINKED_KEY, 'true');
-      const count = schedules.read().length;
-      reloadWithNotice(
-        `Google account linked. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
-      );
+      throw new Error('Google linking requires Firebase configuration.');
     }
   };
   return {
@@ -295,10 +286,36 @@ export async function createApplicationServices(): Promise<ApplicationServices> 
   }
 
   await firebase.auth.authStateReady();
-  const user = firebase.auth.currentUser
-    ?? (await signInAnonymously(firebase.auth)).user;
+  const usingEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+  const emulatorAuthMode = import.meta.env.VITE_FIREBASE_EMULATOR_AUTH_MODE
+    ?? 'advisor';
+  let user = firebase.auth.currentUser;
+  if (!user && usingEmulator && emulatorAuthMode === 'advisor') {
+    const email = import.meta.env.VITE_FIREBASE_EMULATOR_ADVISOR_EMAIL;
+    const password = import.meta.env.VITE_FIREBASE_EMULATOR_ADVISOR_PASSWORD;
+    if (!email || !password) {
+      throw new Error(
+        'The Firebase emulator advisor credentials were not provided.'
+      );
+    }
+    user = (await signInWithEmailAndPassword(firebase.auth, email, password)).user;
+  }
+  user ??= (await signInAnonymously(firebase.auth)).user;
   const legacySchedules = await readLegacySchedules(firebase.database, user.uid);
   const notice = consumeNotice();
+
+  if (usingEmulator && emulatorAuthMode === 'advisor') {
+    await ensureHousehold(firebase.database, user, legacySchedules);
+    return {
+      account: linkedAccount(user, notice),
+      schedules: new FirestoreScheduleRepository(
+        firebase.database,
+        ['households', user.uid, 'schedules'],
+        user.uid
+      ),
+      today: new FirestoreTodayRepository(firebase.database, user.uid)
+    };
+  }
 
   if (!isGoogleUser(user)) {
     return {
@@ -353,7 +370,7 @@ export async function createApplicationServices(): Promise<ApplicationServices> 
       'households',
       user.uid,
       'schedules'
-    ]),
+    ], user.uid),
     today: new FirestoreTodayRepository(firebase.database, user.uid)
   };
 }

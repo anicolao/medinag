@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 struct StepVerification {
   let spec: String
   let check: () -> Bool
@@ -31,6 +32,22 @@ struct StepVerification {
     }
   }
 
+  static func notExists(
+    _ element: XCUIElement,
+    _ spec: String
+  ) -> StepVerification {
+    StepVerification(spec: spec) {
+      let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate(format: "exists == false"),
+        object: element
+      )
+      return XCTWaiter.wait(
+        for: [expectation],
+        timeout: TestStepHelper.conditionTimeout
+      ) == .completed
+    }
+  }
+
   static func sameSize(
     _ first: XCUIElement,
     _ second: XCUIElement,
@@ -45,6 +62,7 @@ struct StepVerification {
   }
 }
 
+@MainActor
 final class TestStepHelper {
   static let conditionTimeout: TimeInterval = 2
 
@@ -70,7 +88,8 @@ final class TestStepHelper {
     _ identifier: String,
     index: Int,
     description: String,
-    verifications: [String]
+    verifications: [String],
+    surface: String
   ) {
     steps.append(
       Step(
@@ -78,6 +97,7 @@ final class TestStepHelper {
         description: description,
         filename: String(format: "%03d-%@.png", index, identifier),
         verifications: verifications,
+        surface: surface,
         durationMilliseconds: 0
       )
     )
@@ -91,7 +111,8 @@ final class TestStepHelper {
   func step(
     _ identifier: String,
     description: String,
-    verifications: [StepVerification]
+    verifications: [StepVerification],
+    screenshotElement: XCUIElement? = nil
   ) throws {
     let startedAt = ContinuousClock.now
     for verification in verifications {
@@ -104,7 +125,7 @@ final class TestStepHelper {
     }
     let filename = String(format: "%03d-%@.png", nextScreenshotIndex, identifier)
     nextScreenshotIndex += 1
-    let screenshot = XCUIScreen.main.screenshot()
+    let screenshot = screenshotElement?.screenshot() ?? XCUIScreen.main.screenshot()
     let attachment = XCTAttachment(screenshot: screenshot)
     attachment.name = filename
     attachment.lifetime = .keepAlways
@@ -116,6 +137,7 @@ final class TestStepHelper {
         description: description,
         filename: filename,
         verifications: verifications.map(\.spec),
+        surface: "ios",
         durationMilliseconds: startedAt.duration(to: .now).milliseconds
       )
     )
@@ -129,16 +151,20 @@ final class TestStepHelper {
 
       ## Surface coverage
 
-      - **Web Admin Dashboard:** not-applicable — This story exercises Steve's local iOS response loop.
+      - **Web Admin Dashboard:** covered
       - **iOS:** covered
       - **watchOS:** not-applicable — watchOS is deferred until after the iOS MVP.
 
       ## Deterministic preconditions
 
-      - Fixtures: `scheduled-dose-first-reminder` and `scheduled-dose-repeat-due`
-      - Clock: 2026-08-03 08:00 America/Toronto, advanced directly to 08:10 for the repeat
-      - Device: iPhone 17 on iOS 26.2, portrait, light appearance, standard Dynamic Type
-      - Status bar: hidden in E2E so the runner's real wall clock cannot contradict the fixture
+      - Backend: a fresh Firebase Authentication and Firestore emulator suite with security rules enabled
+      - Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test
+      - Identity: advisor and subject credentials are generated for the run through Firebase Auth
+      - Clock: notification delivery is advanced on the app-background event; logical reminder times remain derived from the Firestore event
+      - Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, medium Dynamic Type
+      - Status bar: fixed at 8:00 AM with a Simulator override
+      - System UI: notification permission and both reminders are rendered by iOS SpringBoard
+      - Lifecycle: the UI test terminates MediNag before it captures or taps either notification
       - Snooze interval: 10 minutes from `DoseCoordinator.defaultSnoozeInterval`
 
       \(steps.map(markdown).joined(separator: "\n\n"))
@@ -158,7 +184,7 @@ final class TestStepHelper {
     return """
       ## \(heading)
 
-      ![\(heading)](./screenshots/ios/\(step.filename))
+      ![\(heading)](./screenshots/\(step.surface)/\(step.filename))
 
       **Verifications:**
 
@@ -172,6 +198,7 @@ private struct Step {
   let description: String
   let filename: String
   let verifications: [String]
+  let surface: String
   let durationMilliseconds: Int
 }
 

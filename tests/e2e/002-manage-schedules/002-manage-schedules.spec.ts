@@ -8,10 +8,6 @@ test('US-002: Lori manages medication schedules', async ({ page }, testInfo) => 
     "As Lori, I want to create, edit, and pause Steve's medication schedules so that his reminders match the daily plan."
   );
 
-  await page.addInitScript(() => {
-    localStorage.clear();
-    window.__MEDINAG_E2E__ = true;
-  });
   await page.goto('/#/schedules');
 
   await tester.step('empty-schedule-list', {
@@ -35,9 +31,9 @@ test('US-002: Lori manages medication schedules', async ({ page }, testInfo) => 
           await expect(page.getByText('No medication schedules yet')).toBeVisible()
       },
       {
-        spec: 'The preview identifies browser-local data',
+        spec: 'The dashboard is connected to the isolated Firebase environment',
         check: async () =>
-          await expect(page.getByText('Preview data · saved in this browser')).toBeVisible()
+          await expect(page.getByText('Google account linked · Firebase synced')).toBeVisible()
       }
     ]
   });
@@ -87,6 +83,26 @@ test('US-002: Lori manages medication schedules', async ({ page }, testInfo) => 
       }
     ]
   });
+
+  await page.getByRole('link', { name: 'Today' }).click();
+  await tester.step('medication-event-created', {
+    description: 'The schedule produces a pending medication event in Firestore',
+    verifications: [
+      {
+        spec: 'The Today route receives the medication event through a Firestore listener',
+        check: async () =>
+          await expect(page.getByTestId('today-event-list')).toContainText(
+            'Morning Prescription Doses'
+          )
+      },
+      {
+        spec: 'The event is pending for Steve',
+        check: async () =>
+          await expect(page.getByTestId('today-event-list')).toContainText('Pending')
+      }
+    ]
+  });
+  await page.getByRole('link', { name: 'Schedules' }).click();
 
   await page.getByRole('button', { name: 'Edit Morning Prescription Doses' }).click();
   await page.getByLabel('Medication label').fill('Morning Meds — 2 pills');

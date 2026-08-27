@@ -53,8 +53,14 @@ copy_attachment() {
   exit 1
 }
 
-copy_attachment "000-first-reminder.png" "$screenshot_directory/000-first-reminder.png"
-copy_attachment "001-dose-snoozed.png" "$screenshot_directory/001-dose-snoozed.png"
-copy_attachment "002-repeat-reminder.png" "$screenshot_directory/002-repeat-reminder.png"
-copy_attachment "003-dose-completed.png" "$screenshot_directory/003-dose-completed.png"
+copy_attachment "000-subject-sign-in.png" "$screenshot_directory/000-subject-sign-in.png"
+copy_attachment "001-firestore-event-received.png" "$screenshot_directory/001-firestore-event-received.png"
+copy_attachment "002-notification-permission.png" "$screenshot_directory/002-notification-permission.png"
+copy_attachment "003-waiting-for-first-reminder.png" "$screenshot_directory/003-waiting-for-first-reminder.png"
+copy_attachment "004-first-system-notification.png" "$screenshot_directory/004-first-system-notification.png"
+copy_attachment "005-first-reminder-response.png" "$screenshot_directory/005-first-reminder-response.png"
+copy_attachment "006-dose-snoozed-in-firestore.png" "$screenshot_directory/006-dose-snoozed-in-firestore.png"
+copy_attachment "007-repeat-system-notification.png" "$screenshot_directory/007-repeat-system-notification.png"
+copy_attachment "008-repeat-reminder-response.png" "$screenshot_directory/008-repeat-reminder-response.png"
+copy_attachment "009-dose-completed-in-firestore.png" "$screenshot_directory/009-dose-completed-in-firestore.png"
 copy_attachment "README.md" "$story_directory/README.md"

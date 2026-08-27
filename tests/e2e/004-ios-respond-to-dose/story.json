@@ -1,16 +1,15 @@
 {
   "id": "US-004",
-  "title": "Steve responds to a scheduled dose",
-  "narrative": "As Steve, I want to snooze and then complete a medication reminder so Lori can see an accurate response.",
-  "fixtures": [
-    "scheduled-dose-first-reminder",
-    "scheduled-dose-repeat-due"
+  "title": "Lori schedules and Steve responds to a dose",
+  "narrative": "As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard.",
+  "production_paths": [
+    "Firebase Auth",
+    "Firestore schedule and medication-event writes",
+    "Firestore snapshot listeners",
+    "iOS local-notification lifecycle"
   ],
   "surfaces": {
-    "web": {
-      "status": "not-applicable",
-      "reason": "This story exercises Steve's local iOS response loop."
-    },
+    "web": { "status": "covered" },
     "ios": {
       "status": "covered"
     },

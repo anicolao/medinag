@@ -54,6 +54,7 @@
 		8FD40690383616CF75360A1A /* MediNagApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagApp.swift; sourceTree = "<group>"; };
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
+		AA81EF092FE9DCE888E99E27 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseSubjectRepository.swift; sourceTree = "<group>"; };
 		D395DDA4C65C718B3E6634C0 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
@@ -98,6 +99,7 @@
 		28D058E8C2014A0511ECA06E /* MediNagUITests */ = {
 			isa = PBXGroup;
 			children = (
+				AA81EF092FE9DCE888E99E27 /* Info.plist */,
 				D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */,
 				E827A83DB040E02286EA2824 /* TestStepHelper.swift */,
 			);
@@ -452,7 +454,8 @@
 			baseConfigurationReference = 8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MediNagUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -533,7 +536,8 @@
 			baseConfigurationReference = 797198C5A5C5ECE18FD313BE /* E2E.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MediNagUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -569,7 +573,8 @@
 			baseConfigurationReference = 4C2E252649E3AF386F9CB68E /* Debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MediNagUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

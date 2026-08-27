@@ -8,7 +8,7 @@ enum ComparisonError: LocalizedError {
   case fileSetDifference(expected: [String], actual: [String])
   case imageUnreadable(String)
   case dimensionDifference(String, expected: CGSize, actual: CGSize)
-  case pixelDifference(String, pixelCount: Int)
+  case pixelDifference(String, pixelCount: Int, bounds: CGRect)
 
   var errorDescription: String? {
     switch self {
@@ -22,8 +22,8 @@ enum ComparisonError: LocalizedError {
       "Could not decode screenshot: \(path)"
     case .dimensionDifference(let name, let expected, let actual):
       "Screenshot \(name) dimensions differ: expected \(expected), received \(actual)."
-    case .pixelDifference(let name, let pixelCount):
-      "Screenshot \(name) differs by \(pixelCount) pixels (zero are allowed)."
+    case .pixelDifference(let name, let pixelCount, let bounds):
+      "Screenshot \(name) differs by \(pixelCount) pixels within \(bounds) (zero are allowed)."
     }
   }
 }
@@ -79,16 +79,24 @@ func canonicalImage(at url: URL) throws -> CanonicalImage {
   return CanonicalImage(width: image.width, height: image.height, pixels: pixels)
 }
 
-func differingPixelCount(_ expected: Data, _ actual: Data) -> Int {
+func pixelDifference(
+  _ expected: Data,
+  _ actual: Data,
+  width: Int
+) -> (count: Int, bounds: CGRect)? {
   expected.withUnsafeBytes { expectedBytes in
     actual.withUnsafeBytes { actualBytes in
       guard
         let expectedBase = expectedBytes.bindMemory(to: UInt8.self).baseAddress,
         let actualBase = actualBytes.bindMemory(to: UInt8.self).baseAddress
       else {
-        return 0
+        return nil
       }
       var count = 0
+      var minimumX = Int.max
+      var minimumY = Int.max
+      var maximumX = Int.min
+      var maximumY = Int.min
       for offset in stride(from: 0, to: expected.count, by: 4) {
         if expectedBase[offset] != actualBase[offset]
           || expectedBase[offset + 1] != actualBase[offset + 1]
@@ -96,9 +104,25 @@ func differingPixelCount(_ expected: Data, _ actual: Data) -> Int {
           || expectedBase[offset + 3] != actualBase[offset + 3]
         {
           count += 1
+          let pixel = offset / 4
+          let x = pixel % width
+          let y = pixel / width
+          minimumX = min(minimumX, x)
+          minimumY = min(minimumY, y)
+          maximumX = max(maximumX, x)
+          maximumY = max(maximumY, y)
         }
       }
-      return count
+      guard count > 0 else { return nil }
+      return (
+        count,
+        CGRect(
+          x: minimumX,
+          y: minimumY,
+          width: maximumX - minimumX + 1,
+          height: maximumY - minimumY + 1
+        )
+      )
     }
   }
 }
@@ -126,9 +150,16 @@ for name in baselineNames {
       actual: CGSize(width: CGFloat(actual.width), height: CGFloat(actual.height))
     )
   }
-  let difference = differingPixelCount(expected.pixels, actual.pixels)
-  guard difference == 0 else {
-    throw ComparisonError.pixelDifference(name, pixelCount: difference)
+  if let difference = pixelDifference(
+    expected.pixels,
+    actual.pixels,
+    width: expected.width
+  ) {
+    throw ComparisonError.pixelDifference(
+      name,
+      pixelCount: difference.count,
+      bounds: difference.bounds
+    )
   }
   print("Exact pixel match: \(name)")
 }

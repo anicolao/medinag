@@ -69,8 +69,9 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
-`npm run test:e2e` to run the same validations used by CI.
+Open `http://127.0.0.1:5174`. Use `npm run check` and `npm run build` for static
+validation. `npm run test:e2e:connected` runs the required dashboard stories
+against fresh Firebase Auth and Firestore emulators.
 
 ## Run the iOS MVP
 
@@ -100,8 +101,25 @@ npm run firebase:deploy
 The emulator requires Java 21, which is included in the Nix development shell.
 Copy `.env.example` to `.env.local` and provide the Firebase web-app
 configuration to exercise the production backend locally. Without configuration,
-the dashboard deliberately uses browser-local preview data so deterministic E2E
-tests never mutate production.
+the dashboard deliberately uses browser-local preview data. Preview mode is for
+design work only and is never accepted as end-to-end coverage.
+
+For an interactive, isolated end-to-end environment spanning the dashboard and
+iOS app, run:
+
+```bash
+npm run e2e:local
+```
+
+The command starts fresh Auth and Firestore emulators, creates run-specific Lori
+and Steve accounts, opens Lori's localhost dashboard, and launches the iOS app.
+The terminal prints Steve's generated credentials and household ID. After Steve
+signs in, a schedule added in the dashboard appears in the app through the real
+Firestore listener. Stop the complete environment with Control-C.
+
+Hardcoded schedules, medication events, identities, fake repositories, and
+browser-storage seed data are forbidden in E2E tests. See `E2E_GUIDE.md` for the
+full data-flow, timing, and zero-pixel requirements.
 
 GitHub Pages builds receive every Firebase web-app configuration field through
 Actions secrets named `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,

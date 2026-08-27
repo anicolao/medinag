@@ -73,7 +73,8 @@ targets:
       Release: Config/Release.xcconfig
     settings:
       base:
-        GENERATE_INFOPLIST_FILE: true
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagUITests/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.uitests
         TEST_TARGET_NAME: MediNag
     dependencies:

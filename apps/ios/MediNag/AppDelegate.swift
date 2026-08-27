@@ -27,16 +27,29 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
+    let content = response.notification.request.content
     guard
-      let eventID = response.notification.request.content.userInfo[
+      let eventID = content.userInfo[
         MediNagNotification.eventID
-      ] as? String
+      ] as? String,
+      let medicationName = content.userInfo[
+        MediNagNotification.medicationName
+      ] as? String,
+      let reminderTimestamp = content.userInfo[
+        MediNagNotification.reminderTime
+      ] as? TimeInterval,
+      let reminderNumber = content.userInfo[
+        MediNagNotification.reminderNumber
+      ] as? Int
     else {
       return
     }
     await NotificationResponseRouter.shared.route(
       actionIdentifier: response.actionIdentifier,
-      eventID: eventID
+      eventID: eventID,
+      medicationName: medicationName,
+      reminderTime: Date(timeIntervalSince1970: reminderTimestamp),
+      reminderNumber: reminderNumber
     )
   }
 }
