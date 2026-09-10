@@ -5,7 +5,7 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
 eval "$(node scripts/setup-e2e-environment.mjs --shell)"
-vite_log="$(mktemp /tmp/medinag-vite.XXXXXX.log)"
+vite_log="$(mktemp /tmp/medinag-vite.XXXXXX)"
 npm run dev >"$vite_log" 2>&1 &
 vite_pid=$!
 cleanup() {

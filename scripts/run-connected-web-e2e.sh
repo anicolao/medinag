@@ -17,7 +17,7 @@ export MEDINAG_E2E_AUTH_HOST="127.0.0.1:9099"
 export MEDINAG_E2E_FIRESTORE_HOST="127.0.0.1:8080"
 export MEDINAG_E2E_ADMINISTRATOR_NAME="Lori"
 export MEDINAG_E2E_PATIENT_NAME="Steve"
-export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX.json)"
+export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX)"
 export MEDINAG_E2E_PLAYWRIGHT_TARGET="${1:-tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts}"
 
 exec npx firebase emulators:exec \
