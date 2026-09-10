@@ -6,13 +6,25 @@ struct MediNagCoreChecks {
   private static let now = Date(timeIntervalSince1970: 1_785_715_200)
 
   static func main() async throws {
+    try await checkResponseIdentifiers()
     try await checkYesIWill()
     try await checkDefaultSnoozeInterval()
     try await checkConfiguredSnoozeRestoresAfterRelaunch()
     try await checkMaximumReminderCount()
     try await checkYesIDid()
     try await checkNotificationReadiness()
-    print("MediNagCoreChecks: 6 passed")
+    print("MediNagCoreChecks: 7 passed")
+  }
+
+  private static func checkResponseIdentifiers() async throws {
+    try await expect(
+      DoseResponse.yesIWill.rawValue == "yesIWill",
+      "Yes, I will must retain its notification routing identifier"
+    )
+    try await expect(
+      DoseResponse.yesIDid.rawValue == "yesIDid",
+      "Yes, I did must retain its notification routing identifier"
+    )
   }
 
   private static func checkConfiguredSnoozeRestoresAfterRelaunch() async throws {

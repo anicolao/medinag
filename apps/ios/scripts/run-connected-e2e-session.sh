@@ -47,14 +47,6 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_SCHEDULED_DISPLAY_TIME="$MEDINAG_E2E_SCHEDULED_DISPLAY_TIME" \
   MEDINAG_E2E_REPEAT_DISPLAY_TIME="$MEDINAG_E2E_REPEAT_DISPLAY_TIME"
 
-run_xcodebuild -quiet test-without-building \
-  -project apps/ios/MediNag.xcodeproj \
-  -scheme MediNag \
-  -configuration E2E \
-  -destination "platform=iOS Simulator,id=$simulator_id" \
-  -derivedDataPath "$derived_data_directory" \
-  -only-testing:MediNagTests
-
 result_bundle="$derived_data_directory/SystemNotification.xcresult"
 if [[ -d "$result_bundle" ]]; then
   /usr/bin/find "$result_bundle" -depth -delete

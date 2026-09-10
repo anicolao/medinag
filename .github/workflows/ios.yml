@@ -89,12 +89,12 @@ jobs:
       - name: Materialize complete walkthrough
         if: always()
         run: |
-          apps/ios/scripts/export-walkthrough.sh \
-            apps/ios/DerivedData/SystemNotificationAttachments \
-            apps/ios/DerivedData/ActualWalkthrough
           mkdir -p apps/ios/DerivedData/ActualWalkthrough/screenshots/web
           cp tests/e2e/004-ios-respond-to-dose/screenshots/web/*.png \
             apps/ios/DerivedData/ActualWalkthrough/screenshots/web/
+          apps/ios/scripts/export-walkthrough.sh \
+            apps/ios/DerivedData/SystemNotificationAttachments \
+            apps/ios/DerivedData/ActualWalkthrough
 
       - name: Enforce zero-pixel iOS tolerance
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.record_screenshots) }}
@@ -112,6 +112,7 @@ jobs:
             apps/ios/DerivedData/ActualWalkthrough/
             apps/ios/DerivedData/SystemNotificationAttachments/
             apps/ios/DerivedData/SystemNotification.xcresult/
+            tests/e2e/004-ios-respond-to-dose/screenshots/web/
             playwright-report/
           if-no-files-found: error
           retention-days: 7
