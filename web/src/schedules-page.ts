@@ -83,7 +83,7 @@ function pageTemplate(
             <p>Publish and manage one plan for someone you care about.</p>
           </div>
           <button class="primary-button" type="button" data-action="add">
-            <span aria-hidden="true">＋</span>
+            <span aria-hidden="true">+</span>
             Add dose
           </button>
         </header>
