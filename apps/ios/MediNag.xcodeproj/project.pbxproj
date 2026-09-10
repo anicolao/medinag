@@ -9,12 +9,16 @@
 /* Begin PBXBuildFile section */
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
 		24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */; };
+		26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */; };
+		2D40B6B0CFADA25D6B18A835 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F844B57121A61C2FD25698E6 /* GoogleSignIn */; };
 		372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD40690383616CF75360A1A /* MediNagApp.swift */; };
+		3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
 		470882BFE2E693C7EF0A374F /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3C74746627D6BF26ECF6DCC1 /* MediNagCore */; };
 		726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A35C5F490D783A4224F82302 /* FirebaseCore */; };
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
+		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
 		CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */; };
 		E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */; };
@@ -48,6 +52,7 @@
 		308089DAB1637436AB191692 /* MediNag.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNag.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4C2E252649E3AF386F9CB68E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
 		8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
@@ -56,6 +61,7 @@
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
 		AA81EF092FE9DCE888E99E27 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2273A57654E11B25A99C6EB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseSubjectRepository.swift; sourceTree = "<group>"; };
 		D395DDA4C65C718B3E6634C0 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespondToDoseUITests.swift; sourceTree = "<group>"; };
@@ -74,6 +80,8 @@
 				CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */,
 				726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */,
 				9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */,
+				2D40B6B0CFADA25D6B18A835 /* GoogleSignIn in Frameworks */,
+				26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,9 +141,11 @@
 			children = (
 				40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */,
 				E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */,
+				C2273A57654E11B25A99C6EB /* Assets.xcassets */,
 				D8EDA23C6B76FF5E6490770D /* ContentView.swift */,
 				8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */,
 				C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */,
+				701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */,
 				D84D3ED11E3629FD0FC1A856 /* Info.plist */,
 				8FD40690383616CF75360A1A /* MediNagApp.swift */,
 				A8187B68655A62CA3923A2B4 /* NotificationServices.swift */,
@@ -218,6 +228,7 @@
 				22C41DAF71681CB352152FA9 /* Sources */,
 				36474D323A6E63EF35F05149 /* Resources */,
 				2757605DCFD31479F22A43A0 /* Frameworks */,
+				397BCC5BF22F09F37B385D5F /* Embed local Firebase configuration */,
 			);
 			buildRules = (
 			);
@@ -229,6 +240,8 @@
 				7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */,
 				A35C5F490D783A4224F82302 /* FirebaseCore */,
 				A88928DEDC4C5380C0772599 /* FirebaseFirestore */,
+				F844B57121A61C2FD25698E6 /* GoogleSignIn */,
+				602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */,
 			);
 			productName = MediNag;
 			productReference = 308089DAB1637436AB191692 /* MediNag.app */;
@@ -266,6 +279,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				0E50310B032DE1BE12BC9D36 /* XCLocalSwiftPackageReference "Core" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -285,11 +299,34 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */,
 				BED3126F79F402470EC3C662 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		397BCC5BF22F09F37B385D5F /* Embed local Firebase configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed local Firebase configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		22C41DAF71681CB352152FA9 /* Sources */ = {
@@ -301,6 +338,7 @@
 				E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */,
 				828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */,
 				B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */,
+				3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */,
 				372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */,
 				EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */,
 			);
@@ -739,6 +777,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
+			requirement = {
+				kind = exactVersion;
+				version = 9.2.0;
+			};
+		};
 		688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -753,6 +799,11 @@
 		3C74746627D6BF26ECF6DCC1 /* MediNagCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
+		};
+		602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 		7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -772,6 +823,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		F844B57121A61C2FD25698E6 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

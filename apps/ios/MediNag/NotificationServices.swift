@@ -7,6 +7,20 @@ import MediNagCore
     private static let notificationAccelerationKey =
       "medinag.e2e.notification-acceleration-enabled"
 
+    static var googleIDToken: String? {
+      guard
+        let encoded = ProcessInfo.processInfo.arguments.e2eLaunchValue(
+          after: "-e2e-google-id-token-base64"
+        ),
+        let data = Data(base64Encoded: encoded),
+        let token = String(data: data, encoding: .utf8),
+        !token.isEmpty
+      else {
+        return nil
+      }
+      return token
+    }
+
     static var notificationAccelerationEnabled: Bool {
       let defaults = UserDefaults.standard
       if ProcessInfo.processInfo.arguments.contains(
@@ -19,6 +33,15 @@ import MediNagCore
     }
   }
 #endif
+
+private extension Array where Element == String {
+  func e2eLaunchValue(after argument: String) -> String? {
+    guard let index = firstIndex(of: argument) else { return nil }
+    let valueIndex = self.index(after: index)
+    guard indices.contains(valueIndex) else { return nil }
+    return self[valueIndex]
+  }
+}
 
 enum MediNagNotification {
   static let category = "MEDINAG_NAG_CATEGORY"
@@ -159,12 +182,15 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     #if E2E
       E2ENotificationDeliveryStore.shared.cancel(eventID: eventID)
     #endif
-    center.removePendingNotificationRequests(
-      withIdentifiers: [notificationIdentifier(eventID: eventID)]
-    )
-    center.removeDeliveredNotifications(
-      withIdentifiers: [notificationIdentifier(eventID: eventID)]
-    )
+    let prefix = notificationIdentifierPrefix(eventID: eventID)
+    let pendingIdentifiers = await center.pendingNotificationRequests()
+      .map(\.identifier)
+      .filter { $0.hasPrefix(prefix) }
+    let deliveredIdentifiers = await center.deliveredNotifications()
+      .map { $0.request.identifier }
+      .filter { $0.hasPrefix(prefix) }
+    center.removePendingNotificationRequests(withIdentifiers: pendingIdentifiers)
+    center.removeDeliveredNotifications(withIdentifiers: deliveredIdentifiers)
   }
 
   private func addNotification(
@@ -193,6 +219,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     // Critical Alerts require an Apple entitlement and are intentionally
     // deferred beyond this MVP. Use the standard local alert sound here.
     content.sound = .default
+    content.interruptionLevel = .timeSensitive
     content.categoryIdentifier = MediNagNotification.category
     content.userInfo = [
       MediNagNotification.eventID: event.id,
@@ -206,7 +233,10 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
       from: date
     )
     let request = UNNotificationRequest(
-      identifier: notificationIdentifier(eventID: event.id),
+      identifier: notificationIdentifier(
+        eventID: event.id,
+        reminderNumber: reminderNumber
+      ),
       content: content,
       trigger: UNCalendarNotificationTrigger(
         dateMatching: dateComponents,
@@ -217,12 +247,12 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
   }
 
   #if E2E
-    static func deliverAcceleratedNotification() {
+    static func deliverAcceleratedNotification() -> Bool {
       guard
         E2ERuntime.notificationAccelerationEnabled,
         let reminder = E2ENotificationDeliveryStore.shared.take()
       else {
-        return
+        return false
       }
 
       let content = UNMutableNotificationContent()
@@ -231,6 +261,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
         : "Medication reminder 2"
       content.body = "\(reminder.date.formatted(date: .omitted, time: .shortened)) • \(reminder.event.medicationName)"
       content.sound = .default
+      content.interruptionLevel = .timeSensitive
       content.categoryIdentifier = MediNagNotification.category
       content.userInfo = [
         MediNagNotification.eventID: reminder.event.id,
@@ -240,17 +271,44 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
       ]
       UNUserNotificationCenter.current().add(
         UNNotificationRequest(
-          identifier: "medinag.dose.\(reminder.event.id)",
+          identifier: notificationIdentifier(
+            eventID: reminder.event.id,
+            reminderNumber: reminder.reminderNumber
+          ),
           content: content,
-          trigger: nil
+          // XCTest backgrounds the app immediately after this synchronous
+          // submission, leaving presentation to SpringBoard.
+          trigger: UNTimeIntervalNotificationTrigger(
+            timeInterval: 0.5,
+            repeats: false
+          )
         ),
         withCompletionHandler: nil
       )
+      return true
     }
   #endif
 
-  private func notificationIdentifier(eventID: String) -> String {
+  private static func notificationIdentifier(
+    eventID: String,
+    reminderNumber: Int
+  ) -> String {
+    "\(notificationIdentifierPrefix(eventID: eventID)).\(reminderNumber)"
+  }
+
+  private static func notificationIdentifierPrefix(eventID: String) -> String {
     "medinag.dose.\(eventID)"
+  }
+
+  private func notificationIdentifier(
+    eventID: String,
+    reminderNumber: Int
+  ) -> String {
+    Self.notificationIdentifier(eventID: eventID, reminderNumber: reminderNumber)
+  }
+
+  private func notificationIdentifierPrefix(eventID: String) -> String {
+    Self.notificationIdentifierPrefix(eventID: eventID)
   }
 }
 

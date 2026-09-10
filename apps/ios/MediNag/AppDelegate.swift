@@ -1,3 +1,4 @@
+import GoogleSignIn
 import UIKit
 @preconcurrency import UserNotifications
 
@@ -16,6 +17,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     return true
   }
 
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    GIDSignIn.sharedInstance.handle(url)
+  }
+
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
@@ -27,6 +36,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
+    center.removeDeliveredNotifications(
+      withIdentifiers: [response.notification.request.identifier]
+    )
     let content = response.notification.request.content
     guard
       let eventID = content.userInfo[

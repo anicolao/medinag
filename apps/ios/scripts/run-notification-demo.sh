@@ -134,6 +134,7 @@ open -a Simulator --args -CurrentDeviceUDID "$device_id"
   -firebase-emulator-host 127.0.0.1 \
   -firebase-auth-emulator-port 9099 \
   -firebase-firestore-emulator-port 8080 \
+  -e2e-google-id-token-base64 "$MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64" \
   -AppleLanguages '(en)' \
   -AppleLocale en_CA \
   -UIPreferredContentSizeCategoryName UICTContentSizeCategoryM \

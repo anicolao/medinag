@@ -6,79 +6,124 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function ownsLegacyWorkspace(adminId) {
-      return signedIn() && request.auth.uid == adminId;
+    function ownsAdministrator(administratorId) {
+      return signedIn() && request.auth.uid == administratorId;
     }
 
-    function household(householdId) {
-      return get(/databases/$(database)/documents/households/$(householdId));
+    function administrator(administratorId) {
+      return get(/databases/$(database)/documents/administrators/$(administratorId));
     }
 
-    function membership(householdId) {
-      return get(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
-    }
-
-    function ownsHousehold(householdId) {
+    function publishedAdministrator(administratorId) {
       return signedIn()
-        && household(householdId).data.advisorUid == request.auth.uid;
+        && administrator(administratorId).data.published == true;
     }
 
-    function isMember(householdId) {
+    function followsAdministrator(administratorId) {
       return signedIn()
-        && exists(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+        && administrator(administratorId).data.patientUid == request.auth.uid;
     }
 
-    function hasRole(householdId, role) {
-      return isMember(householdId)
-        && membership(householdId).data.role == role;
-    }
-
-    function isAdvisor(householdId) {
-      return ownsHousehold(householdId) || hasRole(householdId, 'advisor');
-    }
-
-    function validHousehold() {
-      return request.resource.data.keys().hasOnly([
-          'advisorUid',
-          'name',
-          'subjectName',
-          'migrationVersion',
-          'createdAt',
-          'updatedAt'
-        ])
-        && request.resource.data.advisorUid == request.auth.uid
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 100
-        && request.resource.data.subjectName is string
-        && request.resource.data.subjectName.size() > 0
-        && request.resource.data.subjectName.size() <= 100
-        && request.resource.data.migrationVersion in [0, 1]
-        && request.resource.data.createdAt is timestamp
-        && request.resource.data.updatedAt is timestamp;
-    }
-
-    function validMember(memberId) {
-      return request.resource.data.keys().hasOnly([
+    function validAdministrator(administratorId) {
+      return request.resource.data.keys().hasAll([
           'uid',
-          'role',
           'displayName',
           'email',
+          'planName',
+          'planCode',
+          'published',
+          'patientUid',
+          'patientDisplayName',
+          'snoozeIntervalMinutes',
+          'escalationDeadlineMinutes',
+          'maxReminders',
+          'timeZone',
+          'smsNumber',
           'createdAt',
           'updatedAt'
         ])
-        && request.resource.data.uid == memberId
-        && request.resource.data.role in ['advisor', 'subject']
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'email',
+          'planName',
+          'planCode',
+          'published',
+          'patientUid',
+          'patientDisplayName',
+          'snoozeIntervalMinutes',
+          'escalationDeadlineMinutes',
+          'maxReminders',
+          'timeZone',
+          'smsNumber',
+          'publishedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == administratorId
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 100
         && request.resource.data.email is string
         && request.resource.data.email.size() <= 320
+        && request.resource.data.planName is string
+        && request.resource.data.planName.size() > 0
+        && request.resource.data.planName.size() <= 100
+        && request.resource.data.planCode is string
+        && request.resource.data.planCode.matches('^[A-Z0-9]{4}-[A-Z0-9]{4}$')
+        && request.resource.data.published is bool
+        && (request.resource.data.patientUid == null
+          || request.resource.data.patientUid is string)
+        && request.resource.data.patientDisplayName is string
+        && request.resource.data.patientDisplayName.size() <= 100
+        && request.resource.data.snoozeIntervalMinutes is int
+        && request.resource.data.snoozeIntervalMinutes >= 1
+        && request.resource.data.snoozeIntervalMinutes <= 60
+        && request.resource.data.escalationDeadlineMinutes is int
+        && request.resource.data.escalationDeadlineMinutes >= 5
+        && request.resource.data.escalationDeadlineMinutes <= 240
+        && request.resource.data.maxReminders is int
+        && request.resource.data.maxReminders >= 1
+        && request.resource.data.maxReminders <= 12
+        && request.resource.data.timeZone is string
+        && request.resource.data.timeZone.size() > 0
+        && request.resource.data.timeZone.size() <= 100
+        && request.resource.data.smsNumber is string
+        && request.resource.data.smsNumber.size() <= 20
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
 
-    function validSchedule() {
+    function validPatient(patientId) {
+      return request.resource.data.keys().hasAll([
+          'uid',
+          'displayName',
+          'email',
+          'followingAdministratorUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'email',
+          'followingAdministratorUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == patientId
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
+        && (request.resource.data.followingAdministratorUid == null
+          || request.resource.data.followingAdministratorUid is string)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validDose() {
       return request.resource.data.keys().hasOnly([
           'medicationName',
           'scheduledTime',
@@ -130,19 +175,15 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
     }
 
-    function subjectChangedOnlyResponseFields() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'status',
-        'snoozeCount',
-        'lastSnoozedAt',
-        'completedAt',
-        'updatedAt'
-      ]);
-    }
-
-    function validSubjectResponse() {
+    function validPatientResponse() {
       return resource.data.status in ['pending', 'snoozed']
-        && subjectChangedOnlyResponseFields()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'snoozeCount',
+          'lastSnoozedAt',
+          'completedAt',
+          'updatedAt'
+        ])
         && validMedicationEvent()
         && (
           (request.resource.data.status == 'snoozed'
@@ -157,61 +198,98 @@ service cloud.firestore {
         );
     }
 
-    // Temporary compatibility path. Linking preserves the anonymous UID, so
-    // Lori can read her existing schedules and migrate them to her household.
-    match /admins/{adminId}/schedules/{scheduleId} {
-      allow read: if ownsLegacyWorkspace(adminId);
-      allow create: if ownsLegacyWorkspace(adminId) && validSchedule();
-      allow update: if ownsLegacyWorkspace(adminId)
-        && validSchedule()
-        && request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if false;
+    function validPatientClaim(administratorId) {
+      return signedIn()
+        && resource.data.published == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'patientUid',
+          'patientDisplayName',
+          'updatedAt'
+        ])
+        && validAdministrator(administratorId)
+        && (
+          (resource.data.patientUid == null
+            && request.resource.data.patientUid == request.auth.uid
+            && request.resource.data.patientDisplayName is string
+            && request.resource.data.patientDisplayName.size() > 0)
+          ||
+          (resource.data.patientUid == request.auth.uid
+            && request.resource.data.patientUid == null
+            && request.resource.data.patientDisplayName == '')
+        );
     }
 
-    match /households/{householdId} {
-      allow create: if signedIn()
-        && householdId == request.auth.uid
-        && validHousehold();
-      // A user must be able to observe that their own household does not exist
-      // before bootstrapping it. This reveals no other user's data because the
-      // household ID must match the authenticated UID.
-      allow read: if (signedIn() && householdId == request.auth.uid)
-        || ownsHousehold(householdId)
-        || isMember(householdId);
-      allow update: if isAdvisor(householdId)
-        && validHousehold()
-        && request.resource.data.advisorUid == resource.data.advisorUid
-        && request.resource.data.migrationVersion >= resource.data.migrationVersion
-        && request.resource.data.createdAt == resource.data.createdAt;
+    match /administrators/{administratorId} {
+      allow create: if ownsAdministrator(administratorId)
+        && validAdministrator(administratorId);
+      allow read: if ownsAdministrator(administratorId)
+        || (signedIn() && resource.data.published == true)
+        || (signedIn() && resource.data.patientUid == request.auth.uid);
+      allow update: if (ownsAdministrator(administratorId)
+          && validAdministrator(administratorId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.planCode == resource.data.planCode
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (
+            (request.resource.data.patientUid == resource.data.patientUid
+              && request.resource.data.patientDisplayName
+                == resource.data.patientDisplayName)
+            || (resource.data.patientUid != null
+              && request.resource.data.patientUid == null
+              && request.resource.data.patientDisplayName == '')
+          ))
+        || validPatientClaim(administratorId);
       allow delete: if false;
 
-      match /members/{memberId} {
-        allow read: if request.auth.uid == memberId || isAdvisor(householdId);
-        allow create: if isAdvisor(householdId) && validMember(memberId);
-        allow update: if isAdvisor(householdId)
-          && validMember(memberId)
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if false;
-      }
-
-      match /schedules/{scheduleId} {
-        allow read: if isAdvisor(householdId) || isMember(householdId);
-        allow create: if isAdvisor(householdId) && validSchedule();
-        allow update: if isAdvisor(householdId)
-          && validSchedule()
+      match /doses/{doseId} {
+        allow read: if ownsAdministrator(administratorId)
+          || publishedAdministrator(administratorId);
+        allow create: if ownsAdministrator(administratorId) && validDose();
+        allow update: if ownsAdministrator(administratorId)
+          && validDose()
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if false;
       }
 
       match /medicationEvents/{eventId} {
-        allow read: if isAdvisor(householdId) || isMember(householdId);
-        allow create: if isAdvisor(householdId) && validMedicationEvent();
-        allow update: if (isAdvisor(householdId)
+        allow read: if ownsAdministrator(administratorId)
+          || followsAdministrator(administratorId);
+        allow create: if ownsAdministrator(administratorId)
+          && validMedicationEvent();
+        allow update: if (ownsAdministrator(administratorId)
             && validMedicationEvent()
             && request.resource.data.createdAt == resource.data.createdAt)
-          || (hasRole(householdId, 'subject') && validSubjectResponse());
+          || (followsAdministrator(administratorId) && validPatientResponse());
         allow delete: if false;
+      }
+    }
+
+    match /patients/{patientId} {
+      allow read: if signedIn() && request.auth.uid == patientId;
+      allow create: if signedIn()
+        && request.auth.uid == patientId
+        && validPatient(patientId);
+      allow update: if signedIn()
+        && request.auth.uid == patientId
+        && validPatient(patientId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    // Read-only compatibility for migrating previously captured administrator data.
+    match /admins/{adminId}/schedules/{scheduleId} {
+      allow read: if ownsAdministrator(adminId);
+      allow write: if false;
+    }
+
+    match /households/{householdId} {
+      allow read: if ownsAdministrator(householdId);
+      allow write: if false;
+
+      match /{document=**} {
+        allow read: if ownsAdministrator(householdId);
+        allow write: if false;
       }
     }
   }

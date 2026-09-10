@@ -1,3 +1,4 @@
+import GoogleSignInSwift
 import MediNagCore
 import SwiftUI
 
@@ -13,7 +14,10 @@ struct ContentView: View {
             .accessibilityIdentifier("app-starting")
 
         case .signedOut:
-          SubjectSignInView(viewModel: viewModel)
+          PatientSignInView(viewModel: viewModel)
+
+        case .choosingSchedule:
+          ScheduleSelectionView(viewModel: viewModel)
 
         case .ready:
           TodayView(viewModel: viewModel)
@@ -70,7 +74,7 @@ private struct ReminderAlertView: View {
       Text(
         reminder.reminderNumber == 1
           ? "It is time for this scheduled dose."
-          : "The 10-minute snooze has ended. Did you take this dose?"
+          : "The \(viewModel.snoozeMinutes)-minute snooze has ended. Did you take this dose?"
       )
       .font(.body)
       .multilineTextAlignment(.center)
@@ -106,70 +110,39 @@ private struct ReminderAlertView: View {
   }
 }
 
-private struct SubjectSignInView: View {
+private struct PatientSignInView: View {
   @ObservedObject var viewModel: AppViewModel
-  @State private var email = ""
-  @State private var password = ""
-  @State private var householdID = ""
 
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 28) {
           BrandHeader(
-            eyebrow: "STEVE'S MEDICATION PLAN",
+            eyebrow: "YOUR MEDICATION PLAN",
             title: "Sign in once",
-            detail: "MediNag will stay connected to Lori's household on this iPhone."
+            detail: "MediNag will remember you on this iPhone."
           )
 
           VStack(spacing: 16) {
-            LabeledField(title: "Email") {
-              TextField("steve@example.com", text: $email)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .keyboardType(.emailAddress)
-                .accessibilityIdentifier("subject-email")
+            GoogleSignInButton(
+              scheme: .light,
+              style: .wide,
+              state: viewModel.isWorking ? .disabled : .normal
+            ) {
+              Task { await viewModel.signInWithGoogle() }
             }
-            LabeledField(title: "Password") {
-              SecureField("Password", text: $password)
-                .textContentType(.password)
-                .accessibilityIdentifier("subject-password")
-            }
-            LabeledField(title: "Household ID") {
-              TextField("Provided by Lori", text: $householdID)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .accessibilityIdentifier("household-id")
+            .accessibilityIdentifier("patient-google-sign-in")
+
+            if viewModel.isWorking {
+              ProgressView("Signing in…")
+                .frame(maxWidth: .infinity, alignment: .center)
             }
           }
           .padding(22)
           .background(.white, in: RoundedRectangle(cornerRadius: 22))
           .shadow(color: .black.opacity(0.06), radius: 24, y: 12)
 
-          Button {
-            Task {
-              await viewModel.signIn(
-                email: email,
-                password: password,
-                householdID: householdID
-              )
-            }
-          } label: {
-            HStack {
-              if viewModel.isWorking {
-                ProgressView().tint(.white)
-              }
-              Text(viewModel.isWorking ? "Connecting…" : "Connect this iPhone")
-                .frame(maxWidth: .infinity)
-            }
-          }
-          .buttonStyle(PrimaryButtonStyle())
-          .disabled(viewModel.isWorking)
-          .accessibilityIdentifier("subject-sign-in")
-
-          Text(
-            "The household ID is a temporary MVP pairing mechanism. It does not grant access unless Lori has already added this Firebase account as the subject."
-          )
+          Text("After signing in, choose the administrator whose medication schedule is for you.")
           .font(.footnote)
           .foregroundStyle(MediNagColor.muted)
         }
@@ -181,8 +154,20 @@ private struct SubjectSignInView: View {
   }
 }
 
-private struct TodayView: View {
+private struct ScheduleSelectionView: View {
   @ObservedObject var viewModel: AppViewModel
+  @State private var query = ""
+  @State private var selectedPlanID: String?
+
+  private var matchingPlans: [PublishedPlan] {
+    let normalized = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !normalized.isEmpty else { return viewModel.availablePlans }
+    return viewModel.availablePlans.filter {
+      $0.administratorName.localizedCaseInsensitiveContains(normalized)
+        || $0.planName.localizedCaseInsensitiveContains(normalized)
+        || $0.planCode.localizedCaseInsensitiveContains(normalized)
+    }
+  }
 
   var body: some View {
     NavigationStack {
@@ -190,9 +175,9 @@ private struct TodayView: View {
         VStack(alignment: .leading, spacing: 22) {
           HStack(alignment: .top) {
             BrandHeader(
-              eyebrow: "STEVE'S DAILY PLAN",
-              title: "Today",
-              detail: "One clear place for every medication response."
+              eyebrow: "CHOOSE YOUR SCHEDULE",
+              title: "Who do you follow?",
+              detail: "Choose the administrator whose medication plan is for you."
             )
             Spacer()
             Button("Sign out") { viewModel.signOut() }
@@ -200,12 +185,151 @@ private struct TodayView: View {
               .accessibilityIdentifier("sign-out")
           }
 
+          HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+              .foregroundStyle(MediNagColor.muted)
+            TextField("Search name or schedule code", text: $query)
+              .textInputAutocapitalization(.never)
+              .autocorrectionDisabled()
+              .accessibilityIdentifier("schedule-search")
+          }
+          .padding(15)
+          .background(.white, in: RoundedRectangle(cornerRadius: 15))
+
+          if matchingPlans.isEmpty {
+            VStack(spacing: 12) {
+              Image(systemName: "person.crop.circle.badge.questionmark")
+                .font(.system(size: 38))
+                .foregroundStyle(MediNagColor.teal)
+              Text("No available schedules found").font(.headline)
+              Text("Check the administrator's name or schedule code and try again.")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(MediNagColor.muted)
+            }
+            .padding(28)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 20))
+            .accessibilityIdentifier("no-schedules-found")
+          } else {
+            VStack(spacing: 12) {
+              ForEach(matchingPlans) { plan in
+                Button {
+                  selectedPlanID = plan.id
+                } label: {
+                  HStack(spacing: 14) {
+                    Text(plan.administratorName.prefix(2).uppercased())
+                      .font(.caption.bold())
+                      .frame(width: 44, height: 44)
+                      .foregroundStyle(MediNagColor.ink)
+                      .background(MediNagColor.teal.opacity(0.12), in: Circle())
+                    VStack(alignment: .leading, spacing: 4) {
+                      Text(plan.administratorName).font(.headline)
+                      Text(plan.nextDoseSummary)
+                        .font(.caption)
+                        .foregroundStyle(MediNagColor.muted)
+                      Text(plan.planCode)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(MediNagColor.muted)
+                    }
+                    Spacer()
+                    if selectedPlanID == plan.id {
+                      Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(MediNagColor.teal)
+                    }
+                  }
+                  .padding(17)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                  .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                  .overlay {
+                    RoundedRectangle(cornerRadius: 18)
+                      .stroke(
+                        selectedPlanID == plan.id
+                          ? MediNagColor.teal
+                          : MediNagColor.teal.opacity(0.12),
+                        lineWidth: selectedPlanID == plan.id ? 2 : 1
+                      )
+                  }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("schedule-option-\(plan.id)")
+              }
+            }
+          }
+
+          Button("Follow this schedule") {
+            guard let plan = viewModel.availablePlans.first(where: { $0.id == selectedPlanID }) else {
+              return
+            }
+            Task { await viewModel.follow(plan) }
+          }
+          .buttonStyle(PrimaryButtonStyle())
+          .disabled(selectedPlanID == nil || viewModel.isWorking)
+          .accessibilityIdentifier("follow-schedule")
+
+          if !viewModel.actionNotice.isEmpty {
+            Text(viewModel.actionNotice)
+              .font(.footnote)
+              .foregroundStyle(MediNagColor.warning)
+              .accessibilityIdentifier("selection-notice")
+          }
+        }
+        .padding(22)
+      }
+      .background(MediNagColor.background)
+      .navigationBarHidden(true)
+    }
+    .accessibilityIdentifier("schedule-selection-screen")
+  }
+}
+
+private extension PublishedPlan {
+  var nextDoseSummary: String {
+    guard !nextDoseTime.isEmpty else { return nextDoseName }
+    let pieces = nextDoseTime.split(separator: ":").compactMap { Int($0) }
+    guard pieces.count == 2 else { return "\(nextDoseName) • \(nextDoseTime)" }
+    let hour = pieces[0]
+    let suffix = hour >= 12 ? "PM" : "AM"
+    return "\(nextDoseName) • \(hour % 12 == 0 ? 12 : hour % 12):\(String(format: "%02d", pieces[1])) \(suffix)"
+  }
+}
+
+private struct TodayView: View {
+  @ObservedObject var viewModel: AppViewModel
+  @State private var confirmingScheduleChange = false
+
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 22) {
+          HStack(alignment: .top) {
+            BrandHeader(
+              eyebrow: "\(viewModel.currentPlan?.administratorName.uppercased() ?? "YOUR")'S SCHEDULE",
+              title: "Today",
+              detail: "One clear place for every medication response."
+            )
+            Spacer()
+            VStack(alignment: .trailing, spacing: 12) {
+              Button("Change") { confirmingScheduleChange = true }
+                .accessibilityIdentifier("change-schedule")
+              Button("Sign out") { viewModel.signOut() }
+                .accessibilityIdentifier("sign-out")
+            }
+            .font(.caption.weight(.semibold))
+          }
+
           NotificationReadinessCard(viewModel: viewModel)
 
           if let next = viewModel.nextEvent {
-            NextDoseCard(event: next)
+            NextDoseCard(
+              event: next,
+              administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator"
+            )
           } else if let schedule = viewModel.schedules.first {
-            ScheduleWaitingCard(schedule: schedule)
+            ScheduleWaitingCard(
+              schedule: schedule,
+              administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator"
+            )
           } else {
             EmptyPlanCard()
           }
@@ -237,6 +361,18 @@ private struct TodayView: View {
       .navigationBarHidden(true)
     }
     .accessibilityIdentifier("today-screen")
+    .confirmationDialog(
+      "Change medication schedule?",
+      isPresented: $confirmingScheduleChange,
+      titleVisibility: .visible
+    ) {
+      Button("Stop following and choose another", role: .destructive) {
+        Task { await viewModel.changeSchedule() }
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("Future reminders from this schedule will be cancelled.")
+    }
   }
 }
 
@@ -263,6 +399,11 @@ private struct NotificationReadinessCard: View {
         )
         .font(.headline)
         .accessibilityIdentifier("notification-readiness")
+        #if E2E
+          .onTapGesture {
+            viewModel.advanceReminderClock()
+          }
+        #endif
         Text(
           viewModel.notificationReadiness == .ready
             ? "This iPhone can present scheduled dose alerts."
@@ -288,6 +429,7 @@ private struct NotificationReadinessCard: View {
 
 private struct NextDoseCard: View {
   let event: MedicationEvent
+  let administratorName: String
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -311,6 +453,10 @@ private struct NextDoseCard: View {
         .font(.title2.bold())
         .foregroundStyle(MediNagColor.ink)
         .accessibilityIdentifier("next-dose-name")
+
+      Text("\(administratorName) set this schedule.")
+        .font(.caption)
+        .foregroundStyle(MediNagColor.muted)
 
       if event.snoozeCount > 0 {
         Text("Reminded \(event.snoozeCount) time\(event.snoozeCount == 1 ? "" : "s")")
@@ -342,6 +488,7 @@ private struct NextDoseCard: View {
 
 private struct ScheduleWaitingCard: View {
   let schedule: MedicationSchedule
+  let administratorName: String
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -353,7 +500,7 @@ private struct ScheduleWaitingCard: View {
         .font(.largeTitle.bold())
       Text(schedule.medicationName)
         .font(.headline)
-      Text("Lori's schedule is synced. Today's dose event will appear here when it is generated.")
+      Text("\(administratorName)'s schedule is synced. Today's dose event will appear here when it is generated.")
         .font(.subheadline)
         .foregroundStyle(MediNagColor.muted)
     }
@@ -418,7 +565,7 @@ private struct EmptyPlanCard: View {
         .foregroundStyle(MediNagColor.teal)
       Text("No doses scheduled")
         .font(.title3.bold())
-      Text("Lori's active medication plan will appear here automatically.")
+      Text("Active doses from the schedule you follow will appear here automatically.")
         .font(.subheadline)
         .foregroundStyle(MediNagColor.muted)
         .multilineTextAlignment(.center)

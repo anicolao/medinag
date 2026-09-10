@@ -24,22 +24,26 @@ public protocol NotificationScheduling: Sendable {
 
 public actor DoseCoordinator {
   public static let defaultSnoozeInterval: TimeInterval = 10 * 60
+  public static let defaultMaximumReminderCount = 3
 
   private let clock: any Clock
   private let eventStore: any MedicationEventStore
   private let notifications: any NotificationScheduling
   private let snoozeInterval: TimeInterval
+  private let maximumReminderCount: Int
 
   public init(
     clock: any Clock,
     eventStore: any MedicationEventStore,
     notifications: any NotificationScheduling,
-    snoozeInterval: TimeInterval = DoseCoordinator.defaultSnoozeInterval
+    snoozeInterval: TimeInterval = DoseCoordinator.defaultSnoozeInterval,
+    maximumReminderCount: Int = DoseCoordinator.defaultMaximumReminderCount
   ) {
     self.clock = clock
     self.eventStore = eventStore
     self.notifications = notifications
     self.snoozeInterval = snoozeInterval
+    self.maximumReminderCount = max(1, maximumReminderCount)
   }
 
   @discardableResult
@@ -50,7 +54,16 @@ public actor DoseCoordinator {
     guard authorized else { return false }
 
     for event in events where event.status != .completed {
-      try await notifications.schedule(event: event)
+      if event.status == .snoozed {
+        guard event.snoozeCount < maximumReminderCount else { continue }
+        let snoozedAt = event.lastSnoozedAt ?? event.scheduledTime
+        try await notifications.scheduleRepeat(
+          for: event,
+          at: snoozedAt.addingTimeInterval(snoozeInterval)
+        )
+      } else {
+        try await notifications.schedule(event: event)
+      }
     }
     return true
   }
@@ -66,10 +79,12 @@ public actor DoseCoordinator {
         eventID: event.id,
         at: clock.now
       )
-      try await notifications.scheduleRepeat(
-        for: updated,
-        at: clock.now.addingTimeInterval(snoozeInterval)
-      )
+      if updated.snoozeCount < maximumReminderCount {
+        try await notifications.scheduleRepeat(
+          for: updated,
+          at: clock.now.addingTimeInterval(snoozeInterval)
+        )
+      }
       return updated
 
     case .yesIDid:

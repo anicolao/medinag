@@ -27,12 +27,11 @@ echo
 echo "Connected MediNag E2E environment is running."
 echo "Dashboard: $dashboard_url"
 echo "Firebase Emulator UI: http://127.0.0.1:4000"
-echo "iOS subject email: $MEDINAG_E2E_SUBJECT_EMAIL"
-echo "iOS subject password: $MEDINAG_E2E_SUBJECT_PASSWORD"
-echo "Household ID: $MEDINAG_E2E_HOUSEHOLD_ID"
+echo "iOS Google patient: $MEDINAG_E2E_PATIENT_EMAIL"
 echo
-echo "Sign in on the Simulator, then add a schedule in the browser."
-echo "The schedule and its medication event will appear through the live Firestore listener."
+echo "In the browser, add a dose and publish Lori's schedule."
+echo "In the iPhone app, sign in with Google, choose Lori, and follow the schedule."
+echo "The dose and its medication event will appear through the live Firestore listener."
 echo "Press Control-C here to stop the isolated environment."
 
 wait "$vite_pid"

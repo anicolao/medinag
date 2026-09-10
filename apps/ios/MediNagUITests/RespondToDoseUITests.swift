@@ -15,27 +15,28 @@ final class RespondToDoseUITests: XCTestCase {
     app.launch()
 
     try tester.step(
-      "subject-sign-in",
-      description: "Steve signs in to the same Firebase household",
+      "patient-sign-in",
+      description: "Steve signs into MediNag with Google",
       verifications: [
-        .exists(app.textFields["subject-email"], "The real Firebase Auth form is visible"),
-        .exists(app.secureTextFields["subject-password"], "The password field is visible"),
-        .exists(app.textFields["household-id"], "The household pairing field is visible"),
+        .exists(app.buttons["patient-google-sign-in"], "Google is the only sign-in action"),
+        .notExists(app.textFields["household-id"], "No household identifier is requested"),
       ]
     )
 
-    app.textFields["subject-email"].tap()
-    app.textFields["subject-email"].typeText(environment.subjectEmail)
-    app.secureTextFields["subject-password"].tap()
-    app.secureTextFields["subject-password"].typeText(environment.subjectPassword)
-    app.textFields["household-id"].tap()
-    app.textFields["household-id"].typeText(environment.householdID)
-    app.keyboards.buttons["Return"].tap()
-    XCTAssertTrue(
-      app.buttons["subject-sign-in"].isHittable,
-      "The Connect button must be visible after entering the generated credentials"
+    app.buttons["patient-google-sign-in"].tap()
+
+    let planOption = app.buttons["schedule-option-\(environment.administratorID)"]
+    try tester.step(
+      "choose-schedule",
+      description: "Steve finds Lori's published schedule",
+      verifications: [
+        .exists(app.otherElements["schedule-selection-screen"], "The schedule chooser is visible"),
+        .labelContains(planOption, environment.administratorName, "Lori is discoverable by name"),
+        .labelContains(planOption, environment.medicationName, "The published dose summary identifies the plan"),
+      ]
     )
-    app.buttons["subject-sign-in"].tap()
+    planOption.tap()
+    app.buttons["follow-schedule"].tap()
 
     let eventStatus = app.staticTexts.matching(
       NSPredicate(
@@ -46,7 +47,7 @@ final class RespondToDoseUITests: XCTestCase {
     ).firstMatch
     try tester.step(
       "firestore-event-received",
-      description: "The iPhone receives Lori's schedule and event through Firestore",
+      description: "The iPhone follows Lori's schedule and receives its Firestore event",
       verifications: [
         .labelContains(
           app.staticTexts["next-dose-name"],
@@ -93,6 +94,7 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
+    app.staticTexts["notification-readiness"].tap()
     XCUIDevice.shared.press(.home)
     let firstNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
@@ -139,6 +141,7 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
+    app.staticTexts["notification-readiness"].tap()
     XCUIDevice.shared.press(.home)
     let repeatNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
@@ -198,6 +201,7 @@ final class RespondToDoseUITests: XCTestCase {
       "-firebase-emulator-host", "127.0.0.1",
       "-firebase-auth-emulator-port", "9099",
       "-firebase-firestore-emulator-port", "8080",
+      "-e2e-google-id-token-base64", environment.googleIDTokenBase64,
       "-AppleLanguages", "(en)",
       "-AppleLocale", "en_CA",
       "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryM",
@@ -224,17 +228,18 @@ final class RespondToDoseUITests: XCTestCase {
       description: "Lori opens a fresh dashboard connected to Firebase",
       verifications: [
         "The dashboard is connected to the isolated Firebase environment",
-        "No medication schedule has been preloaded",
+        "No dose or medication event has been preloaded",
       ],
       surface: "web"
     )
     tester.documentPriorStep(
       "schedule-written-to-firestore",
       index: 1,
-      description: "Lori saves the medication schedule through the dashboard",
+      description: "Lori saves and publishes the medication schedule through the dashboard",
       verifications: [
         "The saved medication label is rendered from the Firestore snapshot",
         "The dashboard confirms the production repository write",
+        "The plan is explicitly published before the iPhone can discover it",
       ],
       surface: "web"
     )
@@ -276,9 +281,9 @@ private struct ConnectedEnvironment {
   let apiKey: String
   let appID: String
   let messagingSenderID: String
-  let subjectEmail: String
-  let subjectPassword: String
-  let householdID: String
+  let googleIDTokenBase64: String
+  let administratorID: String
+  let administratorName: String
   let medicationName: String
   let scheduledDisplayTime: String
   let repeatDisplayTime: String
@@ -288,9 +293,11 @@ private struct ConnectedEnvironment {
     apiKey = try requiredConfiguration("MEDINAG_E2E_API_KEY")
     appID = try requiredConfiguration("MEDINAG_E2E_APP_ID")
     messagingSenderID = try requiredConfiguration("MEDINAG_E2E_MESSAGING_SENDER_ID")
-    subjectEmail = try requiredConfiguration("MEDINAG_E2E_SUBJECT_EMAIL")
-    subjectPassword = try requiredConfiguration("MEDINAG_E2E_SUBJECT_PASSWORD")
-    householdID = try requiredConfiguration("MEDINAG_E2E_HOUSEHOLD_ID")
+    googleIDTokenBase64 = try requiredConfiguration(
+      "MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64"
+    )
+    administratorID = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_ID")
+    administratorName = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_NAME")
     medicationName = try requiredConfiguration("MEDINAG_E2E_MEDICATION_NAME")
     scheduledDisplayTime = try requiredConfiguration("MEDINAG_E2E_SCHEDULED_DISPLAY_TIME")
     repeatDisplayTime = try requiredConfiguration("MEDINAG_E2E_REPEAT_DISPLAY_TIME")

@@ -159,13 +159,14 @@ final class TestStepHelper {
 
       - Backend: a fresh Firebase Authentication and Firestore emulator suite with security rules enabled
       - Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test
-      - Identity: advisor and subject credentials are generated for the run through Firebase Auth
+      - Identity: unique Google administrator and patient identities are generated for the run through Firebase Auth; no UID, credential, or token is fixed in test source
+      - Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
       - Clock: notification delivery is advanced on the app-background event; logical reminder times remain derived from the Firestore event
-      - Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, medium Dynamic Type
+      - Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
       - Status bar: fixed at 8:00 AM with a Simulator override
       - System UI: notification permission and both reminders are rendered by iOS SpringBoard
       - Lifecycle: the UI test terminates MediNag before it captures or taps either notification
-      - Snooze interval: 10 minutes from `DoseCoordinator.defaultSnoozeInterval`
+      - Snooze interval: 10 minutes from the administrator profile written through the dashboard
 
       \(steps.map(markdown).joined(separator: "\n\n"))
       """

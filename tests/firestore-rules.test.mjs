@@ -7,20 +7,40 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   Timestamp,
+  collection,
   doc,
   getDoc,
-  serverTimestamp,
+  getDocs,
+  query,
   setDoc,
-  updateDoc
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { readFile } from 'node:fs/promises';
 
 const projectId = 'demo-medinag';
-const householdId = 'lori-household';
-const now = Timestamp.fromDate(new Date('2026-08-02T12:00:00Z'));
+const now = Timestamp.fromDate(new Date('2026-09-09T12:00:00Z'));
 let environment;
 
-const schedule = {
+const administrator = {
+  uid: 'lori',
+  displayName: 'Lori',
+  email: 'lori@example.com',
+  planName: "Lori's medication schedule",
+  planCode: 'LORI-4821',
+  published: true,
+  patientUid: 'steve',
+  patientDisplayName: 'Steve',
+  snoozeIntervalMinutes: 10,
+  escalationDeadlineMinutes: 30,
+  maxReminders: 3,
+  timeZone: 'America/Toronto',
+  smsNumber: '+12267475188',
+  createdAt: now,
+  updatedAt: now
+};
+
+const dose = {
   medicationName: 'Morning meds',
   scheduledTime: '08:00',
   daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
@@ -29,7 +49,7 @@ const schedule = {
   updatedAt: now
 };
 
-const event = {
+const medicationEvent = {
   scheduleId: 'morning',
   medicationName: 'Morning meds',
   scheduledTime: now,
@@ -44,9 +64,7 @@ const event = {
 before(async () => {
   environment = await initializeTestEnvironment({
     projectId,
-    firestore: {
-      rules: await readFile('firestore.rules', 'utf8')
-    }
+    firestore: { rules: await readFile('firestore.rules', 'utf8') }
   });
 });
 
@@ -54,142 +72,154 @@ beforeEach(async () => {
   await environment.clearFirestore();
   await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
-    await setDoc(doc(database, 'households', householdId), {
-      advisorUid: 'lori',
-      name: "Lori's household",
-      subjectName: 'Steve',
-      migrationVersion: 1,
-      createdAt: now,
-      updatedAt: now
-    });
-    await setDoc(doc(database, 'households', householdId, 'members', 'lori'), {
-      uid: 'lori',
-      role: 'advisor',
-      displayName: 'Lori',
-      email: 'lori@example.com',
-      createdAt: now,
-      updatedAt: now
-    });
-    await setDoc(doc(database, 'households', householdId, 'members', 'steve'), {
+    await setDoc(doc(database, 'administrators', 'lori'), administrator);
+    await setDoc(doc(database, 'administrators', 'lori', 'doses', 'morning'), dose);
+    await setDoc(
+      doc(database, 'administrators', 'lori', 'medicationEvents', 'dose'),
+      medicationEvent
+    );
+    await setDoc(doc(database, 'patients', 'steve'), {
       uid: 'steve',
-      role: 'subject',
       displayName: 'Steve',
       email: 'steve@example.com',
+      followingAdministratorUid: 'lori',
       createdAt: now,
       updatedAt: now
     });
-    await setDoc(doc(database, 'households', householdId, 'schedules', 'morning'), schedule);
-    await setDoc(doc(database, 'households', householdId, 'medicationEvents', 'dose'), event);
   });
 });
 
-after(async () => {
-  await environment.cleanup();
-});
+after(async () => environment.cleanup());
 
-test('an anonymous owner can read only their legacy schedules', async () => {
-  const lori = environment.authenticatedContext('legacy-lori').firestore();
-  await assertSucceeds(
-    setDoc(doc(lori, 'admins', 'legacy-lori', 'schedules', 'morning'), schedule)
-  );
-  await assertSucceeds(
-    getDoc(doc(lori, 'admins', 'legacy-lori', 'schedules', 'morning'))
-  );
-  await assertFails(
-    getDoc(doc(lori, 'admins', 'someone-else', 'schedules', 'morning'))
-  );
-});
-
-test('a signed-in user can establish their own household and advisor membership', async () => {
+test('any signed-in person can create only their own administrator profile', async () => {
   const alex = environment.authenticatedContext('alex').firestore();
-  const alexHousehold = doc(alex, 'households', 'alex');
-  const missingHousehold = await assertSucceeds(getDoc(alexHousehold));
-  assert.equal(missingHousehold.exists(), false);
-  await assertFails(
-    getDoc(doc(alex, 'households', 'someone-elses-id'))
-  );
-  await assertSucceeds(
-    setDoc(alexHousehold, {
-      advisorUid: 'alex',
-      name: "Alex's household",
-      subjectName: 'Steve',
-      migrationVersion: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-  );
-  await assertSucceeds(
-    setDoc(doc(alex, 'households', 'alex', 'members', 'alex'), {
+  await assertSucceeds(setDoc(doc(alex, 'administrators', 'alex'), {
+    ...administrator,
+    uid: 'alex',
+    email: 'alex@example.com',
+    planCode: 'ALEX-1937',
+    published: false,
+    patientUid: null,
+    patientDisplayName: ''
+  }));
+  await assertFails(setDoc(doc(alex, 'administrators', 'someone-else'), {
+    ...administrator,
+    uid: 'someone-else',
+    planCode: 'ELSE-1937'
+  }));
+});
+
+test('signed-in patients can discover published plans but not drafts', async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'administrators', 'alex'), {
+      ...administrator,
       uid: 'alex',
-      role: 'advisor',
-      displayName: 'Alex',
-      email: 'alex@example.com',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-  );
-  await assertSucceeds(
-    updateDoc(alexHousehold, {
-      migrationVersion: 1,
-      updatedAt: serverTimestamp()
-    })
-  );
-  await assertFails(
-    setDoc(doc(alex, 'households', 'someone-elses-id'), {
-      advisorUid: 'alex',
-      name: "Alex's second household",
-      subjectName: 'Steve',
-      migrationVersion: 1,
-      createdAt: now,
-      updatedAt: now
-    })
-  );
+      planCode: 'ALEX-1937',
+      published: false,
+      patientUid: null,
+      patientDisplayName: ''
+    });
+  });
+  const patient = environment.authenticatedContext('visitor').firestore();
+  await assertFails(getDoc(doc(
+    environment.unauthenticatedContext().firestore(),
+    'administrators',
+    'lori'
+  )));
+  const published = await assertSucceeds(getDocs(query(
+    collection(patient, 'administrators'),
+    where('published', '==', true)
+  )));
+  assert.equal(published.docs.length, 1);
+  await assertFails(getDoc(doc(patient, 'administrators', 'alex')));
+  await assertSucceeds(getDoc(doc(patient, 'administrators', 'lori', 'doses', 'morning')));
+  await assertFails(updateDoc(
+    doc(patient, 'administrators', 'lori', 'doses', 'morning'),
+    { active: false, updatedAt: now }
+  ));
 });
 
-test('the advisor manages schedules while the subject has read-only access', async () => {
+test('an available plan can be claimed by one patient only', async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), 'administrators', 'lori'), {
+      patientUid: null,
+      patientDisplayName: ''
+    });
+  });
+  const alex = environment.authenticatedContext('alex').firestore();
+  await assertSucceeds(updateDoc(doc(alex, 'administrators', 'lori'), {
+    patientUid: 'alex',
+    patientDisplayName: 'Alex',
+    updatedAt: now
+  }));
+  const robin = environment.authenticatedContext('robin').firestore();
+  await assertFails(updateDoc(doc(robin, 'administrators', 'lori'), {
+    patientUid: 'robin',
+    patientDisplayName: 'Robin',
+    updatedAt: now
+  }));
+});
+
+test('the administrator can disconnect but cannot appoint a patient', async () => {
   const lori = environment.authenticatedContext('lori').firestore();
-  const steve = environment.authenticatedContext('steve').firestore();
-  const stranger = environment.authenticatedContext('stranger').firestore();
-  const path = ['households', householdId, 'schedules', 'morning'];
-
-  await assertSucceeds(updateDoc(doc(lori, ...path), { scheduledTime: '08:15', updatedAt: now }));
-  await assertSucceeds(getDoc(doc(steve, ...path)));
-  await assertFails(updateDoc(doc(steve, ...path), { active: false, updatedAt: now }));
-  await assertFails(getDoc(doc(stranger, ...path)));
+  await assertSucceeds(updateDoc(doc(lori, 'administrators', 'lori'), {
+    patientUid: null,
+    patientDisplayName: '',
+    updatedAt: now
+  }));
+  await assertFails(updateDoc(doc(lori, 'administrators', 'lori'), {
+    patientUid: 'alex',
+    patientDisplayName: 'Alex',
+    updatedAt: now
+  }));
 });
 
-test('the subject can snooze or complete a dose without changing its prescription', async () => {
+test('a patient owns one following record and cannot rewrite another patient', async () => {
+  const alex = environment.authenticatedContext('alex').firestore();
+  await assertSucceeds(setDoc(doc(alex, 'patients', 'alex'), {
+    uid: 'alex',
+    displayName: 'Alex',
+    email: 'alex@example.com',
+    followingAdministratorUid: null,
+    createdAt: now,
+    updatedAt: now
+  }));
+  await assertFails(updateDoc(doc(alex, 'patients', 'steve'), {
+    followingAdministratorUid: 'alex',
+    updatedAt: now
+  }));
+});
+
+test('only the linked patient can snooze or complete without changing the dose', async () => {
   const steve = environment.authenticatedContext('steve').firestore();
   const eventReference = doc(
     steve,
-    'households',
-    householdId,
+    'administrators',
+    'lori',
     'medicationEvents',
     'dose'
   );
-
-  await assertSucceeds(
-    updateDoc(eventReference, {
-      status: 'snoozed',
-      snoozeCount: 1,
-      lastSnoozedAt: now,
-      updatedAt: now
-    })
-  );
-  await assertSucceeds(
-    updateDoc(eventReference, {
-      status: 'completed',
-      completedAt: now,
-      updatedAt: now
-    })
-  );
-  await assertFails(
-    updateDoc(eventReference, {
-      medicationName: 'Something else',
-      updatedAt: now
-    })
-  );
-
-  const result = await assertSucceeds(getDoc(eventReference));
-  assert.equal(result.data().status, 'completed');
+  await assertSucceeds(updateDoc(eventReference, {
+    status: 'snoozed',
+    snoozeCount: 1,
+    lastSnoozedAt: now,
+    updatedAt: now
+  }));
+  await assertSucceeds(updateDoc(eventReference, {
+    status: 'completed',
+    completedAt: now,
+    updatedAt: now
+  }));
+  await assertFails(updateDoc(eventReference, {
+    medicationName: 'Something else',
+    updatedAt: now
+  }));
+  const stranger = environment.authenticatedContext('stranger').firestore();
+  await assertFails(getDoc(doc(
+    stranger,
+    'administrators',
+    'lori',
+    'medicationEvents',
+    'dose'
+  )));
 });

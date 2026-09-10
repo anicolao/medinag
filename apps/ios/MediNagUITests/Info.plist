@@ -26,12 +26,12 @@
     <string>$(MEDINAG_E2E_APP_ID)</string>
     <key>MEDINAG_E2E_MESSAGING_SENDER_ID</key>
     <string>$(MEDINAG_E2E_MESSAGING_SENDER_ID)</string>
-    <key>MEDINAG_E2E_SUBJECT_EMAIL</key>
-    <string>$(MEDINAG_E2E_SUBJECT_EMAIL)</string>
-    <key>MEDINAG_E2E_SUBJECT_PASSWORD</key>
-    <string>$(MEDINAG_E2E_SUBJECT_PASSWORD)</string>
-    <key>MEDINAG_E2E_HOUSEHOLD_ID</key>
-    <string>$(MEDINAG_E2E_HOUSEHOLD_ID)</string>
+    <key>MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64</key>
+    <string>$(MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64)</string>
+    <key>MEDINAG_E2E_ADMINISTRATOR_ID</key>
+    <string>$(MEDINAG_E2E_ADMINISTRATOR_ID)</string>
+    <key>MEDINAG_E2E_ADMINISTRATOR_NAME</key>
+    <string>$(MEDINAG_E2E_ADMINISTRATOR_NAME)</string>
     <key>MEDINAG_E2E_MEDICATION_NAME</key>
     <string>$(MEDINAG_E2E_MEDICATION_NAME)</string>
     <key>MEDINAG_E2E_SCHEDULED_DISPLAY_TIME</key>

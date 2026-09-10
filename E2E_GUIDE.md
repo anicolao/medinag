@@ -145,11 +145,11 @@ Scheduled-dose, snooze, escalation, and retry scenarios may use an injected test
 
 Every E2E story that touches application data must run against a newly started Firebase emulator suite.
 
-* Create advisor and subject accounts through the Authentication emulator. Do not encode UIDs or credentials in test source.
-* Establish the household and memberships with an authenticated Firebase client while Firestore security rules are enabled. Never use an Admin SDK or disabled-rules context for E2E setup.
+* Create administrator and patient Google identities through the Authentication emulator. Do not encode UIDs, credentials, or tokens in test source.
+* Do not pre-create a relationship. Publish the administrator's plan through the dashboard, then discover and follow it through the iPhone UI while Firestore security rules are enabled. Never use an Admin SDK or disabled-rules context for E2E setup.
 * Configure the dashboard with `VITE_` variables generated for that emulator run. Configure Apple clients with the same project ID and emulator endpoints.
 * Create schedules through Lori's visible dashboard. The resulting medication event must be written through the production repository and observed by iOS/watchOS snapshot listeners.
-* Verify Steve's response by observing the resulting Firestore update from Lori's dashboard. Do not mutate or assert against an in-memory copy.
+* Verify the patient's response by observing the resulting Firestore update from the administrator dashboard. Do not mutate or assert against an in-memory copy.
 * Emulator setup may generate credentials and write them to a permission-restricted temporary state file. This is infrastructure configuration, not story data; it must not pre-create schedules or dose events.
 
 Production Firebase remains the target for a separate, narrowly controlled smoke test. Normal E2E runs never access production data.
@@ -157,12 +157,12 @@ Production Firebase remains the target for a separate, narrowly controlled smoke
 ### Current runners
 
 Use `npm run e2e:local` for interactive cross-client testing. It starts a fresh
-Auth/Firestore emulator suite, creates run-specific advisor and subject
-identities, starts Lori's dashboard at
-`http://127.0.0.1:5174/#/schedules`, launches the iOS app, and prints Steve's
-credentials and household ID. A schedule entered in the browser must appear in
-the app through its Firestore snapshot listener while the environment remains
-running. Control-C tears down the isolated environment.
+Auth/Firestore emulator suite, creates run-specific Google administrator and
+patient identities, starts Lori's dashboard at
+`http://127.0.0.1:5174/#/schedules`, and launches the iOS app. Add and publish a
+schedule in the browser, then sign in, discover, and follow it on the iPhone. The
+schedule must appear in the app through its Firestore snapshot listener while the
+environment remains running. Control-C tears down the isolated environment.
 
 Use `npm run test:e2e:connected` for the automated dashboard stories and
 `npm run ios:e2e:connected` for the full dashboard-to-system-notification story.

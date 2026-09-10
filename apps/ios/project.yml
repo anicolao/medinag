@@ -17,6 +17,9 @@ packages:
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk.git
     exactVersion: 12.17.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS.git
+    exactVersion: 9.2.0
 
 targets:
   MediNag:
@@ -24,6 +27,8 @@ targets:
     platform: iOS
     sources:
       - path: MediNag
+        excludes:
+          - Resources/GoogleService-Info.plist
     configFiles:
       Debug: Config/Debug.xcconfig
       E2E: Config/E2E.xcconfig
@@ -43,6 +48,35 @@ targets:
         product: FirebaseCore
       - package: Firebase
         product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts:
+      - name: Embed local Firebase configuration
+        basedOnDependencyAnalysis: false
+        script: |
+          configuration="$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist"
+          if [ -f "$configuration" ]; then
+            destination="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+            mkdir -p "$destination"
+            cp "$configuration" "$destination/GoogleService-Info.plist"
+
+            reversed_client_id="$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' "$configuration")"
+            case "$reversed_client_id" in
+              *[!A-Za-z0-9.-]*|'')
+                echo "GoogleService-Info.plist contains an invalid reversed client ID." >&2
+                exit 1
+                ;;
+            esac
+            product_info="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+            /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' "$product_info" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' "$product_info"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id" "$product_info"
+          fi
 
   MediNagTests:
     type: bundle.unit-test

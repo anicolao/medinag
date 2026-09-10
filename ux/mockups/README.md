@@ -28,7 +28,7 @@ Output: `patient-ios-flow.png`
 
 Style references:
 
-- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/000-subject-sign-in.png`
+- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/000-patient-sign-in.png`
 - `tests/e2e/004-ios-respond-to-dose/screenshots/ios/001-firestore-event-received.png`
 - `tests/e2e/004-ios-respond-to-dose/screenshots/ios/005-first-reminder-response.png`
 

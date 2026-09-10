@@ -30,6 +30,13 @@ trap cleanup EXIT INT TERM
 
 "$xcrun_command" simctl boot "$MEDINAG_SIMULATOR_ID"
 "$xcrun_command" simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
+"$xcrun_command" simctl spawn "$MEDINAG_SIMULATOR_ID" defaults write \
+  com.apple.Accessibility ReduceMotionEnabled -bool true
+"$xcrun_command" simctl spawn "$MEDINAG_SIMULATOR_ID" defaults write \
+  com.apple.Accessibility ReduceTransparencyEnabled -bool true
+"$xcrun_command" simctl shutdown "$MEDINAG_SIMULATOR_ID"
+"$xcrun_command" simctl boot "$MEDINAG_SIMULATOR_ID"
+"$xcrun_command" simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" appearance light
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" increase_contrast enabled
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" content_size medium
@@ -42,8 +49,8 @@ trap cleanup EXIT INT TERM
 export MEDINAG_E2E_PROJECT_ID="demo-medinag"
 export MEDINAG_E2E_AUTH_HOST="127.0.0.1:9099"
 export MEDINAG_E2E_FIRESTORE_HOST="127.0.0.1:8080"
-export MEDINAG_E2E_ADVISOR_NAME="Lori"
-export MEDINAG_E2E_SUBJECT_NAME="Steve"
+export MEDINAG_E2E_ADMINISTRATOR_NAME="Lori"
+export MEDINAG_E2E_PATIENT_NAME="Steve"
 export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX.json)"
 export MEDINAG_E2E_MEDICATION_NAME="Morning Prescription Doses"
 export MEDINAG_E2E_SCHEDULED_TIME="08:00"

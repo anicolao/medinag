@@ -94,11 +94,11 @@ export class FirestoreScheduleRepository implements ScheduleRepository {
   constructor(
     private readonly database: Firestore,
     path: string[],
-    householdId?: string
+    medicationEventPath?: string[]
   ) {
     this.schedules = collection(database, path.join('/'));
-    this.medicationEvents = householdId
-      ? collection(database, 'households', householdId, 'medicationEvents')
+    this.medicationEvents = medicationEventPath
+      ? collection(database, medicationEventPath.join('/'))
       : undefined;
   }
 

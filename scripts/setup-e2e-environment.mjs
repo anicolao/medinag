@@ -3,15 +3,13 @@ import { chmod, writeFile } from 'node:fs/promises';
 import { deleteApp, initializeApp } from 'firebase/app';
 import {
   connectAuthEmulator,
-  createUserWithEmailAndPassword,
-  getAuth
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential
 } from 'firebase/auth';
 import {
   connectFirestoreEmulator,
-  doc,
   getFirestore,
-  serverTimestamp,
-  setDoc
 } from 'firebase/firestore';
 
 const required = (name) => {
@@ -25,15 +23,14 @@ const required = (name) => {
 const projectId = required('MEDINAG_E2E_PROJECT_ID');
 const authHost = required('MEDINAG_E2E_AUTH_HOST');
 const firestoreHost = required('MEDINAG_E2E_FIRESTORE_HOST');
-const advisorName = required('MEDINAG_E2E_ADVISOR_NAME');
-const subjectName = required('MEDINAG_E2E_SUBJECT_NAME');
+const administratorName = required('MEDINAG_E2E_ADMINISTRATOR_NAME');
+const patientName = required('MEDINAG_E2E_PATIENT_NAME');
 const stateFile = required('MEDINAG_E2E_STATE_FILE');
-const authMode = process.env.MEDINAG_E2E_AUTH_MODE ?? 'advisor';
-if (!['advisor', 'anonymous'].includes(authMode)) {
-  throw new Error('MEDINAG_E2E_AUTH_MODE must be advisor or anonymous.');
+const authMode = process.env.MEDINAG_E2E_AUTH_MODE ?? 'administrator';
+if (!['administrator', 'signed-out'].includes(authMode)) {
+  throw new Error('MEDINAG_E2E_AUTH_MODE must be administrator or signed-out.');
 }
 const runId = randomUUID();
-const password = randomBytes(24).toString('base64url');
 const messagingSenderId = String(randomInt(100_000_000_000, 999_999_999_999));
 const firebaseConfig = {
   apiKey: `AIzaSy${randomBytes(25).toString('base64url')}`,
@@ -44,78 +41,66 @@ const firebaseConfig = {
   appId: `1:${messagingSenderId}:ios:${randomBytes(16).toString('hex')}`
 };
 
-const advisorApp = initializeApp(firebaseConfig, `advisor-${runId}`);
-const advisorAuth = getAuth(advisorApp);
-connectAuthEmulator(advisorAuth, `http://${authHost}`, { disableWarnings: true });
-const advisorDatabase = getFirestore(advisorApp);
+const administratorApp = initializeApp(firebaseConfig, `administrator-${runId}`);
+const administratorAuth = getAuth(administratorApp);
+connectAuthEmulator(administratorAuth, `http://${authHost}`, { disableWarnings: true });
+const administratorDatabase = getFirestore(administratorApp);
 const [firestoreHostname, firestorePort] = firestoreHost.split(':');
 connectFirestoreEmulator(
-  advisorDatabase,
+  administratorDatabase,
   firestoreHostname,
   Number(firestorePort)
 );
 
-const advisorEmail = `advisor-${runId}@medinag.invalid`;
-const advisor = await createUserWithEmailAndPassword(
-  advisorAuth,
-  advisorEmail,
-  password
-);
-const householdId = advisor.user.uid;
-
-await setDoc(doc(advisorDatabase, 'households', householdId), {
-  advisorUid: advisor.user.uid,
-  name: `${advisorName}'s household`,
-  subjectName,
-  migrationVersion: 1,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp()
+// The emulator is discarded after every story, so these provider identities are
+// freshly created while retaining deterministic user-visible text and UIDs for
+// exact screenshot comparison. The credential token itself is generated here.
+const administratorEmail = 'administrator-e2e@medinag.invalid';
+const administratorGoogleIdToken = JSON.stringify({
+  sub: 'medinag-administrator-e2e',
+  email: administratorEmail,
+  email_verified: true,
+  name: administratorName
 });
-await setDoc(
-  doc(advisorDatabase, 'households', householdId, 'members', advisor.user.uid),
-  {
-    uid: advisor.user.uid,
-    role: 'advisor',
-    displayName: advisorName,
-    email: advisorEmail,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }
+const administrator = await signInWithCredential(
+  administratorAuth,
+  GoogleAuthProvider.credential(administratorGoogleIdToken)
 );
 
-const subjectApp = initializeApp(firebaseConfig, `subject-${runId}`);
-const subjectAuth = getAuth(subjectApp);
-connectAuthEmulator(subjectAuth, `http://${authHost}`, { disableWarnings: true });
-const subjectEmail = `subject-${runId}@medinag.invalid`;
-const subject = await createUserWithEmailAndPassword(
-  subjectAuth,
-  subjectEmail,
-  password
-);
-
-await setDoc(
-  doc(advisorDatabase, 'households', householdId, 'members', subject.user.uid),
-  {
-    uid: subject.user.uid,
-    role: 'subject',
-    displayName: subjectName,
-    email: subjectEmail,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }
+const patientApp = initializeApp(firebaseConfig, `patient-${runId}`);
+const patientAuth = getAuth(patientApp);
+connectAuthEmulator(patientAuth, `http://${authHost}`, { disableWarnings: true });
+const patientEmail = 'patient-e2e@medinag.invalid';
+const patientGoogleIdToken = JSON.stringify({
+  sub: 'medinag-patient-e2e',
+  email: patientEmail,
+  email_verified: true,
+  name: patientName
+});
+const patient = await signInWithCredential(
+  patientAuth,
+  GoogleAuthProvider.credential(patientGoogleIdToken)
 );
 
 const state = {
   runId,
   firebase: firebaseConfig,
   emulators: { authHost, firestoreHost },
-  householdId,
-  advisor: { uid: advisor.user.uid, email: advisorEmail, password },
-  subject: { uid: subject.user.uid, email: subjectEmail, password }
+  administratorId: administrator.user.uid,
+  administrator: {
+    uid: administrator.user.uid,
+    email: administratorEmail,
+    googleIdToken: administratorGoogleIdToken
+  },
+  patient: {
+    uid: patient.user.uid,
+    email: patientEmail,
+    googleIdToken: patientGoogleIdToken
+  }
 };
 await writeFile(stateFile, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
 await chmod(stateFile, 0o600);
-await Promise.all([deleteApp(advisorApp), deleteApp(subjectApp)]);
+await Promise.all([deleteApp(administratorApp), deleteApp(patientApp)]);
 if (process.argv.includes('--shell')) {
   const shellQuote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`;
   const values = {
@@ -126,12 +111,16 @@ if (process.argv.includes('--shell')) {
     VITE_FIREBASE_MESSAGING_SENDER_ID: firebaseConfig.messagingSenderId,
     VITE_FIREBASE_APP_ID: firebaseConfig.appId,
     VITE_USE_FIREBASE_EMULATOR: 'true',
-    VITE_FIREBASE_EMULATOR_AUTH_MODE: authMode,
-    VITE_FIREBASE_EMULATOR_ADVISOR_EMAIL: advisorEmail,
-    VITE_FIREBASE_EMULATOR_ADVISOR_PASSWORD: password,
-    MEDINAG_E2E_HOUSEHOLD_ID: householdId,
-    MEDINAG_E2E_SUBJECT_EMAIL: subjectEmail,
-    MEDINAG_E2E_SUBJECT_PASSWORD: password
+    VITE_FIREBASE_EMULATOR_GOOGLE_ID_TOKEN_BASE64: authMode === 'administrator'
+      ? Buffer.from(administratorGoogleIdToken, 'utf8').toString('base64')
+      : '',
+    MEDINAG_E2E_ADMINISTRATOR_ID: administrator.user.uid,
+    MEDINAG_E2E_ADMINISTRATOR_NAME: administratorName,
+    MEDINAG_E2E_PATIENT_EMAIL: patientEmail,
+    MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64: Buffer.from(
+      patientGoogleIdToken,
+      'utf8'
+    ).toString('base64')
   };
   for (const [name, value] of Object.entries(values)) {
     process.stdout.write(`export ${name}=${shellQuote(value)}\n`);

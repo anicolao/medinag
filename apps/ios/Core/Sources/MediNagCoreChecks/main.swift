@@ -8,9 +8,57 @@ struct MediNagCoreChecks {
   static func main() async throws {
     try await checkYesIWill()
     try await checkDefaultSnoozeInterval()
+    try await checkConfiguredSnoozeRestoresAfterRelaunch()
+    try await checkMaximumReminderCount()
     try await checkYesIDid()
     try await checkNotificationReadiness()
-    print("MediNagCoreChecks: 4 passed")
+    print("MediNagCoreChecks: 6 passed")
+  }
+
+  private static func checkConfiguredSnoozeRestoresAfterRelaunch() async throws {
+    var event = pendingEvent()
+    event.status = .snoozed
+    event.snoozeCount = 1
+    event.lastSnoozedAt = now
+    let notifications = RecordingNotifications()
+    let coordinator = DoseCoordinator(
+      clock: FixedClock(now: now),
+      eventStore: RecordingEventStore(event: event),
+      notifications: notifications,
+      snoozeInterval: 15 * 60
+    )
+
+    _ = try await coordinator.requestNotificationReadiness(for: [event])
+
+    try await expect(
+      await notifications.repeats == [
+        .init(eventID: event.id, date: now.addingTimeInterval(15 * 60))
+      ],
+      "A relaunched app must restore a snoozed notification using the administrator's interval"
+    )
+  }
+
+  private static func checkMaximumReminderCount() async throws {
+    var event = pendingEvent()
+    event.status = .snoozed
+    event.snoozeCount = 2
+    event.lastSnoozedAt = now
+    let notifications = RecordingNotifications()
+    let coordinator = DoseCoordinator(
+      clock: FixedClock(now: now),
+      eventStore: RecordingEventStore(event: event),
+      notifications: notifications,
+      snoozeInterval: 10 * 60,
+      maximumReminderCount: 3
+    )
+
+    let updated = try await coordinator.respond(.yesIWill, to: event)
+
+    try await expect(updated.snoozeCount == 3, "The final response must still be recorded")
+    try await expect(
+      await notifications.repeats.isEmpty,
+      "No notification may be scheduled beyond the administrator's reminder limit"
+    )
   }
 
   private static func checkDefaultSnoozeInterval() async throws {

@@ -1,5 +1,4 @@
 import {
-  FirebaseError,
   getApp,
   getApps,
   initializeApp,
@@ -9,48 +8,43 @@ import {
   GoogleAuthProvider,
   connectAuthEmulator,
   getAuth,
-  linkWithPopup,
-  signInAnonymously,
   signInWithCredential,
-  signInWithEmailAndPassword,
+  signInWithPopup,
   type Auth,
-  type AuthError,
   type User
 } from 'firebase/auth';
 import {
-  connectFirestoreEmulator,
   collection,
+  connectFirestoreEmulator,
   doc,
   getDoc,
   getDocs,
   getFirestore,
   serverTimestamp,
   setDoc,
-  updateDoc,
+  writeBatch,
   type DocumentData,
   type Firestore
 } from 'firebase/firestore';
-import type { AdvisorAccount } from './account-types';
+import type { AdministratorAccount } from './account-types';
 import {
-  BrowserScheduleRepository,
+  FirestoreAdministratorRepository,
+  type AdministratorRepository
+} from './administrator-repository';
+import {
   FirestoreScheduleRepository,
   type ScheduleRepository
 } from './schedule-repository';
 import {
-  BrowserTodayRepository,
   FirestoreTodayRepository,
   type TodayRepository
 } from './today-repository';
 
-interface LegacySchedule {
-  id: string;
-  data: DocumentData;
-}
-
 export interface ApplicationServices {
-  account: AdvisorAccount;
-  schedules: ScheduleRepository;
-  today: TodayRepository;
+  account: AdministratorAccount;
+  administrator?: AdministratorRepository;
+  schedules?: ScheduleRepository;
+  today?: TodayRepository;
 }
 
 const ACCOUNT_NOTICE_KEY = 'medinag:account-notice';
@@ -93,284 +87,186 @@ function createFirebase(): { app: FirebaseApp; auth: Auth; database: Firestore }
   return { app, auth, database };
 }
 
-function isGoogleUser(user: User): boolean {
-  return user.providerData.some(({ providerId }) => providerId === 'google.com');
+function planCode(user: User): string {
+  const prefix = (user.displayName || 'PLAN')
+    .replace(/[^a-z0-9]/gi, '')
+    .slice(0, 4)
+    .toUpperCase()
+    .padEnd(4, 'X');
+  let hash = 2_166_136_261;
+  for (const character of user.email || user.uid) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  const suffix = (hash >>> 0).toString(36).toUpperCase().padStart(4, '0').slice(-4);
+  return `${prefix}-${suffix}`;
 }
 
-async function readLegacySchedules(
-  database: Firestore,
-  userId: string
-): Promise<LegacySchedule[]> {
-  const snapshot = await getDocs(
-    collection(database, 'admins', userId, 'schedules')
-  );
-  return snapshot.docs.map((schedule) => ({
-    id: schedule.id,
-    data: schedule.data()
-  }));
-}
-
-function sanitizedSchedule(data: DocumentData): DocumentData {
+function cleanLegacyDose(data: DocumentData): DocumentData {
   return {
     medicationName: String(data.medicationName),
     scheduledTime: String(data.scheduledTime),
     daysOfWeek: [...(data.daysOfWeek as number[])],
     active: Boolean(data.active),
     createdAt: data.createdAt,
-    updatedAt: data.updatedAt
+    updatedAt: serverTimestamp()
   };
 }
 
-async function ensureHousehold(
+async function ensureAdministrator(
   database: Firestore,
-  user: User,
-  legacySchedules: LegacySchedule[]
+  user: User
 ): Promise<number> {
-  const householdId = user.uid;
-  const householdReference = doc(database, 'households', householdId);
-  const householdSnapshot = await getDoc(householdReference);
-  if (!householdSnapshot.exists()) {
-    await setDoc(householdReference, {
-      advisorUid: user.uid,
-      name: `${user.displayName?.split(' ')[0] || 'Lori'}'s household`,
-      subjectName: 'Steve',
-      migrationVersion: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-  }
-
-  const memberReference = doc(
-    database,
-    'households',
-    householdId,
-    'members',
-    user.uid
-  );
-  const memberSnapshot = await getDoc(memberReference);
-  if (!memberSnapshot.exists()) {
-    await setDoc(memberReference, {
+  const reference = doc(database, 'administrators', user.uid);
+  const snapshot = await getDoc(reference);
+  if (!snapshot.exists()) {
+    await setDoc(reference, {
       uid: user.uid,
-      role: 'advisor',
-      displayName: user.displayName || 'Lori',
+      displayName: user.displayName || 'Administrator',
       email: user.email || '',
+      planName: `${user.displayName || 'My'}'s medication schedule`,
+      planCode: planCode(user),
+      published: false,
+      patientUid: null,
+      patientDisplayName: '',
+      snoozeIntervalMinutes: 10,
+      escalationDeadlineMinutes: 30,
+      maxReminders: 3,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto',
+      smsNumber: '',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
   }
 
-  let migratedCount = 0;
-  for (const legacy of legacySchedules) {
-    const target = doc(
-      database,
-      'households',
-      householdId,
-      'schedules',
-      legacy.id
-    );
-    if (!(await getDoc(target)).exists()) {
-      await setDoc(target, sanitizedSchedule(legacy.data));
-      migratedCount += 1;
-    }
+  const [anonymousLegacy, householdLegacy] = await Promise.all([
+    getDocs(collection(database, 'admins', user.uid, 'schedules')),
+    getDocs(collection(database, 'households', user.uid, 'schedules'))
+  ]);
+  const existing = await getDocs(
+    collection(database, 'administrators', user.uid, 'doses')
+  );
+  const existingIds = new Set(existing.docs.map(({ id }) => id));
+  const legacyById = new Map(
+    [...anonymousLegacy.docs, ...householdLegacy.docs]
+      .filter(({ id }) => !existingIds.has(id))
+      .map((dose) => [dose.id, dose] as const)
+  );
+  const legacy = [...legacyById.values()];
+  if (legacy.length === 0) {
+    return 0;
   }
-
-  await updateDoc(householdReference, {
-    migrationVersion: 1,
-    updatedAt: serverTimestamp()
-  });
-  return migratedCount;
+  const batch = writeBatch(database);
+  for (const dose of legacy) {
+    batch.set(
+      doc(database, 'administrators', user.uid, 'doses', dose.id),
+      cleanLegacyDose(dose.data())
+    );
+  }
+  await batch.commit();
+  return legacy.length;
 }
 
-function browserServices(): ApplicationServices {
-  const schedules = new BrowserScheduleRepository();
-  const account: AdvisorAccount = {
-    kind: 'preview',
-    displayName: 'Lori',
+function signedOutAccount(auth: Auth, database: Firestore): AdministratorAccount {
+  return {
+    kind: 'signed-out',
+    userId: '',
+    displayName: '',
     email: '',
     notice: consumeNotice(),
-    async linkGoogle(): Promise<void> {
-      throw new Error('Google linking requires Firebase configuration.');
-    }
-  };
-  return {
-    account,
-    schedules,
-    today: new BrowserTodayRepository()
-  };
-}
-
-function linkedAccount(
-  user: User,
-  notice: string
-): AdvisorAccount {
-  return {
-    kind: 'google',
-    displayName: user.displayName || 'Lori',
-    email: user.email || '',
-    notice,
-    async linkGoogle(): Promise<void> {
+    async signInWithGoogle(): Promise<void> {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const user = (await signInWithPopup(auth, provider)).user;
+      const migrated = await ensureAdministrator(database, user);
+      reloadWithNotice(
+        migrated > 0
+          ? `${migrated} existing ${migrated === 1 ? 'dose was' : 'doses were'} preserved in your new plan.`
+          : 'Signed in with Google.'
+      );
+    },
+    async signOut(): Promise<void> {
       return undefined;
     }
   };
 }
 
-function migrationErrorAccount(
-  database: Firestore,
-  user: User,
-  legacySchedules: LegacySchedule[],
-  notice: string
-): AdvisorAccount {
+function googleAccount(auth: Auth, user: User, notice: string): AdministratorAccount {
   return {
-    kind: 'migration-error',
-    displayName: user.displayName || 'Lori',
+    kind: 'google',
+    userId: user.uid,
+    displayName: user.displayName || 'Administrator',
     email: user.email || '',
     notice,
-    async linkGoogle(): Promise<void> {
-      const count = await ensureHousehold(database, user, legacySchedules);
-      reloadWithNotice(
-        `Migration complete. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
-      );
+    async signInWithGoogle(): Promise<void> {
+      return undefined;
+    },
+    async signOut(): Promise<void> {
+      await auth.signOut();
+      window.location.hash = '';
+      window.location.reload();
     }
   };
 }
 
-function anonymousAccount(
-  auth: Auth,
-  database: Firestore,
-  user: User,
-  legacySchedules: LegacySchedule[],
-  notice: string
-): AdvisorAccount {
+function unavailableAccount(): AdministratorAccount {
   return {
-    kind: 'anonymous',
-    displayName: 'Lori',
+    kind: 'unavailable',
+    userId: '',
+    displayName: '',
     email: '',
-    notice,
-    async linkGoogle(): Promise<void> {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      let linkedUser: User;
-      try {
-        linkedUser = (await linkWithPopup(user, provider)).user;
-      } catch (error) {
-        const credential = GoogleAuthProvider.credentialFromError(error as AuthError);
-        if (
-          error instanceof FirebaseError
-          && error.code === 'auth/credential-already-in-use'
-          && credential
-        ) {
-          linkedUser = (await signInWithCredential(auth, credential)).user;
-        } else {
-          throw error;
-        }
-      }
-
-      try {
-        const count = await ensureHousehold(database, linkedUser, legacySchedules);
-        reloadWithNotice(
-          `Google account linked. ${count} existing ${count === 1 ? 'schedule was' : 'schedules were'} moved safely.`
-        );
-      } catch {
-        reloadWithNotice(
-          'Google account linked. Your existing schedules are safe, but migration needs another attempt.'
-        );
-      }
+    notice: '',
+    async signInWithGoogle(): Promise<void> {
+      throw new Error('Firebase configuration is required for Google Sign-In.');
+    },
+    async signOut(): Promise<void> {
+      return undefined;
     }
   };
+}
+
+async function emulatorGoogleUser(auth: Auth): Promise<User | null> {
+  if (import.meta.env.VITE_USE_FIREBASE_EMULATOR !== 'true') {
+    return null;
+  }
+  const encoded = import.meta.env.VITE_FIREBASE_EMULATOR_GOOGLE_ID_TOKEN_BASE64;
+  if (!encoded) {
+    return null;
+  }
+  const token = new TextDecoder().decode(
+    Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0))
+  );
+  return (await signInWithCredential(
+    auth,
+    GoogleAuthProvider.credential(token)
+  )).user;
 }
 
 export async function createApplicationServices(): Promise<ApplicationServices> {
   const firebase = createFirebase();
   if (!firebase) {
-    return browserServices();
+    return { account: unavailableAccount() };
   }
 
   await firebase.auth.authStateReady();
-  const usingEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
-  const emulatorAuthMode = import.meta.env.VITE_FIREBASE_EMULATOR_AUTH_MODE
-    ?? 'advisor';
   let user = firebase.auth.currentUser;
-  if (!user && usingEmulator && emulatorAuthMode === 'advisor') {
-    const email = import.meta.env.VITE_FIREBASE_EMULATOR_ADVISOR_EMAIL;
-    const password = import.meta.env.VITE_FIREBASE_EMULATOR_ADVISOR_PASSWORD;
-    if (!email || !password) {
-      throw new Error(
-        'The Firebase emulator advisor credentials were not provided.'
-      );
-    }
-    user = (await signInWithEmailAndPassword(firebase.auth, email, password)).user;
-  }
-  user ??= (await signInAnonymously(firebase.auth)).user;
-  const legacySchedules = await readLegacySchedules(firebase.database, user.uid);
-  const notice = consumeNotice();
-
-  if (usingEmulator && emulatorAuthMode === 'advisor') {
-    await ensureHousehold(firebase.database, user, legacySchedules);
-    return {
-      account: linkedAccount(user, notice),
-      schedules: new FirestoreScheduleRepository(
-        firebase.database,
-        ['households', user.uid, 'schedules'],
-        user.uid
-      ),
-      today: new FirestoreTodayRepository(firebase.database, user.uid)
-    };
+  user ??= await emulatorGoogleUser(firebase.auth);
+  if (!user) {
+    return { account: signedOutAccount(firebase.auth, firebase.database) };
   }
 
-  if (!isGoogleUser(user)) {
-    return {
-      account: anonymousAccount(
-        firebase.auth,
-        firebase.database,
-        user,
-        legacySchedules,
-        notice
-      ),
-      schedules: new FirestoreScheduleRepository(firebase.database, [
-        'admins',
-        user.uid,
-        'schedules'
-      ]),
-      today: new BrowserTodayRepository()
-    };
-  }
-
-  let migratedCount: number;
-  try {
-    migratedCount = await ensureHousehold(
-      firebase.database,
-      user,
-      legacySchedules
-    );
-  } catch {
-    return {
-      account: migrationErrorAccount(
-        firebase.database,
-        user,
-        legacySchedules,
-        notice || 'Google is linked, but the household migration needs another attempt.'
-      ),
-      schedules: new FirestoreScheduleRepository(firebase.database, [
-        'admins',
-        user.uid,
-        'schedules'
-      ]),
-      today: new BrowserTodayRepository()
-    };
-  }
-  const migrationNotice = migratedCount > 0
-    ? `${migratedCount} existing ${migratedCount === 1 ? 'schedule was' : 'schedules were'} moved safely.`
-    : notice;
+  const migrated = await ensureAdministrator(firebase.database, user);
+  const notice = migrated > 0
+    ? `${migrated} existing ${migrated === 1 ? 'dose was' : 'doses were'} preserved in your new plan.`
+    : consumeNotice();
   return {
-    account: linkedAccount(
-      user,
-      migrationNotice
+    account: googleAccount(firebase.auth, user, notice),
+    administrator: new FirestoreAdministratorRepository(firebase.database, user.uid),
+    schedules: new FirestoreScheduleRepository(
+      firebase.database,
+      ['administrators', user.uid, 'doses'],
+      ['administrators', user.uid, 'medicationEvents']
     ),
-    schedules: new FirestoreScheduleRepository(firebase.database, [
-      'households',
-      user.uid,
-      'schedules'
-    ], user.uid),
     today: new FirestoreTodayRepository(firebase.database, user.uid)
   };
 }

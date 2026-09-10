@@ -10,9 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_PROJECT_NUMBER?: string;
   readonly VITE_FIREBASE_CONFIG_VERSION?: string;
   readonly VITE_USE_FIREBASE_EMULATOR?: string;
-  readonly VITE_FIREBASE_EMULATOR_AUTH_MODE?: 'advisor' | 'anonymous';
-  readonly VITE_FIREBASE_EMULATOR_ADVISOR_EMAIL?: string;
-  readonly VITE_FIREBASE_EMULATOR_ADVISOR_PASSWORD?: string;
+  readonly VITE_FIREBASE_EMULATOR_GOOGLE_ID_TOKEN_BASE64?: string;
 }
 
 interface ImportMeta {

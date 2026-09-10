@@ -15,8 +15,8 @@ fi
 export MEDINAG_E2E_PROJECT_ID="demo-medinag"
 export MEDINAG_E2E_AUTH_HOST="127.0.0.1:9099"
 export MEDINAG_E2E_FIRESTORE_HOST="127.0.0.1:8080"
-export MEDINAG_E2E_ADVISOR_NAME="Lori"
-export MEDINAG_E2E_SUBJECT_NAME="Steve"
+export MEDINAG_E2E_ADMINISTRATOR_NAME="Lori"
+export MEDINAG_E2E_PATIENT_NAME="Steve"
 export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX.json)"
 
 exec npx firebase emulators:exec \

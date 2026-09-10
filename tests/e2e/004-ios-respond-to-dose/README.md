@@ -12,13 +12,14 @@
 
 - Backend: a fresh Firebase Authentication and Firestore emulator suite with security rules enabled
 - Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test
-- Identity: advisor and subject credentials are generated for the run through Firebase Auth
+- Identity: unique Google administrator and patient identities are generated for the run through Firebase Auth; no UID, credential, or token is fixed in test source
+- Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
 - Clock: notification delivery is advanced on the app-background event; logical reminder times remain derived from the Firestore event
-- Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, medium Dynamic Type
+- Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
 - Status bar: fixed at 8:00 AM with a Simulator override
 - System UI: notification permission and both reminders are rendered by iOS SpringBoard
 - Lifecycle: the UI test terminates MediNag before it captures or taps either notification
-- Snooze interval: 10 minutes from `DoseCoordinator.defaultSnoozeInterval`
+- Snooze interval: 10 minutes from the administrator profile written through the dashboard
 
 ## Lori opens a fresh dashboard connected to Firebase
 
@@ -27,16 +28,17 @@
 **Verifications:**
 
 - [x] The dashboard is connected to the isolated Firebase environment
-- [x] No medication schedule has been preloaded
+- [x] No dose or medication event has been preloaded
 
-## Lori saves the medication schedule through the dashboard
+## Lori saves and publishes the medication schedule through the dashboard
 
-![Lori saves the medication schedule through the dashboard](./screenshots/web/001-schedule-written-to-firestore.png)
+![Lori saves and publishes the medication schedule through the dashboard](./screenshots/web/001-schedule-written-to-firestore.png)
 
 **Verifications:**
 
 - [x] The saved medication label is rendered from the Firestore snapshot
 - [x] The dashboard confirms the production repository write
+- [x] The plan is explicitly published before the iPhone can discover it
 
 ## The schedule materializes the pending event Steve will receive
 
@@ -47,19 +49,28 @@
 - [x] The pending event arrives through the dashboard Firestore listener
 - [x] The event is waiting for Steve’s response
 
-## Steve signs in to the same Firebase household
+## Steve signs into MediNag with Google
 
-![Steve signs in to the same Firebase household](./screenshots/ios/000-subject-sign-in.png)
+![Steve signs into MediNag with Google](./screenshots/ios/000-patient-sign-in.png)
 
 **Verifications:**
 
-- [x] The real Firebase Auth form is visible
-- [x] The password field is visible
-- [x] The household pairing field is visible
+- [x] Google is the only sign-in action
+- [x] No household identifier is requested
 
-## The iPhone receives Lori's schedule and event through Firestore
+## Steve finds Lori's published schedule
 
-![The iPhone receives Lori's schedule and event through Firestore](./screenshots/ios/001-firestore-event-received.png)
+![Steve finds Lori's published schedule](./screenshots/ios/001-choose-schedule.png)
+
+**Verifications:**
+
+- [x] The schedule chooser is visible
+- [x] Lori is discoverable by name
+- [x] The published dose summary identifies the plan
+
+## The iPhone follows Lori's schedule and receives its Firestore event
+
+![The iPhone follows Lori's schedule and receives its Firestore event](./screenshots/ios/002-firestore-event-received.png)
 
 **Verifications:**
 
@@ -69,7 +80,7 @@
 
 ## iOS asks Steve to allow MediNag notifications
 
-![iOS asks Steve to allow MediNag notifications](./screenshots/ios/002-notification-permission.png)
+![iOS asks Steve to allow MediNag notifications](./screenshots/ios/003-notification-permission.png)
 
 **Verifications:**
 
@@ -78,7 +89,7 @@
 
 ## MediNag is ready and waits for the scheduled notification
 
-![MediNag is ready and waits for the scheduled notification](./screenshots/ios/003-waiting-for-first-reminder.png)
+![MediNag is ready and waits for the scheduled notification](./screenshots/ios/004-waiting-for-first-reminder.png)
 
 **Verifications:**
 
@@ -89,7 +100,7 @@
 
 ## With MediNag terminated, iOS retains the scheduled notification
 
-![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/004-first-system-notification.png)
+![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/005-first-system-notification.png)
 
 **Verifications:**
 
@@ -97,7 +108,7 @@
 
 ## Tapping the notification cold-launches the response screen
 
-![Tapping the notification cold-launches the response screen](./screenshots/ios/005-first-reminder-response.png)
+![Tapping the notification cold-launches the response screen](./screenshots/ios/006-first-reminder-response.png)
 
 **Verifications:**
 
@@ -110,7 +121,7 @@
 
 ## Yes, I will writes the snoozed response back to Firestore
 
-![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/006-dose-snoozed-in-firestore.png)
+![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/007-dose-snoozed-in-firestore.png)
 
 **Verifications:**
 
@@ -121,7 +132,7 @@
 
 ## With MediNag terminated, iOS retains the repeat notification
 
-![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/007-repeat-system-notification.png)
+![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/008-repeat-system-notification.png)
 
 **Verifications:**
 
@@ -129,7 +140,7 @@
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 
-![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/008-repeat-reminder-response.png)
+![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/009-repeat-reminder-response.png)
 
 **Verifications:**
 
@@ -142,7 +153,7 @@
 
 ## Yes, I did completes the real event and cancels further reminders
 
-![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/009-dose-completed-in-firestore.png)
+![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/010-dose-completed-in-firestore.png)
 
 **Verifications:**
 

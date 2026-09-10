@@ -1,7 +1,7 @@
 # MediNag UX Design: One Administrator, One Patient, One Plan
 
-Status: proposed for product review. This document defines the intended user
-experience; it does not authorize implementation yet.
+Status: approved; the administrator dashboard and iPhone MVP follow this design.
+Deferred product items are called out in the repository and iOS READMEs.
 
 ## Outcome
 
@@ -103,11 +103,11 @@ behavior in this document are authoritative where a rendered image is ambiguous.
 
 The boards were generated from these existing visual references:
 
-- `tests/e2e/002-manage-schedules/screenshots/002-schedule-created.png`
+- `tests/e2e/002-manage-schedules/screenshots/002-dose-created.png`
 - `tests/e2e/004-ios-respond-to-dose/screenshots/web/002-event-observed-on-dashboard.png`
-- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/000-subject-sign-in.png`
-- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/001-firestore-event-received.png`
-- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/005-first-reminder-response.png`
+- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/000-patient-sign-in.png`
+- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/002-firestore-event-received.png`
+- `tests/e2e/004-ios-respond-to-dose/screenshots/ios/006-first-reminder-response.png`
 
 ## Administrator web experience
 
