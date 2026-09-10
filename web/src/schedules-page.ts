@@ -5,9 +5,11 @@ import {
   type MedicationSchedule
 } from './schedule-types';
 import type { ScheduleRepository } from './schedule-repository';
-import type { AdvisorAccount } from './account-types';
+import type { AdministratorAccount } from './account-types';
+import type { AdministratorRepository } from './administrator-repository';
+import type { AdministratorProfile } from './administrator-types';
 import {
-  accountLinkBanner,
+  bindSignOut,
   connectionLabel,
   dashboardSidebar,
   escapeHtml
@@ -44,9 +46,9 @@ function scheduleCard(schedule: MedicationSchedule): string {
 
 function pageTemplate(
   schedules: MedicationSchedule[],
+  profile: AdministratorProfile,
   notice: string,
-  repositoryMode: ScheduleRepository['mode'],
-  account: AdvisorAccount
+  account: AdministratorAccount
 ): string {
   const activeCount = schedules.filter(({ active }) => active).length;
   const scheduleMarkup =
@@ -55,9 +57,9 @@ function pageTemplate(
       : `
         <div class="empty-schedules">
           <span class="empty-calendar" aria-hidden="true"></span>
-          <h3>No medication schedules yet</h3>
-          <p>Add Steve’s first dose time to begin the daily plan.</p>
-          <button class="primary-button" type="button" data-action="add-empty">Add first schedule</button>
+          <h3>No doses in this plan yet</h3>
+          <p>Add the first medication time before publishing this schedule.</p>
+          <button class="primary-button" type="button" data-action="add-empty">Add first dose</button>
         </div>
       `;
   const dayInputs = DAYS.map(
@@ -71,42 +73,56 @@ function pageTemplate(
 
   return `
     <div class="dashboard-shell">
-      ${dashboardSidebar(account, 'schedules')}
+      ${dashboardSidebar(account, 'schedule')}
 
       <main class="schedule-main">
-        ${accountLinkBanner(account)}
         <header class="schedule-header">
           <div>
-            <p class="eyebrow">Steve’s daily plan</p>
-            <h1>Medication schedules</h1>
-            <p>Set the dose times that drive reminders on Steve’s iPhone and Apple Watch.</p>
+            <p class="eyebrow">Medication management</p>
+            <h1>Your medication schedule</h1>
+            <p>Publish and manage one plan for someone you care about.</p>
           </div>
           <button class="primary-button" type="button" data-action="add">
-            <span aria-hidden="true">＋</span>
-            Add schedule
+            <span aria-hidden="true">+</span>
+            Add dose
           </button>
         </header>
 
+        <section class="publication-card" aria-label="Publication and sharing">
+          <div>
+            <span class="publication-status ${profile.published ? 'published' : 'draft'}">${profile.published ? 'Published' : 'Draft'}</span>
+            <h2>${escapeHtml(profile.planName)}</h2>
+            <p>${profile.published ? 'A patient can find this plan by name, code, or link.' : 'Add an active dose, review Settings, then publish this plan.'}</p>
+          </div>
+          <div class="plan-code-block">
+            <span>Schedule code</span>
+            <strong data-testid="schedule-code">${escapeHtml(profile.planCode)}</strong>
+          </div>
+          ${profile.published
+            ? `<button class="secondary-button" type="button" data-action="copy-link">Copy link</button>`
+            : `<button class="primary-button" type="button" data-action="publish"${activeCount === 0 ? ' disabled' : ''}>Publish schedule</button>`}
+        </section>
+
         <section class="schedule-summary" aria-label="Schedule summary">
+          <div><span>Active doses</span><strong>${activeCount}</strong></div>
+          <div><span>Total doses</span><strong>${schedules.length}</strong></div>
+          <p><span class="summary-dot" aria-hidden="true"></span>${connectionLabel()}</p>
+        </section>
+
+        <section class="patient-link-card" aria-label="Patient relationship">
           <div>
-            <span>Active schedules</span>
-            <strong>${activeCount}</strong>
+            <span>Patient</span>
+            <strong>${profile.patientUid ? escapeHtml(profile.patientDisplayName || 'Linked patient') : 'Waiting for a patient'}</strong>
+            <p>${profile.patientUid ? 'This patient receives the published plan.' : 'Share the code after publishing. The first patient to follow it becomes linked.'}</p>
           </div>
-          <div>
-            <span>Total schedules</span>
-            <strong>${schedules.length}</strong>
-          </div>
-          <p>
-            <span class="summary-dot" aria-hidden="true"></span>
-            ${connectionLabel(account, repositoryMode)}
-          </p>
+          ${profile.patientUid ? '<button class="text-button" type="button" data-action="disconnect-patient">Disconnect patient</button>' : ''}
         </section>
 
         <section class="schedule-section" aria-labelledby="schedule-list-title">
           <div class="section-heading">
             <div>
               <h2 id="schedule-list-title">Recurring doses</h2>
-              <p>Schedules repeat on the selected days until paused.</p>
+              <p>Doses repeat on the selected days until paused.</p>
             </div>
           </div>
           <div class="schedule-list" data-testid="schedule-list">
@@ -123,9 +139,9 @@ function pageTemplate(
         <div class="dialog-heading">
           <div>
             <p class="eyebrow">Medication timing</p>
-            <h2 id="schedule-dialog-title">Add schedule</h2>
+            <h2 id="schedule-dialog-title">Add dose</h2>
           </div>
-          <button class="dialog-close" type="button" data-action="close" aria-label="Close schedule form">×</button>
+          <button class="dialog-close" type="button" data-action="close" aria-label="Close dose form">×</button>
         </div>
 
         <label class="field">
@@ -147,7 +163,7 @@ function pageTemplate(
 
         <div class="dialog-actions">
           <button class="secondary-button" type="button" data-action="cancel">Cancel</button>
-          <button class="primary-button" type="submit">Save schedule</button>
+          <button class="primary-button" type="submit">Save dose</button>
         </div>
       </form>
     </dialog>
@@ -157,15 +173,19 @@ function pageTemplate(
 export function mountSchedulesPage(
   root: HTMLElement,
   repository: ScheduleRepository,
-  account: AdvisorAccount,
+  administrator: AdministratorRepository,
+  account: AdministratorAccount,
   onReady: () => void
 ): () => void {
   let schedules: MedicationSchedule[] = [];
+  let profile: AdministratorProfile | undefined;
   let notice = account.notice;
   let ready = false;
 
   const render = (): void => {
-    root.innerHTML = pageTemplate(schedules, notice, repository.mode, account);
+    if (!profile) return;
+    root.innerHTML = pageTemplate(schedules, profile, notice, account);
+    bindSignOut(root, account);
     const dialog = root.querySelector<HTMLDialogElement>('.schedule-dialog');
     const form = root.querySelector<HTMLFormElement>('.schedule-form');
     if (!dialog || !form) {
@@ -192,7 +212,7 @@ export function mountSchedulesPage(
       const time = form.elements.namedItem('scheduledTime') as HTMLInputElement;
       form.dataset.scheduleId = schedule?.id ?? '';
       if (title) {
-        title.textContent = schedule ? 'Edit schedule' : 'Add schedule';
+        title.textContent = schedule ? 'Edit dose' : 'Add dose';
       }
       name.value = schedule?.medicationName ?? '';
       time.value = schedule?.scheduledTime ?? '08:00';
@@ -216,11 +236,11 @@ export function mountSchedulesPage(
         if (!schedule) {
           return;
         }
-        notice = schedule.active ? 'Schedule paused.' : 'Schedule resumed.';
+        notice = schedule.active ? 'Dose paused.' : 'Dose resumed.';
         try {
           await repository.setActive(schedule.id, !schedule.active);
         } catch (error) {
-          notice = error instanceof Error ? error.message : 'Unable to update the schedule.';
+          notice = error instanceof Error ? error.message : 'Unable to update the dose.';
           render();
         }
       });
@@ -229,24 +249,37 @@ export function mountSchedulesPage(
       .querySelectorAll<HTMLElement>('[data-action="close"], [data-action="cancel"]')
       .forEach((button) => button.addEventListener('click', closeDialog));
 
-    const linkGoogle = root.querySelector<HTMLButtonElement>(
-      '[data-action="link-google"]'
-    );
-    linkGoogle?.addEventListener('click', async () => {
-      linkGoogle.disabled = true;
-      linkGoogle.textContent = 'Opening Google…';
+    root.querySelector<HTMLButtonElement>('[data-action="publish"]')
+      ?.addEventListener('click', async () => {
+      if (schedules.every(({ active }) => !active)) return;
       try {
-        await account.linkGoogle();
+        await administrator.publish();
+        notice = 'Schedule published.';
       } catch (error) {
-        const action = account.kind === 'migration-error'
-          ? 'Migration could not be completed'
-          : 'Google account was not linked';
-        notice = error instanceof Error
-          ? `${action}: ${error.message}`
-          : `${action}.`;
+        notice = error instanceof Error ? error.message : 'Unable to publish the schedule.';
         render();
       }
     });
+
+    root.querySelector<HTMLButtonElement>('[data-action="copy-link"]')
+      ?.addEventListener('click', async () => {
+        const link = `${window.location.origin}${window.location.pathname}?schedule=${encodeURIComponent(profile!.planCode)}`;
+        await navigator.clipboard.writeText(link);
+        notice = 'Schedule link copied.';
+        render();
+      });
+
+    root.querySelector<HTMLButtonElement>('[data-action="disconnect-patient"]')
+      ?.addEventListener('click', async () => {
+        if (!window.confirm(`Disconnect ${profile!.patientDisplayName || 'the linked patient'} from this schedule?`)) return;
+        try {
+          await administrator.disconnectPatient();
+          notice = 'Patient disconnected.';
+        } catch (error) {
+          notice = error instanceof Error ? error.message : 'Unable to disconnect the patient.';
+          render();
+        }
+      });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -279,7 +312,7 @@ export function mountSchedulesPage(
       }
 
       try {
-        notice = scheduleId ? 'Schedule updated.' : 'Schedule added.';
+        notice = scheduleId ? 'Dose updated.' : 'Dose added.';
         if (scheduleId) {
           await repository.update(scheduleId, input);
         } else {
@@ -287,10 +320,10 @@ export function mountSchedulesPage(
         }
         closeDialog();
       } catch (error) {
-        notice = error instanceof Error ? error.message : 'Unable to save the schedule.';
+        notice = error instanceof Error ? error.message : 'Unable to save the dose.';
         if (submit) {
           submit.disabled = false;
-          submit.textContent = 'Save schedule';
+          submit.textContent = 'Save dose';
         }
         render();
       }
@@ -302,7 +335,7 @@ export function mountSchedulesPage(
     }
   };
 
-  return repository.subscribe(
+  const unsubscribeSchedules = repository.subscribe(
     (nextSchedules) => {
       schedules = nextSchedules;
       render();
@@ -312,4 +345,18 @@ export function mountSchedulesPage(
       render();
     }
   );
+  const unsubscribeAdministrator = administrator.subscribe(
+    (nextProfile) => {
+      profile = nextProfile;
+      render();
+    },
+    (error) => {
+      notice = `Unable to load the plan: ${error.message}`;
+      render();
+    }
+  );
+  return () => {
+    unsubscribeSchedules();
+    unsubscribeAdministrator();
+  };
 }

@@ -2,10 +2,10 @@
 
 ## Current State
 
-PR #5 is merged. Phase 1 of the iOS MVP plan is in draft
-[PR #6](https://github.com/anicolao/medinag/pull/6) on
-`agent/link-lori-google-account`. The detailed plan is recorded in
-[IOS_MVP_PLAN.md](IOS_MVP_PLAN.md).
+PR #6 is merged, completing Phase 1 of the iOS MVP plan. Phase 2 work is on the
+fresh `agent/ios-mvp` branch. The detailed plan is recorded in
+[IOS_MVP_PLAN.md](IOS_MVP_PLAN.md), and app-specific setup is in
+[apps/ios/README.md](apps/ios/README.md).
 
 The phase establishes a shared household data model before an Apple client is
 added:
@@ -64,22 +64,47 @@ instead of failing application initialization.
 - Deterministic E2E uses local fixtures and emulators; production smoke tests are
   separate and must not drive visual baselines.
 
-## Next Steps After Phase 1
+## Phase 2 Scaffold
 
-1. Install and pin full Xcode and an iOS Simulator runtime. This machine
-   currently exposes only Apple's Command Line Tools.
-2. Choose the permanent iOS bundle identifier.
-3. Register the iOS Firebase app and provide its configuration outside source
-   control.
-4. Build the execution-only SwiftUI client with schedule sync, notification
-   readiness, snooze, and completion behavior.
-5. Add the cross-surface web/iOS closed-loop walkthrough described in
-   `IOS_MVP_PLAN.md`.
+- Added a generated SwiftUI project under `apps/ios` with provisional bundle ID
+  `org.boardgamescafe.medinag`.
+- Pinned Xcode 26.2, iOS 26.2, iPhone 17, XcodeGen 2.46.0, and Firebase Apple SDK
+  12.17.0.
+- Added a portable `MediNagCore` package with injected clock, event store, and
+  notification scheduler. Its three deterministic checks pass under the local
+  Swift 6.3 compiler.
+- Added one-time Steve sign-in, household membership verification, Firestore
+  listeners, next-dose and Today states, notification readiness, snooze,
+  completion, repeat scheduling, and cancellation.
+- Added accessibility identifiers and an XCTest walkthrough scaffold enforcing
+  two-second event-driven conditions and exact RGBA screenshot equality.
+- Added a macOS 26 GitHub Actions workflow that will build with Xcode 26.2 on a
+  pull request.
+
+The local computer still has only Apple Command Line Tools. Swift sources parse
+and the portable core compiles, but the SwiftUI/Firebase target and simulator
+cannot be run locally until full Xcode and the iOS runtime are installed.
+
+## Next Steps for Phase 2
+
+1. Confirm or replace the provisional permanent bundle identifier before
+   registering it with Firebase.
+2. Install Xcode 26.2 plus the iOS 26.2 simulator locally, or push the branch so
+   the pinned GitHub runner can perform the first complete build.
+3. Register the Firebase Apple app and supply `GoogleService-Info.plist` outside
+   source control.
+4. Enable email/password Auth, create Steve's account, and add its UID as the
+   subject member of Lori's household.
+5. Generate and review the first iOS zero-pixel walkthrough baselines.
+6. Exercise a production schedule/event from the iPhone simulator before moving
+   to the Phase 3 cross-surface walkthrough.
 
 ## Remaining Questions
 
-- What bundle identifier and Apple development team should be used?
-- Should Steve initially sign in with provisioned credentials or a pairing code?
+- Is `org.boardgamescafe.medinag` the permanent bundle identifier, and which
+  Apple development team should sign device builds?
+- Is the implemented one-time email/password plus household-ID flow acceptable
+  for Steve, or should Phase 2 add a pairing code before production testing?
 - When should legacy anonymous schedules be deleted, if ever?
 - Is GitHub Pages only the review host, or the intended long-term production
   host?
