@@ -28,7 +28,6 @@ const renderRoute = async (): Promise<void> => {
   unmountPage?.();
   unmountPage = undefined;
 
-  await document.fonts.ready;
   const application = await services;
   root.classList.add('is-dashboard');
   if (application.account.kind !== 'google') {

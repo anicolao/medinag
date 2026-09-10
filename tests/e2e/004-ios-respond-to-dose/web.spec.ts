@@ -18,7 +18,7 @@ test('US-004: Lori schedules the dose Steve receives on iOS', async ({ page }, t
     'As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard.'
   );
 
-  await page.goto('/#/schedules');
+  await page.goto('/#/schedules', { waitUntil: 'domcontentloaded' });
   await tester.step('empty-connected-dashboard', {
     description: 'Lori opens a fresh administrator plan connected to Firebase',
     verifications: [

@@ -279,16 +279,16 @@ service cloud.firestore {
 
     // Read-only compatibility for migrating previously captured administrator data.
     match /admins/{adminId}/schedules/{scheduleId} {
-      allow read: if ownsAdministrator(adminId);
+      allow read: if signedIn() && request.auth.uid == adminId;
       allow write: if false;
     }
 
     match /households/{householdId} {
-      allow read: if ownsAdministrator(householdId);
+      allow read: if signedIn() && request.auth.uid == householdId;
       allow write: if false;
 
       match /{document=**} {
-        allow read: if ownsAdministrator(householdId);
+        allow read: if signedIn() && request.auth.uid == householdId;
         allow write: if false;
       }
     }

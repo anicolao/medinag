@@ -77,7 +77,8 @@ function createFirebase(): { app: FirebaseApp; auth: Auth; database: Firestore }
   const app = getApps().length > 0 ? getApp() : initializeApp(config);
   const auth = getAuth(app);
   const database = getFirestore(app);
-  if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true' && !emulatorsConnected) {
+  const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+  if (useEmulator && !emulatorsConnected) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
       disableWarnings: true
     });
@@ -118,7 +119,11 @@ async function ensureAdministrator(
   user: User
 ): Promise<number> {
   const reference = doc(database, 'administrators', user.uid);
-  const snapshot = await getDoc(reference);
+  const [snapshot, anonymousLegacy, householdLegacy] = await Promise.all([
+    getDoc(reference),
+    getDocs(collection(database, 'admins', user.uid, 'schedules')),
+    getDocs(collection(database, 'households', user.uid, 'schedules'))
+  ]);
   if (!snapshot.exists()) {
     await setDoc(reference, {
       uid: user.uid,
@@ -139,16 +144,16 @@ async function ensureAdministrator(
     });
   }
 
-  const [anonymousLegacy, householdLegacy] = await Promise.all([
-    getDocs(collection(database, 'admins', user.uid, 'schedules')),
-    getDocs(collection(database, 'households', user.uid, 'schedules'))
-  ]);
+  const legacyDocuments = [...anonymousLegacy.docs, ...householdLegacy.docs];
+  if (legacyDocuments.length === 0) {
+    return 0;
+  }
   const existing = await getDocs(
     collection(database, 'administrators', user.uid, 'doses')
   );
   const existingIds = new Set(existing.docs.map(({ id }) => id));
   const legacyById = new Map(
-    [...anonymousLegacy.docs, ...householdLegacy.docs]
+    legacyDocuments
       .filter(({ id }) => !existingIds.has(id))
       .map((dose) => [dose.id, dose] as const)
   );
