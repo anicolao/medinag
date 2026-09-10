@@ -21,9 +21,14 @@ final class FirebasePatientDirectory: @unchecked Sendable {
     self.database = database
   }
 
-  func ensurePatient(userID: String, displayName: String, email: String) async throws {
+  func ensurePatient(
+    userID: String,
+    displayName: String,
+    email: String
+  ) async throws -> String? {
     let reference = database.document("patients/\(userID)")
     let snapshot = try await reference.getDocument()
+    let followingAdministratorID = snapshot.data()?["followingAdministratorUid"] as? String
     if snapshot.exists {
       try await reference.updateData([
         "displayName": displayName,
@@ -40,11 +45,7 @@ final class FirebasePatientDirectory: @unchecked Sendable {
         "updatedAt": FieldValue.serverTimestamp(),
       ])
     }
-  }
-
-  func followingAdministratorID(userID: String) async throws -> String? {
-    let snapshot = try await database.document("patients/\(userID)").getDocument()
-    return snapshot.data()?["followingAdministratorUid"] as? String
+    return followingAdministratorID
   }
 
   func availablePlans(for userID: String) async throws -> [PublishedPlan] {
@@ -80,15 +81,6 @@ final class FirebasePatientDirectory: @unchecked Sendable {
       $0.administratorName.localizedCaseInsensitiveCompare($1.administratorName)
         == .orderedAscending
     }
-  }
-
-  func plan(administratorID: String, userID: String) async throws -> PublishedPlan {
-    guard let plan = try await availablePlans(for: userID)
-      .first(where: { $0.id == administratorID })
-    else {
-      throw PatientRepositoryError.planUnavailable
-    }
-    return plan
   }
 
   func follow(_ plan: PublishedPlan, userID: String, displayName: String) async throws {

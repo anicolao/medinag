@@ -25,6 +25,17 @@ final class RespondToDoseUITests: XCTestCase {
 
     app.buttons["patient-google-sign-in"].tap()
 
+    try tester.step(
+      "google-sign-in-in-progress",
+      description: "MediNag authenticates Steve and discovers published schedules",
+      verifications: [
+        .exists(
+          app.progressIndicators["google-sign-in-progress"],
+          "A visible progress state appears while real Firebase requests complete"
+        ),
+      ]
+    )
+
     let planOption = app.buttons["schedule-option-\(environment.administratorID)"]
     try tester.step(
       "choose-schedule",

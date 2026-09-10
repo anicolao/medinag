@@ -230,27 +230,29 @@ final class AppViewModel: ObservableObject {
     displayName: String,
     email: String
   ) async throws {
-    try await directory.ensurePatient(
+    async let followingAdministratorID = directory.ensurePatient(
       userID: userID,
       displayName: displayName,
       email: email
     )
-    if let administratorID = try await directory.followingAdministratorID(userID: userID) {
-      do {
-        let plan = try await directory.plan(
-          administratorID: administratorID,
-          userID: userID
-        )
-        guard plan.patientUID == userID else {
-          throw PatientRepositoryError.planUnavailable
-        }
-        try await connect(plan: plan)
-        return
-      } catch {
-        try await directory.clearInvalidFollowing(userID: userID)
-      }
+    async let discoveredPlans = directory.availablePlans(for: userID)
+    let (administratorID, plans) = try await (
+      followingAdministratorID,
+      discoveredPlans
+    )
+    if
+      let administratorID,
+      let plan = plans.first(where: {
+        $0.id == administratorID && $0.patientUID == userID
+      })
+    {
+      try await connect(plan: plan)
+      return
     }
-    await refreshAvailablePlans()
+    if administratorID != nil {
+      try await directory.clearInvalidFollowing(userID: userID)
+    }
+    availablePlans = plans
     state = .choosingSchedule
   }
 

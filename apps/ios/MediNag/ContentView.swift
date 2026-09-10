@@ -136,6 +136,7 @@ private struct PatientSignInView: View {
             if viewModel.isWorking {
               ProgressView("Signing in…")
                 .frame(maxWidth: .infinity, alignment: .center)
+                .accessibilityIdentifier("google-sign-in-progress")
             }
           }
           .padding(22)
