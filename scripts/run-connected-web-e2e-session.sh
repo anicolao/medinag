@@ -5,8 +5,6 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
 eval "$(node scripts/setup-e2e-environment.mjs --shell)"
-npm run build
-export MEDINAG_E2E_WEB_SERVER_COMMAND="npm run preview"
 if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
   exec npx playwright test "$MEDINAG_E2E_PLAYWRIGHT_TARGET" --update-snapshots
 fi
