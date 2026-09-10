@@ -46,7 +46,7 @@ export default defineConfig({
   },
   snapshotPathTemplate: '{testDir}/{testFileDir}/screenshots/{arg}{ext}',
   webServer: {
-    command: 'npm run dev',
+    command: process.env.MEDINAG_E2E_WEB_SERVER_COMMAND ?? 'npm run dev',
     url: 'http://127.0.0.1:5174',
     reuseExistingServer: !process.env.CI,
     timeout: 2_000

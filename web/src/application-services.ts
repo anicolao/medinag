@@ -20,6 +20,7 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  initializeFirestore,
   serverTimestamp,
   setDoc,
   writeBatch,
@@ -76,8 +77,10 @@ function createFirebase(): { app: FirebaseApp; auth: Auth; database: Firestore }
 
   const app = getApps().length > 0 ? getApp() : initializeApp(config);
   const auth = getAuth(app);
-  const database = getFirestore(app);
   const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+  const database = useEmulator
+    ? initializeFirestore(app, { experimentalForceLongPolling: true })
+    : getFirestore(app);
   if (useEmulator && !emulatorsConnected) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
       disableWarnings: true

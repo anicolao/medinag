@@ -10,6 +10,8 @@ xcodebuild_command="$developer_directory/usr/bin/xcodebuild"
 
 cd "$repository_root"
 eval "$(node scripts/setup-e2e-environment.mjs --shell)"
+npm run build
+export MEDINAG_E2E_WEB_SERVER_COMMAND="npm run preview"
 if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
   npx playwright test tests/e2e/004-ios-respond-to-dose/web.spec.ts --update-snapshots
 else

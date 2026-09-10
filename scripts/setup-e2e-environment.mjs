@@ -9,6 +9,8 @@ import {
 } from 'firebase/auth';
 import {
   connectFirestoreEmulator,
+  doc,
+  getDoc,
   getFirestore,
 } from 'firebase/firestore';
 
@@ -66,6 +68,11 @@ const administrator = await signInWithCredential(
   administratorAuth,
   GoogleAuthProvider.credential(administratorGoogleIdToken)
 );
+
+// Pay the emulator's Java/gRPC cold-start cost before any user-story timer begins.
+// This is deliberately a missing-document read: application data must still be
+// created through the visible product UI.
+await getDoc(doc(administratorDatabase, 'administrators', administrator.user.uid));
 
 const patientApp = initializeApp(firebaseConfig, `patient-${runId}`);
 const patientAuth = getAuth(patientApp);
