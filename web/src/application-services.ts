@@ -52,13 +52,22 @@ const ACCOUNT_NOTICE_KEY = 'medinag:account-notice';
 let emulatorsConnected = false;
 
 function consumeNotice(): string {
-  const notice = sessionStorage.getItem(ACCOUNT_NOTICE_KEY) ?? '';
-  sessionStorage.removeItem(ACCOUNT_NOTICE_KEY);
-  return notice;
+  try {
+    const notice = sessionStorage.getItem(ACCOUNT_NOTICE_KEY) ?? '';
+    sessionStorage.removeItem(ACCOUNT_NOTICE_KEY);
+    return notice;
+  } catch {
+    return '';
+  }
 }
 
 function reloadWithNotice(notice: string): void {
-  sessionStorage.setItem(ACCOUNT_NOTICE_KEY, notice);
+  try {
+    sessionStorage.setItem(ACCOUNT_NOTICE_KEY, notice);
+  } catch {
+    // Some privacy modes allow authentication but deny Web Storage. The
+    // notice is optional, so completing sign-in must not depend on it.
+  }
   window.location.reload();
 }
 

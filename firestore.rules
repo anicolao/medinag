@@ -6,6 +6,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function legacyHousehold(householdId) {
+      return get(/databases/$(database)/documents/households/$(householdId));
+    }
+
+    function legacyMembership(householdId) {
+      return get(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+    }
+
+    function ownsLegacyHousehold(householdId) {
+      return signedIn()
+        && legacyHousehold(householdId).data.advisorUid == request.auth.uid;
+    }
+
+    function isLegacyMember(householdId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+    }
+
+    function hasLegacyRole(householdId, role) {
+      return isLegacyMember(householdId)
+        && legacyMembership(householdId).data.role == role;
+    }
+
+    function isLegacyAdvisor(householdId) {
+      return ownsLegacyHousehold(householdId)
+        || hasLegacyRole(householdId, 'advisor');
+    }
+
     function ownsAdministrator(administratorId) {
       return signedIn() && request.auth.uid == administratorId;
     }
@@ -119,6 +147,47 @@ service cloud.firestore {
         && request.resource.data.email.size() <= 320
         && (request.resource.data.followingAdministratorUid == null
           || request.resource.data.followingAdministratorUid is string)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validLegacyHousehold() {
+      return request.resource.data.keys().hasOnly([
+          'advisorUid',
+          'name',
+          'subjectName',
+          'migrationVersion',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.advisorUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.subjectName is string
+        && request.resource.data.subjectName.size() > 0
+        && request.resource.data.subjectName.size() <= 100
+        && request.resource.data.migrationVersion in [0, 1]
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validLegacyMember(memberId) {
+      return request.resource.data.keys().hasOnly([
+          'uid',
+          'role',
+          'displayName',
+          'email',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == memberId
+        && request.resource.data.role in ['advisor', 'subject']
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
@@ -277,19 +346,67 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Read-only compatibility for migrating previously captured administrator data.
+    // Temporary write compatibility keeps the main-branch dashboard usable
+    // while the administrator/patient schema is reviewed in a PR preview.
     match /admins/{adminId}/schedules/{scheduleId} {
       allow read: if signedIn() && request.auth.uid == adminId;
-      allow write: if false;
+      allow create: if signedIn()
+        && request.auth.uid == adminId
+        && validDose();
+      allow update: if signedIn()
+        && request.auth.uid == adminId
+        && validDose()
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
     }
 
     match /households/{householdId} {
-      allow read: if signedIn() && request.auth.uid == householdId;
-      allow write: if false;
+      allow create: if signedIn()
+        && householdId == request.auth.uid
+        && validLegacyHousehold();
+      allow read: if (signedIn() && householdId == request.auth.uid)
+        || ownsLegacyHousehold(householdId)
+        || isLegacyMember(householdId);
+      allow update: if isLegacyAdvisor(householdId)
+        && validLegacyHousehold()
+        && request.resource.data.advisorUid == resource.data.advisorUid
+        && request.resource.data.migrationVersion >= resource.data.migrationVersion
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
 
-      match /{document=**} {
-        allow read: if signedIn() && request.auth.uid == householdId;
-        allow write: if false;
+      match /members/{memberId} {
+        allow read: if request.auth.uid == memberId
+          || isLegacyAdvisor(householdId);
+        allow create: if isLegacyAdvisor(householdId)
+          && validLegacyMember(memberId);
+        allow update: if isLegacyAdvisor(householdId)
+          && validLegacyMember(memberId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+
+      match /schedules/{scheduleId} {
+        allow read: if isLegacyAdvisor(householdId)
+          || isLegacyMember(householdId);
+        allow create: if isLegacyAdvisor(householdId) && validDose();
+        allow update: if isLegacyAdvisor(householdId)
+          && validDose()
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+
+      match /medicationEvents/{eventId} {
+        allow read: if isLegacyAdvisor(householdId)
+          || isLegacyMember(householdId);
+        allow create: if isLegacyAdvisor(householdId)
+          && validMedicationEvent();
+        allow update: if (isLegacyAdvisor(householdId)
+            && validMedicationEvent()
+            && request.resource.data.createdAt == resource.data.createdAt)
+          || (hasLegacyRole(householdId, 'subject')
+            && validPatientResponse());
+        allow delete: if false;
       }
     }
   }

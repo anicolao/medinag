@@ -19,6 +19,7 @@ import {
 import { readFile } from 'node:fs/promises';
 
 const projectId = 'demo-medinag';
+const legacyHouseholdId = 'legacy-household';
 const now = Timestamp.fromDate(new Date('2026-09-09T12:00:00Z'));
 let environment;
 
@@ -86,6 +87,44 @@ beforeEach(async () => {
       createdAt: now,
       updatedAt: now
     });
+    await setDoc(doc(database, 'households', legacyHouseholdId), {
+      advisorUid: 'legacy-lori',
+      name: "Lori's household",
+      subjectName: 'Legacy Steve',
+      migrationVersion: 1,
+      createdAt: now,
+      updatedAt: now
+    });
+    await setDoc(
+      doc(database, 'households', legacyHouseholdId, 'members', 'legacy-lori'),
+      {
+        uid: 'legacy-lori',
+        role: 'advisor',
+        displayName: 'Legacy Lori',
+        email: 'legacy-lori@example.com',
+        createdAt: now,
+        updatedAt: now
+      }
+    );
+    await setDoc(
+      doc(database, 'households', legacyHouseholdId, 'members', 'legacy-steve'),
+      {
+        uid: 'legacy-steve',
+        role: 'subject',
+        displayName: 'Legacy Steve',
+        email: 'legacy-steve@example.com',
+        createdAt: now,
+        updatedAt: now
+      }
+    );
+    await setDoc(
+      doc(database, 'households', legacyHouseholdId, 'schedules', 'morning'),
+      dose
+    );
+    await setDoc(
+      doc(database, 'households', legacyHouseholdId, 'medicationEvents', 'dose'),
+      medicationEvent
+    );
   });
 });
 
@@ -221,5 +260,82 @@ test('only the linked patient can snooze or complete without changing the dose',
     'lori',
     'medicationEvents',
     'dose'
+  )));
+});
+
+test('the production dashboard can keep writing the legacy owner schedule during migration', async () => {
+  const lori = environment.authenticatedContext('legacy-lori').firestore();
+  await assertSucceeds(setDoc(
+    doc(lori, 'admins', 'legacy-lori', 'schedules', 'morning'),
+    dose
+  ));
+  await assertSucceeds(updateDoc(
+    doc(lori, 'admins', 'legacy-lori', 'schedules', 'morning'),
+    { scheduledTime: '08:15', updatedAt: now }
+  ));
+  const stranger = environment.authenticatedContext('stranger').firestore();
+  await assertFails(setDoc(
+    doc(stranger, 'admins', 'legacy-lori', 'schedules', 'evening'),
+    dose
+  ));
+});
+
+test('the production dashboard retains legacy household administration', async () => {
+  const alex = environment.authenticatedContext('legacy-alex').firestore();
+  const household = doc(alex, 'households', 'legacy-alex');
+  await assertSucceeds(setDoc(household, {
+    advisorUid: 'legacy-alex',
+    name: "Alex's household",
+    subjectName: 'Patient',
+    migrationVersion: 0,
+    createdAt: now,
+    updatedAt: now
+  }));
+  await assertSucceeds(setDoc(
+    doc(alex, 'households', 'legacy-alex', 'members', 'legacy-alex'),
+    {
+      uid: 'legacy-alex',
+      role: 'advisor',
+      displayName: 'Legacy Alex',
+      email: 'legacy-alex@example.com',
+      createdAt: now,
+      updatedAt: now
+    }
+  ));
+  await assertSucceeds(setDoc(
+    doc(alex, 'households', 'legacy-alex', 'schedules', 'morning'),
+    dose
+  ));
+  await assertSucceeds(updateDoc(household, {
+    migrationVersion: 1,
+    updatedAt: now
+  }));
+});
+
+test('legacy subjects can respond but cannot rewrite prescriptions', async () => {
+  const steve = environment.authenticatedContext('legacy-steve').firestore();
+  const eventReference = doc(
+    steve,
+    'households',
+    legacyHouseholdId,
+    'medicationEvents',
+    'dose'
+  );
+  await assertSucceeds(updateDoc(eventReference, {
+    status: 'snoozed',
+    snoozeCount: 1,
+    lastSnoozedAt: now,
+    updatedAt: now
+  }));
+  await assertFails(updateDoc(eventReference, {
+    medicationName: 'Something else',
+    updatedAt: now
+  }));
+  await assertSucceeds(getDoc(doc(
+    steve,
+    'households',
+    legacyHouseholdId,
+    'schedules',
+    'morning'
   )));
 });
