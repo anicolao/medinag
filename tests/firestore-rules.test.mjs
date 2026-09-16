@@ -280,6 +280,24 @@ test('the production dashboard can keep writing the legacy owner schedule during
   ));
 });
 
+test('a new administrator can inspect an empty same-ID legacy household', async () => {
+  const alex = environment.authenticatedContext('new-alex').firestore();
+  const emptySchedules = await assertSucceeds(getDocs(collection(
+    alex,
+    'households',
+    'new-alex',
+    'schedules'
+  )));
+  assert.equal(emptySchedules.empty, true);
+  const stranger = environment.authenticatedContext('stranger').firestore();
+  await assertFails(getDocs(collection(
+    stranger,
+    'households',
+    'new-alex',
+    'schedules'
+  )));
+});
+
 test('the production dashboard retains legacy household administration', async () => {
   const alex = environment.authenticatedContext('legacy-alex').firestore();
   const household = doc(alex, 'households', 'legacy-alex');

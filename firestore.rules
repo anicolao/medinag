@@ -387,7 +387,8 @@ service cloud.firestore {
       }
 
       match /schedules/{scheduleId} {
-        allow read: if isLegacyAdvisor(householdId)
+        allow read: if (signedIn() && request.auth.uid == householdId)
+          || isLegacyAdvisor(householdId)
           || isLegacyMember(householdId);
         allow create: if isLegacyAdvisor(householdId) && validDose();
         allow update: if isLegacyAdvisor(householdId)
