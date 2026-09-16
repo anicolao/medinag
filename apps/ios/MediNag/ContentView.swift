@@ -16,6 +16,9 @@ struct ContentView: View {
         case .signedOut:
           PatientSignInView(viewModel: viewModel)
 
+        case .authenticating:
+          AuthenticationProgressView(viewModel: viewModel)
+
         case .choosingSchedule:
           ScheduleSelectionView(viewModel: viewModel)
 
@@ -39,6 +42,51 @@ struct ContentView: View {
     }
     .fontDesign(.rounded)
     .tint(MediNagColor.teal)
+  }
+}
+
+private struct AuthenticationProgressView: View {
+  @ObservedObject var viewModel: AppViewModel
+
+  var body: some View {
+    NavigationStack {
+      VStack(alignment: .leading, spacing: 28) {
+        BrandHeader(
+          eyebrow: "SECURE SIGN-IN",
+          title: "Preparing your schedules",
+          detail: "MediNag is signing you in with Google and finding published medication plans."
+        )
+
+        VStack(spacing: 18) {
+          ProgressView()
+            .controlSize(.large)
+            .accessibilityHidden(true)
+          Text("Connecting to Firebase…")
+            .font(.headline)
+            .foregroundStyle(MediNagColor.ink)
+          Text("You can continue now. Your schedules will open as soon as the secure connection is ready.")
+            .font(.subheadline)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(MediNagColor.muted)
+          Button("Continue to schedules") {
+            Task { await viewModel.continueAfterAuthentication() }
+          }
+          .buttonStyle(PrimaryButtonStyle())
+          .accessibilityIdentifier("continue-after-authentication")
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(.white, in: RoundedRectangle(cornerRadius: 22))
+        .shadow(color: .black.opacity(0.06), radius: 24, y: 12)
+
+        Spacer()
+      }
+      .padding(24)
+      .background(MediNagColor.background)
+      .navigationBarHidden(true)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier("authentication-progress-screen")
+    }
   }
 }
 

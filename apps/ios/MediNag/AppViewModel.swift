@@ -17,6 +17,7 @@ final class AppViewModel: ObservableObject {
   enum State: Equatable {
     case starting
     case signedOut
+    case authenticating
     case choosingSchedule
     case ready
     case configurationMissing
@@ -48,6 +49,13 @@ final class AppViewModel: ObservableObject {
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
   private var pendingNotificationInteraction: NotificationInteraction?
+  private var authenticationDestination: AuthenticationDestination?
+  private var authenticationContinuationRequested = false
+
+  private enum AuthenticationDestination {
+    case choosingSchedule([PublishedPlan])
+    case ready(PublishedPlan)
+  }
 
   static func make() -> AppViewModel { AppViewModel() }
 
@@ -81,17 +89,37 @@ final class AppViewModel: ObservableObject {
   func signInWithGoogle() async {
     isWorking = true
     actionNotice = ""
+    authenticationDestination = nil
+    authenticationContinuationRequested = false
+    state = .authenticating
     defer { isWorking = false }
     do {
       let user = try await GooglePatientAuthenticator.signIn()
-      try await finishAuthentication(
+      authenticationDestination = try await prepareAuthentication(
         userID: user.uid,
         displayName: user.displayName ?? "Patient",
         email: user.email ?? ""
       )
+      try await revealAuthenticationDestinationIfRequested()
     } catch {
       try? Auth.auth().signOut()
       GooglePatientAuthenticator.signOut()
+      authenticationDestination = nil
+      authenticationContinuationRequested = false
+      state = .failed(error.localizedDescription)
+    }
+  }
+
+  func continueAfterAuthentication() async {
+    authenticationContinuationRequested = true
+    actionNotice = "Finishing your secure connection…"
+    do {
+      try await revealAuthenticationDestinationIfRequested()
+    } catch {
+      try? Auth.auth().signOut()
+      GooglePatientAuthenticator.signOut()
+      authenticationDestination = nil
+      authenticationContinuationRequested = false
       state = .failed(error.localizedDescription)
     }
   }
@@ -154,6 +182,8 @@ final class AppViewModel: ObservableObject {
     currentPlan = nil
     schedules = []
     events = []
+    authenticationDestination = nil
+    authenticationContinuationRequested = false
     state = .signedOut
   }
 
@@ -215,21 +245,22 @@ final class AppViewModel: ObservableObject {
       return
     }
     do {
-      try await finishAuthentication(
+      let destination = try await prepareAuthentication(
         userID: user.uid,
         displayName: user.displayName ?? "Patient",
         email: user.email ?? ""
       )
+      try await apply(destination)
     } catch {
       state = .failed(error.localizedDescription)
     }
   }
 
-  private func finishAuthentication(
+  private func prepareAuthentication(
     userID: String,
     displayName: String,
     email: String
-  ) async throws {
+  ) async throws -> AuthenticationDestination {
     async let followingAdministratorID = directory.ensurePatient(
       userID: userID,
       displayName: displayName,
@@ -246,14 +277,33 @@ final class AppViewModel: ObservableObject {
         $0.id == administratorID && $0.patientUID == userID
       })
     {
-      try await connect(plan: plan)
-      return
+      return .ready(plan)
     }
     if administratorID != nil {
       try await directory.clearInvalidFollowing(userID: userID)
     }
-    availablePlans = plans
-    state = .choosingSchedule
+    return .choosingSchedule(plans)
+  }
+
+  private func revealAuthenticationDestinationIfRequested() async throws {
+    guard
+      authenticationContinuationRequested,
+      let destination = authenticationDestination
+    else { return }
+    authenticationDestination = nil
+    authenticationContinuationRequested = false
+    actionNotice = ""
+    try await apply(destination)
+  }
+
+  private func apply(_ destination: AuthenticationDestination) async throws {
+    switch destination {
+    case .choosingSchedule(let plans):
+      availablePlans = plans
+      state = .choosingSchedule
+    case .ready(let plan):
+      try await connect(plan: plan)
+    }
   }
 
   private func refreshAvailablePlans() async {

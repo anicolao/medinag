@@ -25,6 +25,22 @@ final class RespondToDoseUITests: XCTestCase {
 
     app.buttons["patient-google-sign-in"].tap()
 
+    try tester.step(
+      "authentication-in-progress",
+      description: "MediNag begins real Google and Firebase authentication",
+      verifications: [
+        .exists(
+          app.otherElements["authentication-progress-screen"],
+          "A visible progress state appears before the two-second condition limit"
+        ),
+        .exists(
+          app.buttons["continue-after-authentication"],
+          "The user controls when to continue to schedule selection"
+        ),
+      ]
+    )
+    app.buttons["continue-after-authentication"].tap()
+
     let planOption = app.buttons["schedule-option-\(environment.administratorID)"]
     try tester.step(
       "choose-schedule",
