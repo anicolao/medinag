@@ -112,7 +112,7 @@ final class RespondToDoseUITests: XCTestCase {
 
     app.staticTexts["notification-readiness"].tap()
     waitForNotificationAcknowledgement(app, count: 1)
-    app.terminate()
+    XCUIDevice.shared.press(.home)
     let firstNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
     ]
@@ -121,6 +121,7 @@ final class RespondToDoseUITests: XCTestCase {
       firstNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
       "SpringBoard did not receive the notification built from the Firestore event"
     )
+    app.terminate()
     try tester.step(
       "first-system-notification",
       description: "With MediNag terminated, iOS retains the scheduled notification",
@@ -161,7 +162,7 @@ final class RespondToDoseUITests: XCTestCase {
     // Tapping the first system notification cold-launches a fresh app process,
     // so its acknowledgement sequence restarts at one.
     waitForNotificationAcknowledgement(app, count: 1)
-    app.terminate()
+    XCUIDevice.shared.press(.home)
     let repeatNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
     ]
@@ -170,6 +171,7 @@ final class RespondToDoseUITests: XCTestCase {
       repeatNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
       "SpringBoard did not receive reminder 2 from the snoozed Firestore event"
     )
+    app.terminate()
     try tester.step(
       "repeat-system-notification",
       description: "With MediNag terminated, iOS retains the repeat notification",
