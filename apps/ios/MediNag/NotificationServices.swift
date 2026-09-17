@@ -277,10 +277,11 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
               reminderNumber: reminder.reminderNumber
             ),
             content: content,
-            // The test backgrounds the app only after iOS acknowledges this
-            // request, leaving presentation to SpringBoard.
+            // Give the UI test time to terminate the app after iOS
+            // acknowledges the request. SpringBoard then owns both delivery
+            // and presentation, just as it does for the real calendar trigger.
             trigger: UNTimeIntervalNotificationTrigger(
-              timeInterval: 0.5,
+              timeInterval: 1,
               repeats: false
             )
           )
