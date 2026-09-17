@@ -41,7 +41,8 @@ export class TestStepHelper {
 
   constructor(
     private readonly page: Page,
-    private readonly testInfo: TestInfo
+    private readonly testInfo: TestInfo,
+    private readonly surfaceDirectory = ''
   ) {}
 
   setMetadata(title: string, narrative: string): void {
@@ -57,7 +58,10 @@ export class TestStepHelper {
     const safeId = id.replaceAll('_', '-');
     const filename = `${index}-${safeId}.png`;
 
-    await expect(this.page).toHaveScreenshot(filename, {
+    const screenshotPath = this.surfaceDirectory
+      ? [this.surfaceDirectory, filename]
+      : filename;
+    await expect(this.page).toHaveScreenshot(screenshotPath, {
       animations: 'disabled',
       caret: 'hide',
       maxDiffPixelRatio: 0,
@@ -69,7 +73,9 @@ export class TestStepHelper {
 
     this.steps.push({
       title: options.description,
-      image: `./screenshots/${filename}`,
+      image: `./screenshots/${
+        Array.isArray(screenshotPath) ? screenshotPath.join('/') : screenshotPath
+      }`,
       specs: options.verifications.map(({ spec }) => spec)
     });
     this.stepCount += 1;

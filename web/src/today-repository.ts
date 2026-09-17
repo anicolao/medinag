@@ -61,7 +61,7 @@ export class FirestoreTodayRepository implements TodayRepository {
 
   constructor(
     private readonly database: Firestore,
-    private readonly householdId: string
+    private readonly administratorId: string
   ) {}
 
   subscribe(
@@ -71,8 +71,8 @@ export class FirestoreTodayRepository implements TodayRepository {
     const events = query(
       collection(
         this.database,
-        'households',
-        this.householdId,
+        'administrators',
+        this.administratorId,
         'medicationEvents'
       ),
       orderBy('scheduledTime')
