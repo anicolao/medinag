@@ -204,11 +204,29 @@ fi
 
 encoded_tester_email="$(url_encode "$tester_email")"
 tester_response="$(asc_request GET "/v1/betaTesters?filter%5Bemail%5D=$encoded_tester_email&limit=200")"
-tester_id="$(jq -r '.data[0].id // empty' <<< "$tester_response")"
+user_response="$(asc_request GET "/v1/users?filter%5Busername%5D=$encoded_tester_email&limit=1")"
+[[ "$(jq '.data | length' <<< "$user_response")" == "1" ]] \
+  || fail "The configured internal tester is not an accepted App Store Connect user"
+
+# App Store Connect can expose multiple beta-tester identities for one team
+# user—one per app/group history. Try each existing identity before creating a
+# MediNag-scoped one.
+tester_id=""
+tester_group_link="$(jq -nc --arg id "$group_id" '{data:[{type:"betaGroups",id:$id}]}')"
+while IFS= read -r candidate_id; do
+  candidate_groups="$(asc_request GET "/v1/betaTesters/$candidate_id/relationships/betaGroups?limit=200")"
+  if jq -e --arg id "$group_id" 'any(.data[]; .id == $id)' <<< "$candidate_groups" >/dev/null; then
+    tester_id="$candidate_id"
+    break
+  fi
+  if asc_request POST "/v1/betaTesters/$candidate_id/relationships/betaGroups" \
+    "$tester_group_link" >/dev/null 2>&1; then
+    tester_id="$candidate_id"
+    break
+  fi
+done < <(jq -r '.data[].id' <<< "$tester_response")
+
 if [[ -z "$tester_id" ]]; then
-  user_response="$(asc_request GET "/v1/users?filter%5Busername%5D=$encoded_tester_email&limit=1")"
-  [[ "$(jq '.data | length' <<< "$user_response")" == "1" ]] \
-    || fail "The configured internal tester is not an accepted App Store Connect user"
   tester_body="$(jq -nc \
     --arg email "$tester_email" \
     --arg firstName "$(jq -r '.data[0].attributes.firstName // "MediNag"' <<< "$user_response")" \
@@ -217,12 +235,10 @@ if [[ -z "$tester_id" ]]; then
     '{data:{type:"betaTesters",attributes:{email:$email,firstName:$firstName,lastName:$lastName},relationships:{betaGroups:{data:[{type:"betaGroups",id:$groupID}]}}}}')"
   tester_response="$(asc_request POST '/v1/betaTesters' "$tester_body")"
   tester_id="$(jq -r '.data.id' <<< "$tester_response")"
-else
-  tester_groups="$(asc_request GET "/v1/betaTesters/$tester_id/relationships/betaGroups?limit=200")"
-  if ! jq -e --arg id "$group_id" 'any(.data[]; .id == $id)' <<< "$tester_groups" >/dev/null; then
-    tester_link="$(jq -nc --arg id "$tester_id" '{data:[{type:"betaTesters",id:$id}]}')"
-    asc_request POST "/v1/betaGroups/$group_id/relationships/betaTesters" "$tester_link" >/dev/null
-  fi
 fi
+
+group_testers="$(asc_request GET "/v1/betaGroups/$group_id/betaTesters?limit=200")"
+jq -e --arg id "$tester_id" 'any(.data[]; .id == $id)' <<< "$group_testers" >/dev/null \
+  || fail "Apple did not confirm the configured tester in the internal group"
 
 echo "MediNag $marketing_version ($build_number) is processed and assigned to $testflight_group."

@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { TestStepHelper } from '../helpers/test-step-helper';
 
+// Browser fixture startup is part of Playwright's story timeout on a fresh
+// hosted runner. Individual navigation, action, and assertion conditions remain
+// capped at the required two seconds by playwright.config.ts.
+test.setTimeout(20_000);
+
 const required = (name: string): string => {
   const value = process.env[name];
   if (!value) {
