@@ -235,7 +235,19 @@ final class AppViewModel: ObservableObject {
   }
 
   func respond(_ response: DoseResponse, toEventID eventID: String) async {
-    guard let event = events.first(where: { $0.id == eventID }) else { return }
+    guard let event = events.first(where: { $0.id == eventID }) else {
+      guard let reminder = activeReminder, reminder.eventID == eventID else { return }
+      pendingNotificationInteraction = NotificationInteraction(
+        kind: .response(response),
+        eventID: reminder.eventID,
+        medicationName: reminder.medicationName,
+        reminderTime: reminder.scheduledTime,
+        reminderNumber: reminder.reminderNumber
+      )
+      activeReminder = nil
+      actionNotice = "Recording your response…"
+      return
+    }
     await respond(response, to: event)
   }
 
@@ -425,10 +437,6 @@ final class AppViewModel: ObservableObject {
   }
 
   private func handleNotificationInteraction(_ interaction: NotificationInteraction) {
-    guard events.contains(where: { $0.id == interaction.eventID }) else {
-      pendingNotificationInteraction = interaction
-      return
-    }
     switch interaction.kind {
     case .opened:
       #if E2E
@@ -441,6 +449,10 @@ final class AppViewModel: ObservableObject {
         reminderNumber: interaction.reminderNumber
       )
     case .response(let response):
+      guard events.contains(where: { $0.id == interaction.eventID }) else {
+        pendingNotificationInteraction = interaction
+        return
+      }
       Task { await respond(response, toEventID: interaction.eventID) }
     }
   }

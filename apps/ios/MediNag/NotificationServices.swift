@@ -281,7 +281,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
             // acknowledges the request. SpringBoard then owns both delivery
             // and presentation, just as it does for the real calendar trigger.
             trigger: UNTimeIntervalNotificationTrigger(
-              timeInterval: 1,
+              timeInterval: 1.5,
               repeats: false
             )
           )
