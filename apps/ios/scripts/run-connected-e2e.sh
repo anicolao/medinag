@@ -56,6 +56,7 @@ export MEDINAG_E2E_MEDICATION_NAME="Morning Prescription Doses"
 export MEDINAG_E2E_SCHEDULED_TIME="08:00"
 export MEDINAG_E2E_SCHEDULED_DISPLAY_TIME="8:00"
 export MEDINAG_E2E_REPEAT_DISPLAY_TIME="8:10"
+export MEDINAG_E2E_TIME_ZONE="America/Toronto"
 export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/apps/ios/DerivedData/ConnectedE2E}"
 
 npx firebase emulators:exec \

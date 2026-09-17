@@ -108,7 +108,7 @@ private struct ReminderAlertView: View {
           .tracking(1.5)
           .foregroundStyle(MediNagColor.teal)
           .accessibilityIdentifier("reminder-sequence")
-        Text(reminder.scheduledTime.formatted(date: .omitted, time: .shortened))
+        Text(MediNagDateFormatting.reminderTime(reminder.scheduledTime))
           .font(.system(size: 52, weight: .bold, design: .rounded))
           .foregroundStyle(MediNagColor.ink)
           .accessibilityIdentifier("reminder-time")
@@ -489,7 +489,7 @@ private struct NextDoseCard: View {
             .font(.caption2.bold())
             .tracking(1.4)
             .foregroundStyle(MediNagColor.teal)
-          Text(event.scheduledTime.formatted(date: .omitted, time: .shortened))
+          Text(MediNagDateFormatting.reminderTime(event.scheduledTime))
             .font(.system(size: 42, weight: .bold, design: .rounded))
             .foregroundStyle(MediNagColor.ink)
         }
@@ -566,7 +566,7 @@ private struct EventRow: View {
 
   var body: some View {
     HStack(spacing: 14) {
-      Text(event.scheduledTime.formatted(date: .omitted, time: .shortened))
+      Text(MediNagDateFormatting.reminderTime(event.scheduledTime))
         .font(.headline.monospacedDigit())
         .frame(width: 76, alignment: .leading)
       VStack(alignment: .leading, spacing: 3) {

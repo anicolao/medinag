@@ -6,6 +6,7 @@ import MediNagCore
   enum E2ERuntime {
     private static let notificationAccelerationKey =
       "medinag.e2e.notification-acceleration-enabled"
+    private static let timeZoneKey = "medinag.e2e.time-zone"
 
     static var googleIDToken: String? {
       guard
@@ -31,6 +32,26 @@ import MediNagCore
       }
       return defaults.bool(forKey: notificationAccelerationKey)
     }
+
+    static var reminderTimeZone: TimeZone {
+      let defaults = UserDefaults.standard
+      if
+        let identifier = ProcessInfo.processInfo.arguments.e2eLaunchValue(
+          after: "-e2e-time-zone"
+        ),
+        let timeZone = TimeZone(identifier: identifier)
+      {
+        defaults.set(identifier, forKey: timeZoneKey)
+        return timeZone
+      }
+      if
+        let identifier = defaults.string(forKey: timeZoneKey),
+        let timeZone = TimeZone(identifier: identifier)
+      {
+        return timeZone
+      }
+      return .current
+    }
   }
 #endif
 
@@ -51,6 +72,18 @@ enum MediNagNotification {
   static let medicationName = "medinagMedicationName"
   static let reminderTime = "medinagReminderTime"
   static let reminderNumber = "medinagReminderNumber"
+}
+
+enum MediNagDateFormatting {
+  static func reminderTime(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .none
+    formatter.timeStyle = .short
+    #if E2E
+      formatter.timeZone = E2ERuntime.reminderTimeZone
+    #endif
+    return formatter.string(from: date)
+  }
 }
 
 enum NotificationInteractionKind: Sendable {
@@ -215,7 +248,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
 
     let content = UNMutableNotificationContent()
     content.title = reminderNumber == 1 ? "Medication reminder" : "Medication reminder 2"
-    content.body = "\(date.formatted(date: .omitted, time: .shortened)) • \(event.medicationName)"
+    content.body = "\(MediNagDateFormatting.reminderTime(date)) • \(event.medicationName)"
     // Critical Alerts require an Apple entitlement and are intentionally
     // deferred beyond this MVP. Use the standard local alert sound here.
     content.sound = .default
@@ -259,7 +292,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
       content.title = reminder.reminderNumber == 1
         ? "Medication reminder"
         : "Medication reminder 2"
-      content.body = "\(reminder.date.formatted(date: .omitted, time: .shortened)) • \(reminder.event.medicationName)"
+      content.body = "\(MediNagDateFormatting.reminderTime(reminder.date)) • \(reminder.event.medicationName)"
       content.sound = .default
       content.interruptionLevel = .timeSensitive
       content.categoryIdentifier = MediNagNotification.category

@@ -38,6 +38,8 @@
     <string>$(MEDINAG_E2E_SCHEDULED_DISPLAY_TIME)</string>
     <key>MEDINAG_E2E_REPEAT_DISPLAY_TIME</key>
     <string>$(MEDINAG_E2E_REPEAT_DISPLAY_TIME)</string>
+    <key>MEDINAG_E2E_TIME_ZONE</key>
+    <string>$(MEDINAG_E2E_TIME_ZONE)</string>
     <key>XCTContainsUITests</key>
     <true/>
 </dict>

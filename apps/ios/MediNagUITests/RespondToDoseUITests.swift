@@ -222,6 +222,7 @@ final class RespondToDoseUITests: XCTestCase {
       "-firebase-auth-emulator-port", "9099",
       "-firebase-firestore-emulator-port", "8080",
       "-e2e-google-id-token-base64", environment.googleIDTokenBase64,
+      "-e2e-time-zone", environment.timeZoneIdentifier,
       "-AppleLanguages", "(en)",
       "-AppleLocale", "en_CA",
       "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryM",
@@ -326,6 +327,7 @@ private struct ConnectedEnvironment {
   let medicationName: String
   let scheduledDisplayTime: String
   let repeatDisplayTime: String
+  let timeZoneIdentifier: String
 
   init() throws {
     projectID = try requiredConfiguration("MEDINAG_E2E_PROJECT_ID")
@@ -340,6 +342,7 @@ private struct ConnectedEnvironment {
     medicationName = try requiredConfiguration("MEDINAG_E2E_MEDICATION_NAME")
     scheduledDisplayTime = try requiredConfiguration("MEDINAG_E2E_SCHEDULED_DISPLAY_TIME")
     repeatDisplayTime = try requiredConfiguration("MEDINAG_E2E_REPEAT_DISPLAY_TIME")
+    timeZoneIdentifier = try requiredConfiguration("MEDINAG_E2E_TIME_ZONE")
   }
 }
 
