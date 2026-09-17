@@ -235,8 +235,12 @@ plan, and following a plan. It never asks for a household ID.
 - Supporting copy: **MediNag will remember you on this iPhone.**
 - Primary action: **Continue with Google**
 
-Successful authentication goes directly to plan selection if the account has no
-current plan. A returning patient with a valid plan goes directly to Today.
+After the Google action, a stable **Preparing your schedules** screen confirms
+that real authentication and Firebase discovery are in progress. **Continue to
+schedules** records that the patient is ready to proceed; the app opens plan
+selection as soon as the real calls complete. This progress boundary keeps a
+slow connection visible and user-controlled without an artificial delay. A
+returning patient with a valid plan continues to Today instead of choosing again.
 
 ### P2 — Choose a schedule
 

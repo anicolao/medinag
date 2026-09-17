@@ -247,7 +247,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
   }
 
   #if E2E
-    static func deliverAcceleratedNotification() -> Bool {
+    static func deliverAcceleratedNotification() async -> Bool {
       guard
         E2ERuntime.notificationAccelerationEnabled,
         let reminder = E2ENotificationDeliveryStore.shared.take()
@@ -269,23 +269,26 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
         MediNagNotification.reminderTime: reminder.date.timeIntervalSince1970,
         MediNagNotification.reminderNumber: reminder.reminderNumber,
       ]
-      UNUserNotificationCenter.current().add(
-        UNNotificationRequest(
-          identifier: notificationIdentifier(
-            eventID: reminder.event.id,
-            reminderNumber: reminder.reminderNumber
-          ),
-          content: content,
-          // XCTest backgrounds the app immediately after this synchronous
-          // submission, leaving presentation to SpringBoard.
-          trigger: UNTimeIntervalNotificationTrigger(
-            timeInterval: 0.5,
-            repeats: false
+      do {
+        try await UNUserNotificationCenter.current().add(
+          UNNotificationRequest(
+            identifier: notificationIdentifier(
+              eventID: reminder.event.id,
+              reminderNumber: reminder.reminderNumber
+            ),
+            content: content,
+            // The test backgrounds the app only after iOS acknowledges this
+            // request, leaving presentation to SpringBoard.
+            trigger: UNTimeIntervalNotificationTrigger(
+              timeInterval: 0.5,
+              repeats: false
+            )
           )
-        ),
-        withCompletionHandler: nil
-      )
-      return true
+        )
+        return true
+      } catch {
+        return false
+      }
     }
   #endif
 

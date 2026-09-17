@@ -449,8 +449,9 @@ private struct NotificationReadinessCard: View {
         .font(.headline)
         .accessibilityIdentifier("notification-readiness")
         #if E2E
+          .accessibilityValue("Notification requests acknowledged: \(viewModel.acknowledgedNotificationCount)")
           .onTapGesture {
-            viewModel.advanceReminderClock()
+            Task { await viewModel.advanceReminderClock() }
           }
         #endif
         Text(

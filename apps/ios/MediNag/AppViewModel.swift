@@ -40,6 +40,9 @@ final class AppViewModel: ObservableObject {
   @Published private(set) var actionNotice = ""
   @Published private(set) var isWorking = false
   @Published private(set) var activeReminder: ReminderPresentation?
+  #if E2E
+    @Published private(set) var acknowledgedNotificationCount = 0
+  #endif
 
   private var listeners: [ListenerRegistration] = []
   private var coordinator: DoseCoordinator?
@@ -202,8 +205,10 @@ final class AppViewModel: ObservableObject {
   }
 
   #if E2E
-    func advanceReminderClock() {
-      _ = LocalNotificationScheduler.deliverAcceleratedNotification()
+    func advanceReminderClock() async {
+      if await LocalNotificationScheduler.deliverAcceleratedNotification() {
+        acknowledgedNotificationCount += 1
+      }
     }
   #endif
 

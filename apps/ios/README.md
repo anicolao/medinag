@@ -65,9 +65,9 @@ enabled. The Google token is exchanged for a Firebase credential and persisted b
 Firebase Auth; no credential belongs in source or build settings.
 
 An administrator must sign into the website, add at least one active dose, and
-publish the schedule. A new patient then signs into the iPhone app, selects that
-administrator, and follows the plan. No administrator-side patient provisioning
-is required.
+publish the schedule. A new patient then signs into the iPhone app, continues
+through the visible Firebase preparation state, selects that administrator, and
+follows the plan. No administrator-side patient provisioning is required.
 
 ## Install on a physical iPhone
 
@@ -83,6 +83,26 @@ It validates Firebase identifiers, detects the phone, generates the project,
 signs a serial build, installs it, and launches MediNag. Override selection with
 `MEDINAG_IOS_DEVICE_ID`; use `MEDINAG_APPLE_CONFIG` for a different signing
 handoff.
+
+## Release through TestFlight
+
+MediNag reuses the owner-only App Store Connect handoff already installed for
+the Board Games Cafe Apple team. Apple does not permit app-record creation via
+its API, so the first release requires one manual App Store Connect record with
+name **MediNag**, bundle ID `org.boardgamescafe.medinag`, SKU `medinag-ios`, and
+primary language English (Canada). The bundle ID itself is already registered.
+
+After that record exists, one command discovers the next build number, archives
+and validates the app with production Firebase configuration, uploads it, waits
+for Apple processing, assigns it to the Internal group, and adds the configured
+internal tester:
+
+```bash
+npm run ios:testflight
+```
+
+Private keys and Apple account identifiers remain outside the repository. Use
+`MEDINAG_APPLE_CONFIG` to select a different owner-only handoff.
 
 ## Interactive connected environment
 

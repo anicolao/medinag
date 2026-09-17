@@ -111,6 +111,7 @@ final class RespondToDoseUITests: XCTestCase {
     )
 
     app.staticTexts["notification-readiness"].tap()
+    waitForNotificationAcknowledgement(app, count: 1)
     XCUIDevice.shared.press(.home)
     let firstNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
@@ -158,6 +159,9 @@ final class RespondToDoseUITests: XCTestCase {
     )
 
     app.staticTexts["notification-readiness"].tap()
+    // Tapping the first system notification cold-launches a fresh app process,
+    // so its acknowledgement sequence restarts at one.
+    waitForNotificationAcknowledgement(app, count: 1)
     XCUIDevice.shared.press(.home)
     let repeatNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
@@ -289,6 +293,25 @@ final class RespondToDoseUITests: XCTestCase {
         "Neither response has greater visual weight"
       ),
     ]
+  }
+
+  private func waitForNotificationAcknowledgement(
+    _ app: XCUIApplication,
+    count: Int
+  ) {
+    let readiness = app.staticTexts["notification-readiness"]
+    let receipt = XCTNSPredicateExpectation(
+      predicate: NSPredicate(
+        format: "value CONTAINS %@",
+        "Notification requests acknowledged: \(count)"
+      ),
+      object: readiness
+    )
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [receipt], timeout: TestStepHelper.conditionTimeout),
+      .completed,
+      "iOS did not acknowledge notification request \(count)"
+    )
   }
 }
 

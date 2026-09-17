@@ -19,6 +19,7 @@
     "ios:core:check": "swift run --package-path apps/ios/Core MediNagCoreChecks",
     "ios:generate": "apps/ios/scripts/generate-project.sh",
     "ios:device": "apps/ios/scripts/run-on-device.sh",
+    "ios:testflight": "apps/ios/scripts/release-testflight.sh",
     "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
     "test:e2e": "npm run test:e2e:connected",
