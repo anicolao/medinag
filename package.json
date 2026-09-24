@@ -25,6 +25,7 @@
     "ios:testflight": "apps/ios/scripts/release-testflight.sh",
     "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
+    "test:e2e:audit": "node scripts/audit-e2e-truthfulness.mjs",
     "test:e2e": "npm run test:e2e:connected",
     "test:e2e:connected": "scripts/run-connected-web-e2e.sh tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts && MEDINAG_E2E_AUTH_MODE=signed-out scripts/run-connected-web-e2e.sh tests/e2e/003-link-lori-google-account/003-link-lori-google-account.spec.ts",
     "test:e2e:connected:update-snapshots": "MEDINAG_E2E_UPDATE_SNAPSHOTS=true scripts/run-connected-web-e2e.sh tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts && MEDINAG_E2E_AUTH_MODE=signed-out MEDINAG_E2E_UPDATE_SNAPSHOTS=true scripts/run-connected-web-e2e.sh tests/e2e/003-link-lori-google-account/003-link-lori-google-account.spec.ts",

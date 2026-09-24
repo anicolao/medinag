@@ -43,6 +43,9 @@ jobs:
       - name: Check types
         run: npm run check
 
+      - name: Audit E2E truthfulness
+        run: npm run test:e2e:audit
+
       - name: Build dashboard
         run: npm run build
 

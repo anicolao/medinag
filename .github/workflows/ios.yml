@@ -72,6 +72,9 @@ jobs:
       - name: Run portable core checks
         run: npm run ios:core:check
 
+      - name: Audit E2E truthfulness
+        run: npm run test:e2e:audit
+
       - name: Run connected user story
         run: npm run ios:e2e:connected
         env:
