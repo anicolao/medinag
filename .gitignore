@@ -4,6 +4,7 @@ node_modules/
 .firebase/
 .build/
 build/
+functions/lib/
 playwright-report/
 test-results/
 firebase-debug.log

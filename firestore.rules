@@ -128,6 +128,8 @@ service cloud.firestore {
           'displayName',
           'email',
           'followingAdministratorUid',
+          'timeZone',
+          'timeZoneUpdatedAt',
           'createdAt',
           'updatedAt'
         ])
@@ -136,6 +138,8 @@ service cloud.firestore {
           'displayName',
           'email',
           'followingAdministratorUid',
+          'timeZone',
+          'timeZoneUpdatedAt',
           'createdAt',
           'updatedAt'
         ])
@@ -147,6 +151,10 @@ service cloud.firestore {
         && request.resource.data.email.size() <= 320
         && (request.resource.data.followingAdministratorUid == null
           || request.resource.data.followingAdministratorUid is string)
+        && request.resource.data.timeZone is string
+        && request.resource.data.timeZone.size() > 0
+        && request.resource.data.timeZone.size() <= 100
+        && request.resource.data.timeZoneUpdatedAt is timestamp
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
@@ -216,9 +224,26 @@ service cloud.firestore {
     }
 
     function validMedicationEvent() {
-      return request.resource.data.keys().hasOnly([
+      return request.resource.data.keys().hasAll([
           'scheduleId',
           'medicationName',
+          'occurrenceDate',
+          'scheduledLocalTime',
+          'timeZone',
+          'scheduledTime',
+          'status',
+          'snoozeCount',
+          'lastSnoozedAt',
+          'completedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'scheduleId',
+          'medicationName',
+          'occurrenceDate',
+          'scheduledLocalTime',
+          'timeZone',
           'scheduledTime',
           'status',
           'snoozeCount',
@@ -232,6 +257,13 @@ service cloud.firestore {
         && request.resource.data.medicationName is string
         && request.resource.data.medicationName.size() > 0
         && request.resource.data.medicationName.size() <= 100
+        && request.resource.data.occurrenceDate is string
+        && request.resource.data.occurrenceDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.scheduledLocalTime is string
+        && request.resource.data.scheduledLocalTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && request.resource.data.timeZone is string
+        && request.resource.data.timeZone.size() > 0
+        && request.resource.data.timeZone.size() <= 100
         && request.resource.data.scheduledTime is timestamp
         && request.resource.data.status in ['pending', 'snoozed', 'completed']
         && request.resource.data.snoozeCount is int
@@ -265,6 +297,83 @@ service cloud.firestore {
             && request.resource.data.lastSnoozedAt == resource.data.lastSnoozedAt
             && request.resource.data.completedAt is timestamp)
         );
+    }
+
+    function validDeviceCoverage(patientId) {
+      return request.resource.data.keys().hasOnly([
+          'patientUid',
+          'deviceId',
+          'timeZone',
+          'lastRefreshAt',
+          'scheduledThrough',
+          'applicationBuild',
+          'reconciliationStatus',
+          'expectedPendingCount',
+          'actualPendingCount',
+          'updatedAt'
+        ])
+        && request.resource.data.patientUid == patientId
+        && request.resource.data.deviceId is string
+        && request.resource.data.deviceId.size() > 0
+        && request.resource.data.deviceId.size() <= 100
+        && request.resource.data.timeZone is string
+        && request.resource.data.timeZone.size() > 0
+        && request.resource.data.timeZone.size() <= 100
+        && request.resource.data.lastRefreshAt is timestamp
+        && request.resource.data.scheduledThrough is timestamp
+        && request.resource.data.applicationBuild is string
+        && request.resource.data.applicationBuild.size() <= 100
+        && request.resource.data.reconciliationStatus in ['ready', 'failed']
+        && request.resource.data.expectedPendingCount is int
+        && request.resource.data.expectedPendingCount >= 0
+        && request.resource.data.actualPendingCount is int
+        && request.resource.data.actualPendingCount >= 0
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validClientIncident(administratorId) {
+      return request.resource.data.keys().hasOnly([
+          'administratorUid',
+          'patientUid',
+          'deviceId',
+          'code',
+          'message',
+          'severity',
+          'source',
+          'status',
+          'firstOccurredAt',
+          'lastOccurredAt',
+          'occurrenceCount',
+          'alertSequence',
+          'smsState',
+          'smsAttempts',
+          'context',
+          'updatedAt'
+        ])
+        && request.resource.data.administratorUid == administratorId
+        && request.resource.data.patientUid == request.auth.uid
+        && request.resource.data.deviceId is string
+        && request.resource.data.deviceId.size() > 0
+        && request.resource.data.deviceId.size() <= 100
+        && request.resource.data.code is string
+        && request.resource.data.code.size() > 0
+        && request.resource.data.code.size() <= 100
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 500
+        && request.resource.data.severity in ['warning', 'critical']
+        && request.resource.data.source == 'ios'
+        && request.resource.data.status == 'open'
+        && request.resource.data.firstOccurredAt is timestamp
+        && request.resource.data.lastOccurredAt is timestamp
+        && request.resource.data.occurrenceCount is int
+        && request.resource.data.occurrenceCount >= 1
+        && request.resource.data.alertSequence is int
+        && request.resource.data.alertSequence >= 1
+        && request.resource.data.smsState == 'queued'
+        && request.resource.data.smsAttempts == 0
+        && request.resource.data.context is map
+        && request.resource.data.updatedAt is timestamp;
     }
 
     function validPatientClaim(administratorId) {
@@ -330,6 +439,24 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt)
           || (followsAdministrator(administratorId) && validPatientResponse());
         allow delete: if false;
+      }
+
+      match /deviceCoverage/{patientId} {
+        allow read: if ownsAdministrator(administratorId)
+          || (followsAdministrator(administratorId)
+            && request.auth.uid == patientId);
+        allow create, update: if followsAdministrator(administratorId)
+          && request.auth.uid == patientId
+          && validDeviceCoverage(patientId);
+        allow delete: if false;
+      }
+
+      match /systemIncidents/{incidentId} {
+        allow read: if ownsAdministrator(administratorId)
+          || followsAdministrator(administratorId);
+        allow create: if followsAdministrator(administratorId)
+          && validClientIncident(administratorId);
+        allow update, delete: if false;
       }
     }
 

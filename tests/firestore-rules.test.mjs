@@ -53,6 +53,9 @@ const dose = {
 const medicationEvent = {
   scheduleId: 'morning',
   medicationName: 'Morning meds',
+  occurrenceDate: '2026-09-09',
+  scheduledLocalTime: '08:00',
+  timeZone: 'America/Toronto',
   scheduledTime: now,
   status: 'pending',
   snoozeCount: 0,
@@ -84,6 +87,8 @@ beforeEach(async () => {
       displayName: 'Steve',
       email: 'steve@example.com',
       followingAdministratorUid: 'lori',
+      timeZone: 'America/Toronto',
+      timeZoneUpdatedAt: now,
       createdAt: now,
       updatedAt: now
     });
@@ -220,6 +225,8 @@ test('a patient owns one following record and cannot rewrite another patient', a
     displayName: 'Alex',
     email: 'alex@example.com',
     followingAdministratorUid: null,
+    timeZone: 'America/Vancouver',
+    timeZoneUpdatedAt: now,
     createdAt: now,
     updatedAt: now
   }));
@@ -261,6 +268,88 @@ test('only the linked patient can snooze or complete without changing the dose',
     'medicationEvents',
     'dose'
   )));
+});
+
+test('the linked patient reports real device coverage for administrator review', async () => {
+  const steve = environment.authenticatedContext('steve').firestore();
+  const coverage = {
+    patientUid: 'steve',
+    deviceId: 'iphone-steve',
+    timeZone: 'America/Toronto',
+    lastRefreshAt: now,
+    scheduledThrough: now,
+    applicationBuild: '0.1.0 (2)',
+    reconciliationStatus: 'ready',
+    expectedPendingCount: 7,
+    actualPendingCount: 7,
+    updatedAt: now
+  };
+  await assertSucceeds(setDoc(doc(
+    steve,
+    'administrators',
+    'lori',
+    'deviceCoverage',
+    'steve'
+  ), coverage));
+  const lori = environment.authenticatedContext('lori').firestore();
+  await assertSucceeds(getDoc(doc(
+    lori,
+    'administrators',
+    'lori',
+    'deviceCoverage',
+    'steve'
+  )));
+  const stranger = environment.authenticatedContext('stranger').firestore();
+  await assertFails(setDoc(doc(
+    stranger,
+    'administrators',
+    'lori',
+    'deviceCoverage',
+    'stranger'
+  ), { ...coverage, patientUid: 'stranger' }));
+});
+
+test('client incidents are visible to the administrator but cannot forge SMS results', async () => {
+  const steve = environment.authenticatedContext('steve').firestore();
+  const incidentReference = doc(
+    steve,
+    'administrators',
+    'lori',
+    'systemIncidents',
+    'iphone-steve-notification-permission'
+  );
+  const incident = {
+    administratorUid: 'lori',
+    patientUid: 'steve',
+    deviceId: 'iphone-steve',
+    code: 'notification_permission_denied',
+    message: 'Medication notifications are disabled.',
+    severity: 'critical',
+    source: 'ios',
+    status: 'open',
+    firstOccurredAt: now,
+    lastOccurredAt: now,
+    occurrenceCount: 1,
+    alertSequence: 1,
+    smsState: 'queued',
+    smsAttempts: 0,
+    context: { authorizationStatus: 'denied' },
+    updatedAt: now
+  };
+  await assertSucceeds(setDoc(incidentReference, incident));
+  const lori = environment.authenticatedContext('lori').firestore();
+  await assertSucceeds(getDoc(doc(
+    lori,
+    'administrators',
+    'lori',
+    'systemIncidents',
+    'iphone-steve-notification-permission'
+  )));
+  await assertFails(setDoc(
+    doc(steve, 'administrators', 'lori', 'systemIncidents', 'forged'),
+    { ...incident, smsState: 'delivered', smsAttempts: 1 }
+  ));
+  await assertFails(updateDoc(incidentReference, { status: 'resolved' }));
 });
 
 test('the production dashboard can keep writing the legacy owner schedule during migration', async () => {
