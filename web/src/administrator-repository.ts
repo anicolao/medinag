@@ -51,7 +51,6 @@ implements AdministratorRepository {
           snoozeIntervalMinutes: Number(data.snoozeIntervalMinutes),
           escalationDeadlineMinutes: Number(data.escalationDeadlineMinutes),
           maxReminders: Number(data.maxReminders),
-          timeZone: String(data.timeZone),
           smsNumber: String(data.smsNumber)
         });
       },

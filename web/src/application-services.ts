@@ -40,12 +40,17 @@ import {
   FirestoreTodayRepository,
   type TodayRepository
 } from './today-repository';
+import {
+  FirestoreSystemHealthRepository,
+  type SystemHealthRepository
+} from './system-health-repository';
 
 export interface ApplicationServices {
   account: AdministratorAccount;
   administrator?: AdministratorRepository;
   schedules?: ScheduleRepository;
   today?: TodayRepository;
+  health?: SystemHealthRepository;
 }
 
 const ACCOUNT_NOTICE_KEY = 'medinag:account-notice';
@@ -149,7 +154,7 @@ async function ensureAdministrator(
       snoozeIntervalMinutes: 10,
       escalationDeadlineMinutes: 30,
       maxReminders: 3,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto',
+      timeZone: 'patient-local',
       smsNumber: '',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -281,9 +286,9 @@ export async function createApplicationServices(): Promise<ApplicationServices> 
     administrator: new FirestoreAdministratorRepository(firebase.database, user.uid),
     schedules: new FirestoreScheduleRepository(
       firebase.database,
-      ['administrators', user.uid, 'doses'],
-      ['administrators', user.uid, 'medicationEvents']
+      ['administrators', user.uid, 'doses']
     ),
-    today: new FirestoreTodayRepository(firebase.database, user.uid)
+    today: new FirestoreTodayRepository(firebase.database, user.uid),
+    health: new FirestoreSystemHealthRepository(firebase.database, user.uid)
   };
 }

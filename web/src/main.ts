@@ -38,7 +38,12 @@ const renderRoute = async (): Promise<void> => {
     );
     return;
   }
-  if (!application.administrator || !application.schedules || !application.today) {
+  if (
+    !application.administrator
+    || !application.schedules
+    || !application.today
+    || !application.health
+  ) {
     throw new Error('Authenticated application services are incomplete.');
   }
 
@@ -55,6 +60,7 @@ const renderRoute = async (): Promise<void> => {
     unmountPage = mountTodayPage(
       root,
       application.today,
+      application.health,
       application.administrator,
       application.account,
       () => markReady(version)

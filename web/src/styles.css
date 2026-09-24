@@ -981,6 +981,79 @@ h1 {
   font-size: 17px;
 }
 
+.health-section {
+  display: grid;
+  gap: 14px;
+}
+
+.coverage-card,
+.incident-card {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 19px 22px;
+  background: #fff;
+  border: 1px solid #dfe7e5;
+  border-left: 4px solid #4caa83;
+  border-radius: 17px;
+  box-shadow: 0 7px 24px rgb(28 66 67 / 4%);
+}
+
+.coverage-card.failed,
+.coverage-card.missing,
+.incident-card.warning {
+  border-left-color: #d6a64c;
+}
+
+.incident-card.critical {
+  border-left-color: #c35555;
+}
+
+.coverage-card span:first-child,
+.incident-card span:first-child {
+  display: block;
+  color: #718487;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.coverage-card strong,
+.incident-card h3 {
+  display: block;
+  margin: 5px 0 0;
+  color: #204248;
+  font-size: 15px;
+}
+
+.coverage-card small,
+.incident-card p {
+  display: block;
+  margin: 6px 0 0;
+  color: #75878a;
+  font-size: 11px;
+}
+
+.incident-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sms-state {
+  flex: 0 0 auto;
+  color: #536d71;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.healthy-state {
+  margin: 0;
+  color: #467463;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .empty-today p {
   margin: -4px 0 4px;
   color: #76898b;

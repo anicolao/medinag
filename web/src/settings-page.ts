@@ -50,15 +50,11 @@ function template(profile: AdministratorProfile, account: AdministratorAccount, 
                   ${selectOptions([1, 2, 3, 4, 5], profile.maxReminders, '')}
                 </select>
               </label>
-              <label class="field">
-                <span>Plan time zone</span>
-                <select name="timeZone">
-                  <option value="America/Toronto"${profile.timeZone === 'America/Toronto' ? ' selected' : ''}>America/Toronto</option>
-                  <option value="America/Vancouver"${profile.timeZone === 'America/Vancouver' ? ' selected' : ''}>America/Vancouver</option>
-                  <option value="America/New_York"${profile.timeZone === 'America/New_York' ? ' selected' : ''}>America/New_York</option>
-                  <option value="UTC"${profile.timeZone === 'UTC' ? ' selected' : ''}>UTC</option>
-                </select>
-              </label>
+              <div class="patient-time-zone-note settings-wide-field">
+                <span>Patient-local time</span>
+                <strong>Dose times follow the patient’s current time zone.</strong>
+                <small>The iPhone reports its time zone when it follows this schedule and whenever it refreshes.</small>
+              </div>
             </div>
           </section>
 
@@ -123,7 +119,6 @@ export function mountSettingsPage(
           snoozeIntervalMinutes: Number(values.get('snoozeIntervalMinutes')),
           escalationDeadlineMinutes: Number(values.get('escalationDeadlineMinutes')),
           maxReminders: Number(values.get('maxReminders')),
-          timeZone: String(values.get('timeZone')),
           smsNumber: String(values.get('smsNumber')).trim()
         });
         notice = 'Settings saved.';

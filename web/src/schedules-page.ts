@@ -80,7 +80,7 @@ function pageTemplate(
           <div>
             <p class="eyebrow">Medication management</p>
             <h1>Your medication schedule</h1>
-            <p>Publish and manage one plan for someone you care about.</p>
+            <p>Publish and manage one plan for someone you care about. Every dose time is local to the patient.</p>
           </div>
           <button class="primary-button" type="button" data-action="add">
             <span aria-hidden="true">+</span>
@@ -153,6 +153,7 @@ function pageTemplate(
         <label class="field time-field">
           <span>Dose time</span>
           <input name="scheduledTime" type="time" value="08:00" required />
+          <small>This time is interpreted in the patient’s current time zone.</small>
         </label>
 
         <fieldset class="days-field">

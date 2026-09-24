@@ -10,7 +10,6 @@ export interface AdministratorProfile {
   snoozeIntervalMinutes: number;
   escalationDeadlineMinutes: number;
   maxReminders: number;
-  timeZone: string;
   smsNumber: string;
 }
 
@@ -20,6 +19,5 @@ export interface AdministratorSettingsInput {
   snoozeIntervalMinutes: number;
   escalationDeadlineMinutes: number;
   maxReminders: number;
-  timeZone: string;
   smsNumber: string;
 }

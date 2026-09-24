@@ -1,14 +1,12 @@
 import {
   collection,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  Timestamp,
-  where,
-  writeBatch,
+  setDoc,
+  updateDoc,
   type CollectionReference,
   type Firestore
 } from 'firebase/firestore';
@@ -89,17 +87,12 @@ export class BrowserScheduleRepository implements ScheduleRepository {
 export class FirestoreScheduleRepository implements ScheduleRepository {
   readonly mode = 'firestore' as const;
   private readonly schedules: CollectionReference;
-  private readonly medicationEvents?: CollectionReference;
 
   constructor(
     private readonly database: Firestore,
-    path: string[],
-    medicationEventPath?: string[]
+    path: string[]
   ) {
     this.schedules = collection(database, path.join('/'));
-    this.medicationEvents = medicationEventPath
-      ? collection(database, medicationEventPath.join('/'))
-      : undefined;
   }
 
   subscribe(
@@ -125,83 +118,24 @@ export class FirestoreScheduleRepository implements ScheduleRepository {
 
   async create(input: ScheduleInput): Promise<void> {
     const schedule = doc(this.schedules);
-    const batch = writeBatch(this.database);
-    batch.set(schedule, {
+    await setDoc(schedule, {
       ...input,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-    if (this.medicationEvents && input.active) {
-      batch.set(doc(this.medicationEvents), medicationEvent(schedule.id, input));
-    }
-    await batch.commit();
   }
 
   async update(id: string, input: ScheduleInput): Promise<void> {
-    const batch = writeBatch(this.database);
-    batch.update(doc(this.schedules, id), {
+    await updateDoc(doc(this.schedules, id), {
       ...input,
       updatedAt: serverTimestamp()
     });
-    if (this.medicationEvents && input.active) {
-      const existingEvents = await getDocs(
-        query(this.medicationEvents, where('scheduleId', '==', id))
-      );
-      const unfinishedEvents = existingEvents.docs.filter(
-        (event) => event.data().status !== 'completed'
-      );
-      if (unfinishedEvents.length === 0) {
-        batch.set(doc(this.medicationEvents), medicationEvent(id, input));
-      } else {
-        for (const event of unfinishedEvents) {
-          batch.update(event.ref, {
-            medicationName: input.medicationName,
-            scheduledTime: Timestamp.fromDate(nextOccurrence(input)),
-            updatedAt: serverTimestamp()
-          });
-        }
-      }
-    }
-    await batch.commit();
   }
 
   async setActive(id: string, active: boolean): Promise<void> {
-    const batch = writeBatch(this.database);
-    batch.update(doc(this.schedules, id), {
+    await updateDoc(doc(this.schedules, id), {
       active,
       updatedAt: serverTimestamp()
     });
-    await batch.commit();
   }
-}
-
-function medicationEvent(
-  scheduleId: string,
-  input: ScheduleInput
-): Record<string, unknown> {
-  return {
-    scheduleId,
-    medicationName: input.medicationName,
-    scheduledTime: Timestamp.fromDate(nextOccurrence(input)),
-    status: 'pending',
-    snoozeCount: 0,
-    lastSnoozedAt: null,
-    completedAt: null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-}
-
-export function nextOccurrence(input: ScheduleInput, now = new Date()): Date {
-  const [hour, minute] = input.scheduledTime.split(':').map(Number);
-  for (let dayOffset = 0; dayOffset <= 7; dayOffset += 1) {
-    const candidate = new Date(now);
-    candidate.setDate(now.getDate() + dayOffset);
-    candidate.setHours(hour, minute, 0, 0);
-    const mondayBasedDay = ((candidate.getDay() + 6) % 7) + 1;
-    if (input.daysOfWeek.includes(mondayBasedDay) && candidate > now) {
-      return candidate;
-    }
-  }
-  throw new Error('The schedule has no future occurrence.');
 }
