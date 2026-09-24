@@ -25,15 +25,15 @@ test('US-004: Lori schedules the dose Steve receives on iOS', async ({ page }, t
 
   await page.goto('/#/schedules', { waitUntil: 'domcontentloaded' });
   await tester.step('empty-connected-dashboard', {
-    description: 'Lori opens a fresh administrator plan connected to Firebase',
+    description: 'Lori opens a fresh dashboard connected to Firebase',
     verifications: [
       {
-        spec: 'The dashboard is connected to the isolated Firebase environment',
+        claim: 'web.firebase-connected',
         check: async () =>
           await expect(page.getByText('Google signed in · Firebase synced')).toBeVisible()
       },
       {
-        spec: 'No dose or medication event has been preloaded',
+        claim: 'web.no-preloaded-dose',
         check: async () =>
           await expect(page.getByText('No doses in this plan yet')).toBeVisible()
       }
@@ -44,30 +44,27 @@ test('US-004: Lori schedules the dose Steve receives on iOS', async ({ page }, t
   await page.getByLabel('Medication label').fill(medicationName);
   await page.getByLabel('Dose time').fill(scheduledTime);
   await page.getByRole('button', { name: 'Save dose' }).click();
+  await expect(page.getByRole('status')).toHaveText('Dose added.');
+  await page.getByRole('button', { name: 'Publish schedule' }).click();
 
   await tester.step('schedule-written-to-firestore', {
     description: 'Lori saves and publishes the medication schedule through the dashboard',
     verifications: [
       {
-        spec: 'The saved medication label is rendered from the Firestore snapshot',
+        claim: 'web.saved-label',
         check: async () =>
           await expect(page.getByRole('heading', { name: medicationName })).toBeVisible()
       },
       {
-        spec: 'The dashboard confirms the production repository write',
+        claim: 'web.repository-write',
         check: async () =>
-          await expect(page.getByRole('status')).toHaveText('Dose added.')
+          await expect(page.getByRole('status')).toHaveText('Schedule published.')
       },
       {
-        spec: 'The plan remains a draft until Lori explicitly publishes it',
+        claim: 'web.plan-published',
         check: async () =>
-          await expect(page.getByText('Draft', { exact: true })).toBeVisible()
+          await expect(page.getByText('Published', { exact: true })).toBeVisible()
       }
     ]
   });
-
-  await page.getByRole('button', { name: 'Publish schedule' }).click();
-  await expect(page.getByText('Published', { exact: true })).toBeVisible();
-
-  tester.generateDocs();
 });

@@ -19,6 +19,7 @@
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
 		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
+		B7B494C82B75CDBC54A429FF /* claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 8177F89908E773650A98ED95 /* claims.json */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
@@ -59,6 +60,7 @@
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
+		8177F89908E773650A98ED95 /* claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = claims.json; sourceTree = "<group>"; };
 		8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
 		8FD40690383616CF75360A1A /* MediNagApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagApp.swift; sourceTree = "<group>"; };
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
@@ -118,11 +120,20 @@
 			path = MediNagUITests;
 			sourceTree = "<group>";
 		};
+		58D52A61C69AE42EE828D9EB /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				FA6EE0CA4752391B8A785FFE /* e2e */,
+			);
+			path = tests;
+			sourceTree = "<group>";
+		};
 		5FA0D372217BDD24DAFD8E55 = {
 			isa = PBXGroup;
 			children = (
 				6AA6A2A48A50A6E5046BFA09 /* Config */,
 				BCC9EC6C6087604C8230D6B9 /* MediNag */,
+				B0AF1B741457C34D1BE7E9BE /* medinag */,
 				CD46DC3740B945DDE7263559 /* MediNagTests */,
 				28D058E8C2014A0511ECA06E /* MediNagUITests */,
 				E94D665164BF92FA61568DD1 /* Packages */,
@@ -138,6 +149,15 @@
 				8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */,
 			);
 			path = Config;
+			sourceTree = "<group>";
+		};
+		B0AF1B741457C34D1BE7E9BE /* medinag */ = {
+			isa = PBXGroup;
+			children = (
+				58D52A61C69AE42EE828D9EB /* tests */,
+			);
+			name = medinag;
+			path = ../..;
 			sourceTree = "<group>";
 		};
 		BCC9EC6C6087604C8230D6B9 /* MediNag */ = {
@@ -158,6 +178,14 @@
 				0E8A51B7B4F47C9CD032BDE4 /* Resources */,
 			);
 			path = MediNag;
+			sourceTree = "<group>";
+		};
+		BE7E4621A61F1B24672B1B62 /* 004-ios-respond-to-dose */ = {
+			isa = PBXGroup;
+			children = (
+				8177F89908E773650A98ED95 /* claims.json */,
+			);
+			path = "004-ios-respond-to-dose";
 			sourceTree = "<group>";
 		};
 		C965100F96BDA12935AD3316 /* Products */ = {
@@ -186,6 +214,14 @@
 			name = Packages;
 			sourceTree = "<group>";
 		};
+		FA6EE0CA4752391B8A785FFE /* e2e */ = {
+			isa = PBXGroup;
+			children = (
+				BE7E4621A61F1B24672B1B62 /* 004-ios-respond-to-dose */,
+			);
+			path = e2e;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -194,6 +230,7 @@
 			buildConfigurationList = A08C8005AD9BC80F80AF1DD8 /* Build configuration list for PBXNativeTarget "MediNagUITests" */;
 			buildPhases = (
 				6F6D375A8F3469E2F2871144 /* Sources */,
+				F297012ACF3DACB333DBBD92 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -307,6 +344,14 @@
 			files = (
 				BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */,
 				BED3126F79F402470EC3C662 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F297012ACF3DACB333DBBD92 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B7B494C82B75CDBC54A429FF /* claims.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -8,6 +8,12 @@
 - **iOS:** covered
 - **watchOS:** not-applicable — watchOS is deferred until after the iOS MVP.
 
+## Evidence environments
+
+- **connected-emulators:** Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.
+- **ios-simulator:** Pinned iPhone 17 / iOS 26.5 Simulator using the production notification scheduler and a scaled timeline.
+- **springboard:** The iOS Simulator SpringBoard with MediNag terminated before notification delivery.
+
 ## Deterministic preconditions
 
 - Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code

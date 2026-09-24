@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repository_root="$(cd "$script_directory/../../.." && pwd)"
+
 if [[ $# -lt 2 ]]; then
   echo "usage: $0 <xcresult-attachments-directory> <story-output-directory> [additional-attachments-directory ...]" >&2
   exit 2
@@ -65,4 +68,7 @@ copy_attachment "008-dose-snoozed-in-firestore.png" "$screenshot_directory/008-d
 copy_attachment "009-repeat-system-notification.png" "$screenshot_directory/009-repeat-system-notification.png"
 copy_attachment "010-repeat-reminder-response.png" "$screenshot_directory/010-repeat-reminder-response.png"
 copy_attachment "011-dose-completed-in-firestore.png" "$screenshot_directory/011-dose-completed-in-firestore.png"
-copy_attachment "README.md" "$story_directory/README.md"
+
+node "$repository_root/scripts/generate-walkthrough.mjs" \
+  "$repository_root/tests/e2e/004-ios-respond-to-dose/claims.json" \
+  "$story_directory"

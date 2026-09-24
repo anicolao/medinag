@@ -101,6 +101,7 @@ targets:
     platform: iOS
     sources:
       - path: MediNagUITests
+      - path: ../../tests/e2e/004-ios-respond-to-dose/claims.json
     configFiles:
       Debug: Config/Debug.xcconfig
       E2E: Config/E2E.xcconfig

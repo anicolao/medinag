@@ -84,9 +84,7 @@ final class TestStepHelper {
   static let conditionTimeout: TimeInterval = 2
 
   private unowned let testCase: XCTestCase
-  private var title = ""
-  private var narrative = ""
-  private var steps: [Step] = []
+  private let claims: ClaimsManifest
   private var nextScreenshotIndex: Int
 
   init(
@@ -98,31 +96,19 @@ final class TestStepHelper {
     self.testCase = testCase
     self.nextScreenshotIndex = startingStepIndex
     _ = application
-    _ = storyID
-  }
-
-  func documentPriorStep(
-    _ identifier: String,
-    index: Int,
-    description: String,
-    verifications: [String],
-    surface: String
-  ) {
-    steps.append(
-      Step(
-        identifier: identifier,
-        description: description,
-        filename: String(format: "%03d-%@.png", index, identifier),
-        verifications: verifications,
-        surface: surface,
-        durationMilliseconds: 0
-      )
-    )
-  }
-
-  func setMetadata(title: String, narrative: String) {
-    self.title = title
-    self.narrative = narrative
+    guard
+      let url = Bundle(for: type(of: testCase)).url(
+        forResource: "claims",
+        withExtension: "json"
+      ),
+      let data = try? Data(contentsOf: url),
+      let claims = try? JSONDecoder().decode(ClaimsManifest.self, from: data),
+      claims.storyId == "US-004",
+      storyID == "004-ios-respond-to-dose"
+    else {
+      fatalError("The US-004 claims manifest is missing or invalid.")
+    }
+    self.claims = claims
   }
 
   func step(
@@ -132,11 +118,32 @@ final class TestStepHelper {
     screenshotElement: XCUIElement? = nil,
     trimAnimatedSystemEdge: Bool = false
   ) throws {
-    let startedAt = ContinuousClock.now
-    for verification in verifications {
+    guard let manifestStep = claims.steps.first(where: {
+      $0.id == identifier && $0.surface == "ios"
+    }) else {
+      XCTFail("No claims-manifest step matches ios:\(identifier).")
+      return
+    }
+    XCTAssertEqual(
+      description,
+      manifestStep.description,
+      "Step \(identifier) description must come from claims.json."
+    )
+    XCTAssertEqual(
+      verifications.count,
+      manifestStep.claims.count,
+      "Step \(identifier) must verify every manifest claim exactly once."
+    )
+    for (index, verification) in verifications.enumerated() {
+      guard index < manifestStep.claims.count else { return }
+      XCTAssertEqual(
+        verification.spec,
+        manifestStep.claims[index].text,
+        "Step \(identifier) assertion \(index + 1) must match claims.json."
+      )
       XCTAssertTrue(
         verification.check(),
-        verification.spec,
+        manifestStep.claims[index].text,
         file: #filePath,
         line: #line
       )
@@ -168,17 +175,6 @@ final class TestStepHelper {
     attachment.name = filename
     attachment.lifetime = .keepAlways
     testCase.add(attachment)
-
-    steps.append(
-      Step(
-        identifier: identifier,
-        description: description,
-        filename: filename,
-        verifications: verifications.map(\.spec),
-        surface: "ios",
-        durationMilliseconds: startedAt.duration(to: .now).milliseconds
-      )
-    )
   }
 
   private func normalizeSystemMaterial(_ image: CGImage) -> CGImage {
@@ -216,70 +212,20 @@ final class TestStepHelper {
   }
 
 
-  func generateDocs() throws {
-    let readme = """
-      # Test: \(title)
-
-      > \(narrative)
-
-      ## Surface coverage
-
-      - **Web Admin Dashboard:** covered
-      - **iOS:** covered
-      - **watchOS:** not-applicable — watchOS is deferred until after the iOS MVP.
-
-      ## Deterministic preconditions
-
-      - Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code
-      - Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test
-      - Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI
-      - Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
-      - Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification
-      - Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
-      - Status bar: fixed at 8:00 AM with a Simulator override
-      - System UI: notification permission and both reminders are rendered by iOS SpringBoard
-      - Lifecycle: the UI test terminates MediNag before it captures or taps either notification
-      - Snooze interval: 10 minutes from the administrator profile written through the dashboard
-
-      \(steps.map(markdown).joined(separator: "\n\n"))
-      """
-    let attachment = XCTAttachment(
-      data: Data(readme.utf8),
-      uniformTypeIdentifier: "public.plain-text"
-    )
-    attachment.name = "README.md"
-    attachment.lifetime = .keepAlways
-    testCase.add(attachment)
-  }
-
-  private func markdown(_ step: Step) -> String {
-    let heading = step.description
-    let checks = step.verifications.map { "- [x] \($0)" }.joined(separator: "\n")
-    return """
-      ## \(heading)
-
-      ![\(heading)](./screenshots/\(step.surface)/\(step.filename))
-
-      **Verifications:**
-
-      \(checks)
-      """
-  }
 }
 
-private struct Step {
-  let identifier: String
-  let description: String
-  let filename: String
-  let verifications: [String]
+private struct ClaimsManifest: Decodable {
+  let storyId: String
+  let steps: [ClaimStep]
+}
+
+private struct ClaimStep: Decodable {
+  let id: String
   let surface: String
-  let durationMilliseconds: Int
+  let description: String
+  let claims: [Claim]
 }
 
-extension Duration {
-  fileprivate var milliseconds: Int {
-    let components = self.components
-    return Int(components.seconds * 1_000)
-      + Int(components.attoseconds / 1_000_000_000_000_000)
-  }
+private struct Claim: Decodable {
+  let text: String
 }

@@ -1,9 +1,10 @@
 import { expect, type Page, type TestInfo } from '@playwright/test';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 export interface Verification {
-  spec: string;
+  spec?: string;
+  claim?: string;
   check: () => Promise<void>;
 }
 
@@ -34,22 +35,75 @@ interface StoryManifest {
   surfaces: Record<'web' | 'ios' | 'watchos', SurfaceCoverage>;
 }
 
+interface WalkthroughClaim {
+  id: string;
+  text: string;
+}
+
+interface WalkthroughStep {
+  id: string;
+  surface: string;
+  description: string;
+  claims: WalkthroughClaim[];
+}
+
+interface ClaimsManifest {
+  steps: WalkthroughStep[];
+}
+
 export class TestStepHelper {
   private metadata?: StoryMetadata;
-  private stepCount = 0;
+  private stepCount: number;
   private readonly steps: DocStep[] = [];
+  private readonly claims?: ClaimsManifest;
 
   constructor(
     private readonly page: Page,
     private readonly testInfo: TestInfo,
-    private readonly surfaceDirectory = ''
-  ) {}
+    private readonly surfaceDirectory = '',
+    startingStepIndex = 0
+  ) {
+    this.stepCount = startingStepIndex;
+    const claimsPath = join(dirname(testInfo.file), 'claims.json');
+    if (existsSync(claimsPath)) {
+      this.claims = JSON.parse(readFileSync(claimsPath, 'utf8')) as ClaimsManifest;
+    } else {
+      // Older single-surface stories retain their inline documentation until
+      // they receive a claims manifest.
+    }
+  }
 
   setMetadata(title: string, narrative: string): void {
     this.metadata = { title, narrative };
   }
 
   async step(id: string, options: StepOptions): Promise<void> {
+    const manifestStep = this.claims?.steps.find(
+      (step) => step.id === id && step.surface === (this.surfaceDirectory || 'web')
+    );
+    if (this.claims && !manifestStep) {
+      throw new Error(`No claims-manifest step matches ${this.surfaceDirectory}:${id}.`);
+    }
+    if (manifestStep && manifestStep.description !== options.description) {
+      throw new Error(`Step ${id} description must come from claims.json.`);
+    }
+    const specs = manifestStep
+      ? options.verifications.map((verification, index) => {
+          const expected = manifestStep.claims[index];
+          if (!expected || verification.claim !== expected.id) {
+            throw new Error(
+              `Step ${id} assertion ${index + 1} must map to claim ${expected?.id ?? '(none)'}.`
+            );
+          }
+          return expected.text;
+        })
+      : options.verifications.map(({ spec }) => {
+          if (!spec) throw new Error(`Step ${id} has an undocumented assertion.`);
+          return spec;
+        });
+    if (manifestStep && options.verifications.length !== manifestStep.claims.length) {
+      throw new Error(`Step ${id} must verify every claim in claims.json exactly once.`);
+    }
     for (const verification of options.verifications) {
       await verification.check();
     }
@@ -72,11 +126,11 @@ export class TestStepHelper {
     });
 
     this.steps.push({
-      title: options.description,
+      title: manifestStep?.description ?? options.description,
       image: `./screenshots/${
         Array.isArray(screenshotPath) ? screenshotPath.join('/') : screenshotPath
       }`,
-      specs: options.verifications.map(({ spec }) => spec)
+      specs
     });
     this.stepCount += 1;
   }

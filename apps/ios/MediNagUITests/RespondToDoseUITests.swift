@@ -212,19 +212,6 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
-    tester.documentPriorStep(
-      "completion-returned-to-dashboard",
-      index: 2,
-      description: "Lori sees Steve's completion and healthy iPhone coverage",
-      verifications: [
-        "The dashboard Firestore listener receives the completed occurrence",
-        "The administrator sees matching pending-request coverage from iOS",
-        "No reminder-system incident remains open",
-      ],
-      surface: "web"
-    )
-
-    try tester.generateDocs()
   }
 
   private func makeApplication(_ environment: ConnectedEnvironment) -> XCUIApplication {
@@ -252,38 +239,11 @@ final class RespondToDoseUITests: XCTestCase {
   }
 
   private func makeTester(application: XCUIApplication) -> TestStepHelper {
-    let tester = TestStepHelper(
+    TestStepHelper(
       testCase: self,
       application: application,
       storyID: "004-ios-respond-to-dose"
     )
-    tester.setMetadata(
-      title: "Lori schedules and Steve responds to a dose",
-      narrative:
-        "As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard."
-    )
-    tester.documentPriorStep(
-      "empty-connected-dashboard",
-      index: 0,
-      description: "Lori opens a fresh dashboard connected to Firebase",
-      verifications: [
-        "The dashboard is connected to the isolated Firebase environment",
-        "No dose or medication event has been preloaded",
-      ],
-      surface: "web"
-    )
-    tester.documentPriorStep(
-      "schedule-written-to-firestore",
-      index: 1,
-      description: "Lori saves and publishes the medication schedule through the dashboard",
-      verifications: [
-        "The saved medication label is rendered from the Firestore snapshot",
-        "The dashboard confirms the production repository write",
-        "The plan is explicitly published before the iPhone can discover it",
-      ],
-      surface: "web"
-    )
-    return tester
   }
 
   private func reminderVerifications(

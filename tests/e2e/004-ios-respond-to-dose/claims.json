@@ -1,0 +1,198 @@
+{
+  "storyId": "US-004",
+  "title": "Lori schedules and Steve responds to a dose",
+  "narrative": "As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard.",
+  "surfaces": {
+    "web": { "status": "covered" },
+    "ios": { "status": "covered" },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "watchOS is deferred until after the iOS MVP."
+    }
+  },
+  "environments": {
+    "connected-emulators": "Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.",
+    "ios-simulator": "Pinned iPhone 17 / iOS 26.5 Simulator using the production notification scheduler and a scaled timeline.",
+    "springboard": "The iOS Simulator SpringBoard with MediNag terminated before notification delivery."
+  },
+  "preconditions": [
+    "Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code",
+    "Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test",
+    "Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI",
+    "Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded",
+    "Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification",
+    "Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type",
+    "Status bar: fixed at 8:00 AM with a Simulator override",
+    "System UI: notification permission and both reminders are rendered by iOS SpringBoard",
+    "Lifecycle: the UI test terminates MediNag before it captures or taps either notification",
+    "Snooze interval: 10 minutes from the administrator profile written through the dashboard"
+  ],
+  "steps": [
+    {
+      "id": "empty-connected-dashboard",
+      "surface": "web",
+      "image": "000-empty-connected-dashboard.png",
+      "description": "Lori opens a fresh dashboard connected to Firebase",
+      "claims": [
+        { "id": "web.firebase-connected", "text": "The dashboard is connected to the isolated Firebase environment", "environment": "connected-emulators", "assertion": "web.spec.ts checks the Firebase-synced status" },
+        { "id": "web.no-preloaded-dose", "text": "No dose or medication event has been preloaded", "environment": "connected-emulators", "assertion": "web.spec.ts checks the empty-plan state" }
+      ]
+    },
+    {
+      "id": "schedule-written-to-firestore",
+      "surface": "web",
+      "image": "001-schedule-written-to-firestore.png",
+      "description": "Lori saves and publishes the medication schedule through the dashboard",
+      "claims": [
+        { "id": "web.saved-label", "text": "The saved medication label is rendered from the Firestore snapshot", "environment": "connected-emulators", "assertion": "web.spec.ts checks the saved medication heading" },
+        { "id": "web.repository-write", "text": "The dashboard confirms the production repository write", "environment": "connected-emulators", "assertion": "web.spec.ts checks the Dose added status" },
+        { "id": "web.plan-published", "text": "The plan is explicitly published before the iPhone can discover it", "environment": "connected-emulators", "assertion": "web.spec.ts checks Published after the visible publish action" }
+      ]
+    },
+    {
+      "id": "patient-sign-in",
+      "surface": "ios",
+      "image": "000-patient-sign-in.png",
+      "description": "Steve signs into MediNag with Google",
+      "claims": [
+        { "id": "ios.google-only", "text": "Google is the only sign-in action", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the Google sign-in button" },
+        { "id": "ios.no-household-id", "text": "No household identifier is requested", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that no household field exists" }
+      ]
+    },
+    {
+      "id": "authentication-in-progress",
+      "surface": "ios",
+      "image": "001-authentication-in-progress.png",
+      "description": "MediNag signs into the isolated Firebase Auth Emulator identity",
+      "claims": [
+        { "id": "ios.auth-progress", "text": "A visible progress state appears before the two-second condition limit", "environment": "connected-emulators", "assertion": "RespondToDoseUITests waits for the authentication progress screen" },
+        { "id": "ios.auth-continue", "text": "The user controls when to continue to schedule selection", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks and taps the visible continue button" }
+      ]
+    },
+    {
+      "id": "choose-schedule",
+      "surface": "ios",
+      "image": "002-choose-schedule.png",
+      "description": "Steve finds Lori's published schedule",
+      "claims": [
+        { "id": "ios.schedule-chooser", "text": "The schedule chooser is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the schedule-selection screen" },
+        { "id": "ios.lori-discoverable", "text": "Lori is discoverable by name", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the administrator name from Firebase" },
+        { "id": "ios.plan-summary", "text": "The published dose summary identifies the plan", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the dashboard-written medication name" }
+      ]
+    },
+    {
+      "id": "firestore-event-received",
+      "surface": "ios",
+      "image": "003-firestore-event-received.png",
+      "description": "The iPhone follows Lori's schedule and receives its Firestore event",
+      "claims": [
+        { "id": "ios.snapshot-label", "text": "The medication label written by Lori appears from the snapshot listener", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the next-dose label" },
+        { "id": "ios.pending-event", "text": "The real medication event is pending", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the event status received from Firestore" },
+        { "id": "ios.permission-action", "text": "The app offers notification permission", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the visible permission action" }
+      ]
+    },
+    {
+      "id": "notification-permission",
+      "surface": "ios",
+      "image": "004-notification-permission.png",
+      "description": "iOS asks Steve to allow MediNag notifications",
+      "claims": [
+        { "id": "ios.system-permission", "text": "The permission prompt is rendered by iOS", "environment": "springboard", "assertion": "RespondToDoseUITests checks the SpringBoard alert" },
+        { "id": "ios.system-allow", "text": "The system offers an Allow action", "environment": "springboard", "assertion": "RespondToDoseUITests checks the SpringBoard Allow button" }
+      ]
+    },
+    {
+      "id": "waiting-for-first-reminder",
+      "surface": "ios",
+      "image": "005-waiting-for-first-reminder.png",
+      "description": "MediNag is ready and waits for the scheduled notification",
+      "claims": [
+        { "id": "ios.pending-requests", "text": "Permission and real pending iOS requests are both confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production readiness state" },
+        { "id": "ios.event-visible", "text": "The Firestore event remains visible while the app waits", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the medication label" },
+        { "id": "ios.no-early-snooze", "text": "No response is available before a notification", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
+        { "id": "ios.no-early-completion", "text": "No completion is available before a notification", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
+      ]
+    },
+    {
+      "id": "first-system-notification",
+      "surface": "ios",
+      "image": "006-first-system-notification.png",
+      "description": "With MediNag terminated, iOS retains the scheduled notification",
+      "claims": [
+        { "id": "ios.first-springboard", "text": "The first reminder is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the system notification title after termination" },
+        { "id": "ios.first-hittable", "text": "The SpringBoard notification has finished arriving", "environment": "springboard", "assertion": "RespondToDoseUITests waits for the system notification to become hittable" }
+      ]
+    },
+    {
+      "id": "first-reminder-response",
+      "surface": "ios",
+      "image": "007-first-reminder-response.png",
+      "description": "Tapping the notification cold-launches the response screen",
+      "claims": [
+        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert" },
+        { "id": "ios.first-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the FIRST sequence" },
+        { "id": "ios.occurrence-time", "text": "The first reminder uses the medication occurrence time", "environment": "connected-emulators", "assertion": "RespondToDoseUITests derives and checks the dashboard-written schedule time" },
+        { "id": "ios.snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },
+        { "id": "ios.complete-available", "text": "Yes, I did is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the completion button" },
+        { "id": "ios.equal-actions", "text": "Neither response has greater visual weight", "environment": "ios-simulator", "assertion": "RespondToDoseUITests compares both button frames" }
+      ]
+    },
+    {
+      "id": "dose-snoozed-in-firestore",
+      "surface": "ios",
+      "image": "008-dose-snoozed-in-firestore.png",
+      "description": "Yes, I will writes the snoozed response back to Firestore",
+      "claims": [
+        { "id": "ios.snooze-count", "text": "The snooze count increments", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the snapshot-driven snooze count" },
+        { "id": "ios.repeat-interval", "text": "The configured repeat interval is confirmed", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the administrator-configured interval" },
+        { "id": "ios.snoozed-snapshot", "text": "The Firestore listener receives the snoozed state", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the event status" },
+        { "id": "ios.response-dismissed", "text": "The response screen is dismissed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert to disappear" }
+      ]
+    },
+    {
+      "id": "repeat-system-notification",
+      "surface": "ios",
+      "image": "009-repeat-system-notification.png",
+      "description": "With MediNag terminated, iOS retains the repeat notification",
+      "claims": [
+        { "id": "ios.repeat-springboard", "text": "The repeat is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the repeat notification title after termination" },
+        { "id": "ios.repeat-hittable", "text": "The repeat notification has finished arriving", "environment": "springboard", "assertion": "RespondToDoseUITests waits for the repeat notification to become hittable" }
+      ]
+    },
+    {
+      "id": "repeat-reminder-response",
+      "surface": "ios",
+      "image": "010-repeat-reminder-response.png",
+      "description": "Tapping reminder 2 cold-launches the app after logical time advances",
+      "claims": [
+        { "id": "ios.repeat-response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert" },
+        { "id": "ios.repeat-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the REMINDER 2 sequence" },
+        { "id": "ios.snooze-expiry", "text": "The repeat displays the response-relative snooze expiry", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the reminder-time element after the snooze write" },
+        { "id": "ios.repeat-snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },
+        { "id": "ios.repeat-complete-available", "text": "Yes, I did is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the completion button" },
+        { "id": "ios.repeat-equal-actions", "text": "Neither response has greater visual weight", "environment": "ios-simulator", "assertion": "RespondToDoseUITests compares both button frames" }
+      ]
+    },
+    {
+      "id": "dose-completed-in-firestore",
+      "surface": "ios",
+      "image": "011-dose-completed-in-firestore.png",
+      "description": "Yes, I did completes the real event and cancels further reminders",
+      "claims": [
+        { "id": "ios.completed-snapshot", "text": "The Firestore listener receives completion", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the completed event status" },
+        { "id": "ios.requests-cancelled", "text": "The app confirms notification cancellation", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks zero pending requests for the occurrence" }
+      ]
+    },
+    {
+      "id": "completion-returned-to-dashboard",
+      "surface": "web",
+      "image": "002-completion-returned-to-dashboard.png",
+      "description": "Lori sees Steve's completion and healthy iPhone coverage",
+      "claims": [
+        { "id": "web.completed-occurrence", "text": "The dashboard Firestore listener receives the completed occurrence", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the medication and Completed state" },
+        { "id": "web.healthy-coverage", "text": "The administrator sees matching pending-request coverage from iOS", "environment": "connected-emulators", "assertion": "completion.spec.ts checks Ready and confirmed iOS reminders" },
+        { "id": "web.no-open-incident", "text": "No reminder-system incident remains open", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the empty incident state" }
+      ]
+    }
+  ]
+}
