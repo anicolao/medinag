@@ -56,19 +56,22 @@ final class SystemHealthReporter: @unchecked Sendable {
     ])
   }
 
+  @discardableResult
   func reportIncident(
     _ incident: ClientSystemIncident,
     administratorID: String,
     patientID: String
-  ) async {
+  ) async -> Bool {
     do {
       try await submit(
         incident,
         administratorID: administratorID,
         patientID: patientID
       )
+      return true
     } catch {
       enqueue(incident)
+      return false
     }
   }
 

@@ -25,6 +25,8 @@ export interface SystemIncident {
   lastOccurredAt: Date;
   occurrenceCount: number;
   smsState: string;
+  smsAttempts: number;
+  smsProviderMessageId: string;
 }
 
 export interface SystemHealthSnapshot {
@@ -98,7 +100,9 @@ export class FirestoreSystemHealthRepository implements SystemHealthRepository {
           status: document.data().status === 'resolved' ? 'resolved' : 'open',
           lastOccurredAt: asDate(document.data().lastOccurredAt),
           occurrenceCount: Number(document.data().occurrenceCount),
-          smsState: String(document.data().smsState ?? 'not_requested')
+          smsState: String(document.data().smsState ?? 'not_requested'),
+          smsAttempts: Number(document.data().smsAttempts ?? 0),
+          smsProviderMessageId: String(document.data().smsProviderMessageId ?? '')
         }));
         emit();
       },

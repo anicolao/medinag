@@ -104,7 +104,7 @@ function pageTemplate(
           <h3>${escapeHtml(incident.message)}</h3>
           <p>${escapeHtml(incident.code)} · occurred ${incident.occurrenceCount} time${incident.occurrenceCount === 1 ? '' : 's'}</p>
         </div>
-        <span class="sms-state">SMS: ${escapeHtml(incident.smsState.replaceAll('_', ' '))}</span>
+        <span class="sms-state">SMS: ${escapeHtml(incident.smsState.replaceAll('_', ' '))}${incident.smsAttempts > 0 ? ` · attempt ${incident.smsAttempts}` : ''}${incident.smsProviderMessageId ? ` · ${escapeHtml(incident.smsProviderMessageId)}` : ''}</span>
       </article>
     `).join('')
     : '<p class="healthy-state">No open reminder-system incidents.</p>';

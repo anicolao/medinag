@@ -216,12 +216,14 @@ final class AppViewModel: ObservableObject {
       let authorized = try await notifications.requestAuthorization()
       guard authorized else {
         notificationReadiness = .denied
-        actionNotice = "Notifications were not enabled."
-        await reportIncident(
+        let submitted = await reportIncident(
           code: "notification_authorization_denied",
           message: "The patient iPhone has not allowed medication notifications.",
           severity: "critical"
         )
+        actionNotice = submitted
+          ? "Notifications were not enabled. Your administrator has been alerted."
+          : "Notifications were not enabled. Your administrator will be alerted when this iPhone reconnects."
         return
       }
       try await reconcileNotifications()
@@ -537,17 +539,18 @@ final class AppViewModel: ObservableObject {
     }
   }
 
+  @discardableResult
   private func reportIncident(
     code: String,
     message: String,
     severity: String,
     context: [String: String] = [:]
-  ) async {
+  ) async -> Bool {
     guard
       let administratorID = currentPlan?.id,
       let patientID = Auth.auth().currentUser?.uid
-    else { return }
-    await healthReporter.reportIncident(
+    else { return false }
+    return await healthReporter.reportIncident(
       ClientSystemIncident(
         code: code,
         message: message,

@@ -10,10 +10,22 @@ xcodebuild_command="$developer_directory/usr/bin/xcodebuild"
 
 cd "$repository_root"
 eval "$(node scripts/setup-e2e-environment.mjs --shell)"
-if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
-  npx playwright test tests/e2e/004-ios-respond-to-dose/web.spec.ts --update-snapshots
+story="${MEDINAG_E2E_STORY:-dose-response}"
+if [[ "$story" == "notification-failure" ]]; then
+  setup_spec="tests/e2e/005-notification-failure/setup.spec.ts"
+  completion_spec="tests/e2e/005-notification-failure/completion.spec.ts"
+  native_test="MediNagUITests/NotificationFailureUITests/testDeniedPermissionAlertsAdministrator"
+  result_name="NotificationFailure"
 else
-  npx playwright test tests/e2e/004-ios-respond-to-dose/web.spec.ts
+  setup_spec="tests/e2e/004-ios-respond-to-dose/web.spec.ts"
+  completion_spec="tests/e2e/004-ios-respond-to-dose/completion.spec.ts"
+  native_test="MediNagUITests/RespondToDoseUITests/testConnectedSystemNotificationDoseLoop"
+  result_name="SystemNotification"
+fi
+if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
+  npx playwright test "$setup_spec" --update-snapshots
+else
+  npx playwright test "$setup_spec"
 fi
 npm run ios:generate
 
@@ -47,7 +59,7 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_SCHEDULED_TIME="$MEDINAG_E2E_SCHEDULED_TIME" \
   MEDINAG_E2E_TIME_ZONE="$MEDINAG_E2E_TIME_ZONE"
 
-result_bundle="$derived_data_directory/SystemNotification.xcresult"
+result_bundle="$derived_data_directory/$result_name.xcresult"
 if [[ -d "$result_bundle" ]]; then
   /usr/bin/find "$result_bundle" -depth -delete
 fi
@@ -57,13 +69,13 @@ run_xcodebuild -quiet test-without-building \
   -configuration E2E \
   -destination "platform=iOS Simulator,id=$simulator_id" \
   -derivedDataPath "$derived_data_directory" \
-  -only-testing:MediNagUITests/RespondToDoseUITests/testConnectedSystemNotificationDoseLoop \
+  -only-testing:"$native_test" \
   -resultBundlePath "$result_bundle"
 
 if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
   npx playwright test \
-    tests/e2e/004-ios-respond-to-dose/completion.spec.ts \
+    "$completion_spec" \
     --update-snapshots
 else
-  npx playwright test tests/e2e/004-ios-respond-to-dose/completion.spec.ts
+  npx playwright test "$completion_spec"
 fi

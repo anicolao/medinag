@@ -6,13 +6,14 @@ script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd "$script_directory/../../.." && pwd)"
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <xcresult-attachments-directory> <story-output-directory> [additional-attachments-directory ...]" >&2
+  echo "usage: $0 <xcresult-attachments-directory> <story-output-directory> [claims-file] [additional-attachments-directory ...]" >&2
   exit 2
 fi
 
 attachment_directories=("$1")
 story_directory="$2"
-shift 2
+claims_file="${3:-$repository_root/tests/e2e/004-ios-respond-to-dose/claims.json}"
+shift $(( $# >= 3 ? 3 : 2 ))
 attachment_directories+=("$@")
 screenshot_directory="$story_directory/screenshots/ios"
 
@@ -56,19 +57,10 @@ copy_attachment() {
   exit 1
 }
 
-copy_attachment "000-patient-sign-in.png" "$screenshot_directory/000-patient-sign-in.png"
-copy_attachment "001-authentication-in-progress.png" "$screenshot_directory/001-authentication-in-progress.png"
-copy_attachment "002-choose-schedule.png" "$screenshot_directory/002-choose-schedule.png"
-copy_attachment "003-firestore-event-received.png" "$screenshot_directory/003-firestore-event-received.png"
-copy_attachment "004-notification-permission.png" "$screenshot_directory/004-notification-permission.png"
-copy_attachment "005-waiting-for-first-reminder.png" "$screenshot_directory/005-waiting-for-first-reminder.png"
-copy_attachment "006-first-system-notification.png" "$screenshot_directory/006-first-system-notification.png"
-copy_attachment "007-first-reminder-response.png" "$screenshot_directory/007-first-reminder-response.png"
-copy_attachment "008-dose-snoozed-in-firestore.png" "$screenshot_directory/008-dose-snoozed-in-firestore.png"
-copy_attachment "009-repeat-system-notification.png" "$screenshot_directory/009-repeat-system-notification.png"
-copy_attachment "010-repeat-reminder-response.png" "$screenshot_directory/010-repeat-reminder-response.png"
-copy_attachment "011-dose-completed-in-firestore.png" "$screenshot_directory/011-dose-completed-in-firestore.png"
+while IFS= read -r screenshot; do
+  copy_attachment "$screenshot" "$screenshot_directory/$screenshot"
+done < <(jq -r '.steps[] | select(.surface == "ios") | .image' "$claims_file")
 
 node "$repository_root/scripts/generate-walkthrough.mjs" \
-  "$repository_root/tests/e2e/004-ios-respond-to-dose/claims.json" \
+  "$claims_file" \
   "$story_directory"

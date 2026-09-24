@@ -55,7 +55,9 @@ export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX)"
 export MEDINAG_E2E_MEDICATION_NAME="Morning Prescription Doses"
 export MEDINAG_E2E_SCHEDULED_TIME="08:00"
 export MEDINAG_E2E_TIME_ZONE="America/Toronto"
-export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/apps/ios/DerivedData/ConnectedE2E}"
+export MEDINAG_E2E_SMS_NUMBER="+15555550199"
+export MEDINAG_E2E_STORY="${MEDINAG_E2E_STORY:-dose-response}"
+export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/apps/ios/DerivedData/ConnectedE2E-$MEDINAG_E2E_STORY}"
 export MEDINAG_E2E_SMS_CAPTURE_FILE="$(mktemp /tmp/medinag-e2e-sms.XXXXXX)"
 
 npm run functions:build

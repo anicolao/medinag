@@ -7,6 +7,15 @@ tool_dir="${ios_dir}/.tools/xcodegen-2.46.0"
 archive="${ios_dir}/.tools/xcodegen-2.46.0.zip"
 xcodegen="${tool_dir}/xcodegen/bin/xcodegen"
 expected_sha256="4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806"
+claims_directory="${ios_dir}/MediNagUITests/Claims"
+
+mkdir -p "${claims_directory}"
+cp "${ios_dir}/../../tests/e2e/004-ios-respond-to-dose/claims.json" \
+  "${claims_directory}/004-ios-respond-to-dose-claims.json"
+if [[ -f "${ios_dir}/../../tests/e2e/005-notification-failure/claims.json" ]]; then
+  cp "${ios_dir}/../../tests/e2e/005-notification-failure/claims.json" \
+    "${claims_directory}/005-notification-failure-claims.json"
+fi
 
 if [[ ! -x "${xcodegen}" ]]; then
   mkdir -p "${ios_dir}/.tools"

@@ -148,6 +148,7 @@ private struct ReminderAlertView: View {
       Text("Neither response is selected by default.")
         .font(.caption)
         .foregroundStyle(MediNagColor.muted)
+        .accessibilityIdentifier("notification-readiness-detail")
 
       Spacer()
     }

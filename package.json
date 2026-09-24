@@ -24,6 +24,7 @@
     "ios:device": "apps/ios/scripts/run-on-device.sh",
     "ios:testflight": "apps/ios/scripts/release-testflight.sh",
     "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
+    "ios:e2e:failure": "MEDINAG_E2E_STORY=notification-failure apps/ios/scripts/run-connected-e2e.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
     "test:e2e:audit": "node scripts/audit-e2e-truthfulness.mjs",
     "test:e2e": "npm run test:e2e:connected",

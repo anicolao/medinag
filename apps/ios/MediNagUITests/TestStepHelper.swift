@@ -96,15 +96,15 @@ final class TestStepHelper {
     self.testCase = testCase
     self.nextScreenshotIndex = startingStepIndex
     _ = application
+    let expectedStoryId = "US-\(storyID.prefix(3))"
     guard
       let url = Bundle(for: type(of: testCase)).url(
-        forResource: "claims",
+        forResource: "\(storyID)-claims",
         withExtension: "json"
       ),
       let data = try? Data(contentsOf: url),
       let claims = try? JSONDecoder().decode(ClaimsManifest.self, from: data),
-      claims.storyId == "US-004",
-      storyID == "004-ios-respond-to-dose"
+      claims.storyId == expectedStoryId
     else {
       fatalError("The US-004 claims manifest is missing or invalid.")
     }

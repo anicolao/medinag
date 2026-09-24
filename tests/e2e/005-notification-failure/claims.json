@@ -1,0 +1,105 @@
+{
+  "storyId": "US-005",
+  "title": "A notification failure alerts the administrator",
+  "narrative": "As Lori and Steve, we want a disabled notification permission to be visible to both of us and to alert Lori exactly once.",
+  "surfaces": {
+    "web": { "status": "covered" },
+    "ios": { "status": "covered" },
+    "watchos": { "status": "not-applicable", "reason": "watchOS is deferred until after the iOS MVP." }
+  },
+  "environments": {
+    "connected-emulators": "Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.",
+    "ios-simulator": "Pinned iPhone 17 / iOS 26.5 Simulator using the production notification authorization path.",
+    "captured-sms": "A local Twilio-compatible HTTP endpoint validates and records the production Function request; it does not claim carrier delivery."
+  },
+  "preconditions": [
+    "Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code",
+    "Data: Lori creates and publishes the schedule and SMS destination through visible dashboard controls",
+    "Identity: run-specific Google-provider identities use the Firebase Auth Emulator",
+    "Device: fresh iPhone 17 on iOS 26.5 with notification authorization not yet determined",
+    "SMS: the production alert Function calls a captured Twilio-compatible HTTP endpoint"
+  ],
+  "steps": [
+    {
+      "id": "alerting-plan-published",
+      "surface": "web",
+      "image": "000-alerting-plan-published.png",
+      "description": "Lori publishes a schedule with an SMS alert destination",
+      "claims": [
+        { "id": "failure.plan-published", "text": "The schedule is published through the dashboard", "environment": "connected-emulators", "assertion": "setup.spec.ts checks the Published state" },
+        { "id": "failure.sms-configured", "text": "The administrator SMS destination is saved through the dashboard", "environment": "connected-emulators", "assertion": "setup.spec.ts checks the saved SMS field" }
+      ]
+    },
+    {
+      "id": "failure-sign-in",
+      "surface": "ios",
+      "image": "000-failure-sign-in.png",
+      "description": "Steve starts the patient sign-in flow",
+      "claims": [
+        { "id": "failure.google-action", "text": "Google is the visible patient sign-in action", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the Google sign-in button" }
+      ]
+    },
+    {
+      "id": "failure-authentication",
+      "surface": "ios",
+      "image": "001-failure-authentication.png",
+      "description": "MediNag signs into the isolated Firebase Auth Emulator identity",
+      "claims": [
+        { "id": "failure.auth-progress", "text": "The authentication progress state is visible", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the progress screen" },
+        { "id": "failure.auth-continue", "text": "Steve explicitly continues to schedule selection", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the continue button" }
+      ]
+    },
+    {
+      "id": "failure-choose-schedule",
+      "surface": "ios",
+      "image": "002-failure-choose-schedule.png",
+      "description": "Steve chooses Lori's published schedule",
+      "claims": [
+        { "id": "failure.schedule-visible", "text": "Lori's published plan is visible from Firebase", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks Lori's name" },
+        { "id": "failure.schedule-dose", "text": "The published plan identifies the medication", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the medication label" }
+      ]
+    },
+    {
+      "id": "failure-event-received",
+      "surface": "ios",
+      "image": "003-failure-event-received.png",
+      "description": "The iPhone follows Lori's schedule before requesting permission",
+      "claims": [
+        { "id": "failure.event-visible", "text": "The medication event arrives through the Firestore listener", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the medication label" },
+        { "id": "failure.permission-action", "text": "The app offers the notification permission action", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the permission button" }
+      ]
+    },
+    {
+      "id": "failure-permission-prompt",
+      "surface": "ios",
+      "image": "004-failure-permission-prompt.png",
+      "description": "iOS asks whether MediNag may send notifications",
+      "claims": [
+        { "id": "failure.system-prompt", "text": "The notification permission sheet is rendered by iOS", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the SpringBoard alert" },
+        { "id": "failure.deny-action", "text": "The system offers a Don't Allow action", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the system denial button" }
+      ]
+    },
+    {
+      "id": "patient-not-ready",
+      "surface": "ios",
+      "image": "005-patient-not-ready.png",
+      "description": "Steve sees that medication notifications are disabled",
+      "claims": [
+        { "id": "failure.disabled-visible", "text": "The patient sees that notifications are disabled", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the readiness label" },
+        { "id": "failure.enable-settings", "text": "The patient is told to enable notifications in Settings", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the readiness detail" },
+        { "id": "failure.incident-written", "text": "The client-visible failure is written through Firestore", "environment": "connected-emulators", "assertion": "NotificationFailureUITests waits for the incident-created acknowledgement" }
+      ]
+    },
+    {
+      "id": "administrator-alerted",
+      "surface": "web",
+      "image": "001-administrator-alerted.png",
+      "description": "Lori sees the incident and its captured SMS result",
+      "claims": [
+        { "id": "failure.dashboard-incident", "text": "The dashboard shows the same notification authorization incident", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the incident code and message" },
+        { "id": "failure.provider-recorded", "text": "The provider acceptance, message ID, and single attempt are recorded", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the administrator incident card" },
+        { "id": "failure.one-request", "text": "Exactly one authenticated Twilio-compatible request is captured", "environment": "captured-sms", "assertion": "completion.spec.ts validates the sole captured request" }
+      ]
+    }
+  ]
+}

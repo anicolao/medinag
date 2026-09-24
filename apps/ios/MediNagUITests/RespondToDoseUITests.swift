@@ -285,7 +285,7 @@ final class RespondToDoseUITests: XCTestCase {
 
 }
 
-private struct ConnectedEnvironment {
+struct ConnectedEnvironment {
   let projectID: String
   let apiKey: String
   let appID: String
@@ -340,7 +340,7 @@ private struct ConnectedEnvironment {
   }
 }
 
-private func requiredConfiguration(_ name: String) throws -> String {
+func requiredConfiguration(_ name: String) throws -> String {
   let bundle = Bundle(for: RespondToDoseUITests.self)
   guard let value = bundle.object(forInfoDictionaryKey: name) as? String, !value.isEmpty else {
     throw XCTSkip("The connected E2E build did not supply \(name).")

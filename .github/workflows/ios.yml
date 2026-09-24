@@ -15,7 +15,7 @@ on:
       - web/**
       - functions/**
       - scripts/**
-      - tests/e2e/004-ios-respond-to-dose/**
+      - tests/e2e/**
       - firebase.json
       - firestore.rules
       - package.json
@@ -28,7 +28,7 @@ on:
       - web/**
       - functions/**
       - scripts/**
-      - tests/e2e/004-ios-respond-to-dose/**
+      - tests/e2e/**
       - firebase.json
       - firestore.rules
       - package.json
@@ -107,6 +107,39 @@ jobs:
             tests/e2e/004-ios-respond-to-dose/screenshots/ios \
             apps/ios/DerivedData/ActualWalkthrough/screenshots/ios
 
+      - name: Run connected notification-failure story
+        run: npm run ios:e2e:failure
+        env:
+          CI: true
+          MEDINAG_E2E_DERIVED_DATA: apps/ios/DerivedData
+          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+          MEDINAG_E2E_UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots }}
+
+      - name: Export notification-failure attachments
+        if: always()
+        run: |
+          mkdir -p apps/ios/DerivedData/NotificationFailureAttachments
+          xcrun xcresulttool export attachments \
+            --path apps/ios/DerivedData/NotificationFailure.xcresult \
+            --output-path apps/ios/DerivedData/NotificationFailureAttachments
+
+      - name: Materialize notification-failure walkthrough
+        run: |
+          mkdir -p apps/ios/DerivedData/ActualFailureWalkthrough/screenshots/web
+          cp tests/e2e/005-notification-failure/screenshots/web/*.png \
+            apps/ios/DerivedData/ActualFailureWalkthrough/screenshots/web/
+          apps/ios/scripts/export-walkthrough.sh \
+            apps/ios/DerivedData/NotificationFailureAttachments \
+            apps/ios/DerivedData/ActualFailureWalkthrough \
+            tests/e2e/005-notification-failure/claims.json
+
+      - name: Enforce zero-pixel notification-failure tolerance
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.record_screenshots) }}
+        run: |
+          swift apps/ios/scripts/compare-walkthrough.swift \
+            tests/e2e/005-notification-failure/screenshots/ios \
+            apps/ios/DerivedData/ActualFailureWalkthrough/screenshots/ios
+
       - name: Upload reviewable walkthrough
         if: always()
         uses: actions/upload-artifact@v4
@@ -116,7 +149,11 @@ jobs:
             apps/ios/DerivedData/ActualWalkthrough/
             apps/ios/DerivedData/SystemNotificationAttachments/
             apps/ios/DerivedData/SystemNotification.xcresult/
+            apps/ios/DerivedData/ActualFailureWalkthrough/
+            apps/ios/DerivedData/NotificationFailureAttachments/
+            apps/ios/DerivedData/NotificationFailure.xcresult/
             tests/e2e/004-ios-respond-to-dose/screenshots/web/
+            tests/e2e/005-notification-failure/screenshots/web/
             playwright-report/
           if-no-files-found: error
           retention-days: 7

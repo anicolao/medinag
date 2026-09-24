@@ -8,7 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */; };
+		121F0F2704A37FD4377A17D2 /* 004-ios-respond-to-dose-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */; };
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
+		1C9B2DEA9A595B0C0611ECE7 /* 005-notification-failure-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */; };
 		24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */; };
 		26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */; };
 		2D40B6B0CFADA25D6B18A835 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F844B57121A61C2FD25698E6 /* GoogleSignIn */; };
@@ -19,11 +21,11 @@
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
 		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
-		B7B494C82B75CDBC54A429FF /* claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 8177F89908E773650A98ED95 /* claims.json */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
 		CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */; };
+		E28224FE8A4B50DE1A5DE5E6 /* NotificationFailureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */; };
 		E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */; };
 		E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8EDA23C6B76FF5E6490770D /* ContentView.swift */; };
 		ECF684623440DCACC79A26D8 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 891F89D16D8D0D01FCEB1516 /* MediNagCore */; };
@@ -51,6 +53,7 @@
 
 /* Begin PBXFileReference section */
 		06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationModelsTests.swift; sourceTree = "<group>"; };
+		1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFailureUITests.swift; sourceTree = "<group>"; };
 		14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderRefreshCoordinator.swift; sourceTree = "<group>"; };
 		1C4984FB11665ABC22BE0FC3 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		308089DAB1637436AB191692 /* MediNag.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNag.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,7 +63,7 @@
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
-		8177F89908E773650A98ED95 /* claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = claims.json; sourceTree = "<group>"; };
+		826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "004-ios-respond-to-dose-claims.json"; sourceTree = "<group>"; };
 		8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
 		8FD40690383616CF75360A1A /* MediNagApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagApp.swift; sourceTree = "<group>"; };
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
@@ -75,6 +78,7 @@
 		D8EDA23C6B76FF5E6490770D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
 		E827A83DB040E02286EA2824 /* TestStepHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStepHelper.swift; sourceTree = "<group>"; };
+		FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "005-notification-failure-claims.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,18 +118,12 @@
 			isa = PBXGroup;
 			children = (
 				AA81EF092FE9DCE888E99E27 /* Info.plist */,
+				1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */,
 				D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */,
 				E827A83DB040E02286EA2824 /* TestStepHelper.swift */,
+				90F4100B04348E74A10055B4 /* Claims */,
 			);
 			path = MediNagUITests;
-			sourceTree = "<group>";
-		};
-		58D52A61C69AE42EE828D9EB /* tests */ = {
-			isa = PBXGroup;
-			children = (
-				FA6EE0CA4752391B8A785FFE /* e2e */,
-			);
-			path = tests;
 			sourceTree = "<group>";
 		};
 		5FA0D372217BDD24DAFD8E55 = {
@@ -133,7 +131,6 @@
 			children = (
 				6AA6A2A48A50A6E5046BFA09 /* Config */,
 				BCC9EC6C6087604C8230D6B9 /* MediNag */,
-				B0AF1B741457C34D1BE7E9BE /* medinag */,
 				CD46DC3740B945DDE7263559 /* MediNagTests */,
 				28D058E8C2014A0511ECA06E /* MediNagUITests */,
 				E94D665164BF92FA61568DD1 /* Packages */,
@@ -151,13 +148,13 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
-		B0AF1B741457C34D1BE7E9BE /* medinag */ = {
+		90F4100B04348E74A10055B4 /* Claims */ = {
 			isa = PBXGroup;
 			children = (
-				58D52A61C69AE42EE828D9EB /* tests */,
+				826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */,
+				FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */,
 			);
-			name = medinag;
-			path = ../..;
+			path = Claims;
 			sourceTree = "<group>";
 		};
 		BCC9EC6C6087604C8230D6B9 /* MediNag */ = {
@@ -178,14 +175,6 @@
 				0E8A51B7B4F47C9CD032BDE4 /* Resources */,
 			);
 			path = MediNag;
-			sourceTree = "<group>";
-		};
-		BE7E4621A61F1B24672B1B62 /* 004-ios-respond-to-dose */ = {
-			isa = PBXGroup;
-			children = (
-				8177F89908E773650A98ED95 /* claims.json */,
-			);
-			path = "004-ios-respond-to-dose";
 			sourceTree = "<group>";
 		};
 		C965100F96BDA12935AD3316 /* Products */ = {
@@ -212,14 +201,6 @@
 				D395DDA4C65C718B3E6634C0 /* Core */,
 			);
 			name = Packages;
-			sourceTree = "<group>";
-		};
-		FA6EE0CA4752391B8A785FFE /* e2e */ = {
-			isa = PBXGroup;
-			children = (
-				BE7E4621A61F1B24672B1B62 /* 004-ios-respond-to-dose */,
-			);
-			path = e2e;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -351,7 +332,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B7B494C82B75CDBC54A429FF /* claims.json in Resources */,
+				121F0F2704A37FD4377A17D2 /* 004-ios-respond-to-dose-claims.json in Resources */,
+				1C9B2DEA9A595B0C0611ECE7 /* 005-notification-failure-claims.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -401,6 +383,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E28224FE8A4B50DE1A5DE5E6 /* NotificationFailureUITests.swift in Sources */,
 				1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */,
 				FAC147392401A2261952CCFC /* TestStepHelper.swift in Sources */,
 			);
