@@ -337,6 +337,18 @@ test('client incidents are visible to the administrator but cannot forge SMS res
     updatedAt: now
   };
   await assertSucceeds(setDoc(incidentReference, incident));
+  await assertSucceeds(updateDoc(incidentReference, {
+    lastOccurredAt: now,
+    occurrenceCount: 2,
+    context: { authorizationStatus: 'still-denied' },
+    updatedAt: now
+  }));
+  await assertFails(updateDoc(incidentReference, {
+    lastOccurredAt: now,
+    occurrenceCount: 3,
+    smsState: 'delivered',
+    updatedAt: now
+  }));
   const lori = environment.authenticatedContext('lori').firestore();
   await assertSucceeds(getDoc(doc(
     lori,

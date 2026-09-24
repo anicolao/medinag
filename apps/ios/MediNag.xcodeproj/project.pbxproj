@@ -17,6 +17,7 @@
 		726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A35C5F490D783A4224F82302 /* FirebaseCore */; };
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
+		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
@@ -52,6 +53,7 @@
 		308089DAB1637436AB191692 /* MediNag.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNag.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4C2E252649E3AF386F9CB68E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemHealthReporter.swift; sourceTree = "<group>"; };
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
@@ -149,6 +151,7 @@
 				D84D3ED11E3629FD0FC1A856 /* Info.plist */,
 				8FD40690383616CF75360A1A /* MediNagApp.swift */,
 				A8187B68655A62CA3923A2B4 /* NotificationServices.swift */,
+				67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */,
 				0E8A51B7B4F47C9CD032BDE4 /* Resources */,
 			);
 			path = MediNag;
@@ -341,6 +344,7 @@
 				3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */,
 				372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */,
 				EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */,
+				A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

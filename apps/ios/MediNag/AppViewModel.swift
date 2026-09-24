@@ -29,6 +29,18 @@ final class AppViewModel: ObservableObject {
     case needsPermission
     case ready
     case denied
+    case noScheduledReminders
+    case failed
+  }
+
+  struct ReminderDiagnostics: Equatable {
+    var lastReconciledAt: Date?
+    var patientTimeZone = ""
+    var scheduledThrough: Date?
+    var nextReminder: Date?
+    var expectedPendingCount = 0
+    var actualPendingCount = 0
+    var missedEventCount = 0
   }
 
   @Published private(set) var state: State = .starting
@@ -40,14 +52,13 @@ final class AppViewModel: ObservableObject {
   @Published private(set) var actionNotice = ""
   @Published private(set) var isWorking = false
   @Published private(set) var activeReminder: ReminderPresentation?
-  #if E2E
-    @Published private(set) var acknowledgedNotificationCount = 0
-  #endif
+  @Published private(set) var reminderDiagnostics = ReminderDiagnostics()
 
   private var listeners: [ListenerRegistration] = []
   private var coordinator: DoseCoordinator?
   private var confirmedAccessAdministratorID: String?
   private let directory = FirebasePatientDirectory()
+  private let healthReporter = SystemHealthReporter()
   private let clock: any Clock
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
@@ -63,14 +74,13 @@ final class AppViewModel: ObservableObject {
   static func make() -> AppViewModel { AppViewModel() }
 
   private init() {
-    let notifications = LocalNotificationScheduler()
     #if E2E
-      self.clock = E2ERuntime.notificationAccelerationEnabled
-        ? E2EReminderClock()
-        : SystemClock()
+      let timeline = E2ERuntime.notificationTimeline()
     #else
-      self.clock = SystemClock()
+      let timeline = SystemNotificationTimeline()
     #endif
+    let notifications = LocalNotificationScheduler(timeline: timeline)
+    self.clock = timeline
     self.notifications = notifications
     self.liveNotifications = notifications
     installNotificationRouter()
@@ -192,26 +202,36 @@ final class AppViewModel: ObservableObject {
   }
 
   func requestNotifications() async {
-    guard let coordinator else { return }
+    guard liveNotifications != nil else { return }
     isWorking = true
     defer { isWorking = false }
     do {
-      let ready = try await coordinator.requestNotificationReadiness(for: events)
-      notificationReadiness = ready ? .ready : .denied
-      actionNotice = ready ? "Notifications are ready." : "Notifications were not enabled."
+      let authorized = try await notifications.requestAuthorization()
+      guard authorized else {
+        notificationReadiness = .denied
+        actionNotice = "Notifications were not enabled."
+        await reportIncident(
+          code: "notification_authorization_denied",
+          message: "The patient iPhone has not allowed medication notifications.",
+          severity: "critical"
+        )
+        return
+      }
+      try await reconcileNotifications()
+      actionNotice = notificationReadiness == .ready
+        ? "Notifications are registered with iOS."
+        : "Notification permission is enabled, but no future reminders are registered."
     } catch {
-      notificationReadiness = .denied
+      notificationReadiness = .failed
       actionNotice = error.localizedDescription
+      await reportIncident(
+        code: "notification_reconciliation_failed",
+        message: "The patient iPhone could not register its expected reminders.",
+        severity: "critical",
+        context: ["error": error.localizedDescription]
+      )
     }
   }
-
-  #if E2E
-    func advanceReminderClock() async {
-      if await LocalNotificationScheduler.deliverAcceleratedNotification() {
-        acknowledgedNotificationCount += 1
-      }
-    }
-  #endif
 
   func respond(_ response: DoseResponse, to event: MedicationEvent) async {
     guard let coordinator else { return }
@@ -368,7 +388,14 @@ final class AppViewModel: ObservableObject {
       Task { @MainActor [weak self] in
         switch result {
         case .success(let schedules): self?.schedules = schedules.filter(\.active)
-        case .failure(let error): self?.actionNotice = error.localizedDescription
+        case .failure(let error):
+          self?.actionNotice = error.localizedDescription
+          await self?.reportIncident(
+            code: "firestore_event_sync_failed",
+            message: "The patient iPhone could not synchronize medication events.",
+            severity: "critical",
+            context: ["error": error.localizedDescription]
+          )
         }
       }
     })
@@ -384,6 +411,13 @@ final class AppViewModel: ObservableObject {
       }
     })
     state = .ready
+    if notificationReadiness == .denied {
+      await reportIncident(
+        code: "notification_authorization_denied",
+        message: "The patient iPhone has disabled medication notifications.",
+        severity: "critical"
+      )
+    }
   }
 
   private func handlePlanUnavailable() async {
@@ -416,7 +450,8 @@ final class AppViewModel: ObservableObject {
       return
     }
     switch await liveNotifications.authorizationStatus() {
-    case .authorized, .provisional, .ephemeral: notificationReadiness = .ready
+    case .authorized, .provisional, .ephemeral:
+      notificationReadiness = .noScheduledReminders
     case .denied: notificationReadiness = .denied
     case .notDetermined: notificationReadiness = .needsPermission
     @unknown default: notificationReadiness = .unknown
@@ -424,12 +459,106 @@ final class AppViewModel: ObservableObject {
   }
 
   private func scheduleUnfinishedEventsIfReady() async {
-    guard notificationReadiness == .ready, let coordinator else { return }
+    guard
+      notificationReadiness == .ready
+        || notificationReadiness == .noScheduledReminders
+        || notificationReadiness == .failed
+    else { return }
     do {
-      _ = try await coordinator.requestNotificationReadiness(for: events)
+      try await reconcileNotifications()
     } catch {
+      notificationReadiness = .failed
       actionNotice = error.localizedDescription
+      await reportIncident(
+        code: "notification_reconciliation_failed",
+        message: "The patient iPhone could not register its expected reminders.",
+        severity: "critical",
+        context: ["error": error.localizedDescription]
+      )
     }
+  }
+
+  private func reconcileNotifications() async throws {
+    guard let liveNotifications else { return }
+    let result = try await liveNotifications.reconcile(
+      events: events,
+      snoozeInterval: TimeInterval(snoozeMinutes * 60),
+      maximumReminderCount: maximumReminderCount
+    )
+    reminderDiagnostics = ReminderDiagnostics(
+      lastReconciledAt: Date(),
+      patientTimeZone: patientTimeZone.identifier,
+      scheduledThrough: result.scheduledThrough,
+      nextReminder: result.nextReminder,
+      expectedPendingCount: result.expectedPendingCount,
+      actualPendingCount: result.actualPendingCount,
+      missedEventCount: result.missedEventIDs.count
+    )
+    notificationReadiness = result.expectedPendingCount > 0
+      && result.actualPendingCount == result.expectedPendingCount
+      ? .ready
+      : .noScheduledReminders
+    if !result.missedEventIDs.isEmpty {
+      actionNotice = "A medication time was missed before this iPhone could register it."
+      await reportIncident(
+        code: "medication_occurrence_missed",
+        message: "A medication occurrence passed before the patient iPhone registered it.",
+        severity: "critical",
+        context: ["eventCount": String(result.missedEventIDs.count)]
+      )
+    }
+    if
+      let plan = currentPlan,
+      let patientID = Auth.auth().currentUser?.uid,
+      let scheduledThrough = result.scheduledThrough
+    {
+      let ready = result.expectedPendingCount > 0
+        && result.actualPendingCount == result.expectedPendingCount
+      do {
+        try await healthReporter.reportCoverage(
+          administratorID: plan.id,
+          patientID: patientID,
+          timeZone: patientTimeZone.identifier,
+          scheduledThrough: scheduledThrough,
+          expectedPendingCount: result.expectedPendingCount,
+          actualPendingCount: result.actualPendingCount,
+          ready: ready
+        )
+        await healthReporter.flushOutbox(
+          administratorID: plan.id,
+          patientID: patientID
+        )
+      } catch {
+        await reportIncident(
+          code: "device_coverage_write_failed",
+          message: "The patient iPhone could not report reminder coverage.",
+          severity: "warning",
+          context: ["error": error.localizedDescription]
+        )
+      }
+    }
+  }
+
+  private func reportIncident(
+    code: String,
+    message: String,
+    severity: String,
+    context: [String: String] = [:]
+  ) async {
+    guard
+      let administratorID = currentPlan?.id,
+      let patientID = Auth.auth().currentUser?.uid
+    else { return }
+    await healthReporter.reportIncident(
+      ClientSystemIncident(
+        code: code,
+        message: message,
+        severity: severity,
+        context: context
+      ),
+      administratorID: administratorID,
+      patientID: patientID
+    )
   }
 
   private func installNotificationRouter() {
@@ -441,9 +570,6 @@ final class AppViewModel: ObservableObject {
   private func handleNotificationInteraction(_ interaction: NotificationInteraction) {
     switch interaction.kind {
     case .opened:
-      #if E2E
-        (clock as? E2EReminderClock)?.setNow(interaction.reminderTime)
-      #endif
       activeReminder = ReminderPresentation(
         eventID: interaction.eventID,
         medicationName: interaction.medicationName,
@@ -474,12 +600,3 @@ final class AppViewModel: ObservableObject {
     #endif
   }
 }
-
-#if E2E
-  private final class E2EReminderClock: Clock, @unchecked Sendable {
-    private let lock = NSLock()
-    private var current = Date()
-    var now: Date { lock.withLock { current } }
-    func setNow(_ date: Date) { lock.withLock { current = date } }
-  }
-#endif

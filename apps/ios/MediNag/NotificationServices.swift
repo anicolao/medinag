@@ -4,8 +4,6 @@ import MediNagCore
 
 #if E2E
   enum E2ERuntime {
-    private static let notificationAccelerationKey =
-      "medinag.e2e.notification-acceleration-enabled"
     private static let timeZoneKey = "medinag.e2e.time-zone"
 
     static var googleIDToken: String? {
@@ -20,17 +18,6 @@ import MediNagCore
         return nil
       }
       return token
-    }
-
-    static var notificationAccelerationEnabled: Bool {
-      let defaults = UserDefaults.standard
-      if ProcessInfo.processInfo.arguments.contains(
-        "-e2e-deliver-notification-on-background"
-      ) {
-        defaults.set(true, forKey: notificationAccelerationKey)
-        return true
-      }
-      return defaults.bool(forKey: notificationAccelerationKey)
     }
 
     static var reminderTimeZone: TimeZone {
@@ -51,6 +38,24 @@ import MediNagCore
         return timeZone
       }
       return .current
+    }
+
+    static func notificationTimeline() -> any NotificationTimeline {
+      guard
+        let value = ProcessInfo.processInfo.arguments.e2eLaunchValue(
+          after: "-e2e-logical-now"
+        ),
+        let logicalNow = ISO8601DateFormatter().date(from: value),
+        let scaleValue = ProcessInfo.processInfo.arguments.e2eLaunchValue(
+          after: "-e2e-time-scale"
+        ),
+        let scale = Double(scaleValue),
+        scale > 0,
+        scale <= 1
+      else {
+        return SystemNotificationTimeline()
+      }
+      return ScaledNotificationTimeline(logicalNow: logicalNow, scale: scale)
     }
   }
 #endif
@@ -82,15 +87,54 @@ enum MediNagDateFormatting {
     return "\(hour % 12 == 0 ? 12 : hour % 12):\(String(format: "%02d", parts[1])) \(hour >= 12 ? "PM" : "AM")"
   }
 
-  static func reminderTime(_ date: Date) -> String {
+  static func reminderTime(_ date: Date, timeZoneIdentifier: String? = nil) -> String {
     let formatter = DateFormatter()
     formatter.dateStyle = .none
     formatter.timeStyle = .short
-    #if E2E
-      formatter.timeZone = E2ERuntime.reminderTimeZone
-    #endif
+    if let timeZoneIdentifier, let timeZone = TimeZone(identifier: timeZoneIdentifier) {
+      formatter.timeZone = timeZone
+    }
     return formatter.string(from: date)
   }
+}
+
+protocol NotificationTimeline: Clock {
+  func deliveryDate(for logicalDeadline: Date) -> Date
+}
+
+struct SystemNotificationTimeline: NotificationTimeline {
+  var now: Date { Date() }
+  func deliveryDate(for logicalDeadline: Date) -> Date { logicalDeadline }
+}
+
+#if E2E
+  final class ScaledNotificationTimeline: NotificationTimeline, @unchecked Sendable {
+    private let logicalAnchor: Date
+    private let realAnchor: Date
+    private let scale: Double
+
+    init(logicalNow: Date, scale: Double, realNow: Date = Date()) {
+      logicalAnchor = logicalNow
+      realAnchor = realNow
+      self.scale = scale
+    }
+
+    var now: Date {
+      logicalAnchor.addingTimeInterval(Date().timeIntervalSince(realAnchor) / scale)
+    }
+
+    func deliveryDate(for logicalDeadline: Date) -> Date {
+      realAnchor.addingTimeInterval(logicalDeadline.timeIntervalSince(logicalAnchor) * scale)
+    }
+  }
+#endif
+
+struct NotificationReconciliation: Equatable, Sendable {
+  let expectedPendingCount: Int
+  let actualPendingCount: Int
+  let scheduledThrough: Date?
+  let nextReminder: Date?
+  let missedEventIDs: [String]
 }
 
 enum NotificationInteractionKind: Sendable {
@@ -162,9 +206,14 @@ final class NotificationResponseRouter {
 
 final class LocalNotificationScheduler: NotificationScheduling, @unchecked Sendable {
   private let center: UNUserNotificationCenter
+  private let timeline: any NotificationTimeline
 
-  init(center: UNUserNotificationCenter = .current()) {
+  init(
+    center: UNUserNotificationCenter = .current(),
+    timeline: any NotificationTimeline = SystemNotificationTimeline()
+  ) {
     self.center = center
+    self.timeline = timeline
   }
 
   static func registerCategories(
@@ -219,9 +268,6 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
   }
 
   func cancel(eventID: String) async {
-    #if E2E
-      E2ENotificationDeliveryStore.shared.cancel(eventID: eventID)
-    #endif
     let prefix = notificationIdentifierPrefix(eventID: eventID)
     let pendingIdentifiers = await center.pendingNotificationRequests()
       .map(\.identifier)
@@ -233,29 +279,99 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     center.removeDeliveredNotifications(withIdentifiers: deliveredIdentifiers)
   }
 
+  func reconcile(
+    events: [MedicationEvent],
+    snoozeInterval: TimeInterval,
+    maximumReminderCount: Int
+  ) async throws -> NotificationReconciliation {
+    struct Desired {
+      let event: MedicationEvent
+      let logicalDate: Date
+      let reminderNumber: Int
+    }
+    let desired = events.compactMap { event -> Desired? in
+      guard event.status != .completed else { return nil }
+      if event.status == .snoozed {
+        guard event.snoozeCount < maximumReminderCount else { return nil }
+        return Desired(
+          event: event,
+          logicalDate: (event.lastSnoozedAt ?? event.scheduledTime)
+            .addingTimeInterval(snoozeInterval),
+          reminderNumber: event.snoozeCount + 1
+        )
+      }
+      return Desired(event: event, logicalDate: event.scheduledTime, reminderNumber: 1)
+    }
+    let future = desired.filter { $0.logicalDate > timeline.now }
+    let missed = desired.filter { $0.logicalDate <= timeline.now }.map(\.event.id)
+    let expectedIdentifiers = Set(future.map {
+      Self.notificationIdentifier(
+        eventID: $0.event.id,
+        reminderNumber: $0.reminderNumber
+      )
+    })
+    let current = await center.pendingNotificationRequests()
+    let obsolete = current.map(\.identifier).filter {
+      $0.hasPrefix("medinag.dose.") && !expectedIdentifiers.contains($0)
+    }
+    center.removePendingNotificationRequests(withIdentifiers: obsolete)
+
+    for item in future {
+      let identifier = Self.notificationIdentifier(
+        eventID: item.event.id,
+        reminderNumber: item.reminderNumber
+      )
+      let deliveryDate = timeline.deliveryDate(for: item.logicalDate)
+      let existing = current.first { $0.identifier == identifier }
+      let existingDate = (existing?.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate()
+      let unchanged = existingDate.map {
+        abs($0.timeIntervalSince(deliveryDate)) < 0.5
+          && existing?.content.userInfo[MediNagNotification.reminderTime] as? TimeInterval
+            == item.logicalDate.timeIntervalSince1970
+      } ?? false
+      if !unchanged {
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        try await addNotification(
+          for: item.event,
+          at: item.logicalDate,
+          reminderNumber: item.reminderNumber
+        )
+      }
+    }
+
+    let confirmed = await center.pendingNotificationRequests().filter {
+      expectedIdentifiers.contains($0.identifier)
+    }
+    guard confirmed.count == expectedIdentifiers.count else {
+      throw NotificationSchedulingError.pendingRequestMismatch(
+        expected: expectedIdentifiers.count,
+        actual: confirmed.count
+      )
+    }
+    return NotificationReconciliation(
+      expectedPendingCount: expectedIdentifiers.count,
+      actualPendingCount: confirmed.count,
+      scheduledThrough: future.map(\.logicalDate).max(),
+      nextReminder: future.map(\.logicalDate).min(),
+      missedEventIDs: missed
+    )
+  }
+
   private func addNotification(
     for event: MedicationEvent,
     at date: Date,
     reminderNumber: Int
   ) async throws {
-    #if E2E
-      if E2ERuntime.notificationAccelerationEnabled {
-        E2ENotificationDeliveryStore.shared.arm(
-          event: event,
-          date: date,
-          reminderNumber: reminderNumber
-        )
-        return
-      }
-    #endif
     // Never turn a missed medication time into an immediate, misleading first
     // reminder. Events must be scheduled ahead of time and fire at their
     // absolute medication or snooze-expiry date.
-    guard date > Date() else { return }
+    guard date > timeline.now else { return }
+    let deliveryDate = timeline.deliveryDate(for: date)
+    guard deliveryDate > Date() else { return }
 
     let content = UNMutableNotificationContent()
     content.title = reminderNumber == 1 ? "Medication reminder" : "Medication reminder 2"
-    content.body = "\(MediNagDateFormatting.reminderTime(date)) • \(event.medicationName)"
+    content.body = "\(MediNagDateFormatting.reminderTime(date, timeZoneIdentifier: event.timeZone)) • \(event.medicationName)"
     // Critical Alerts require an Apple entitlement and are intentionally
     // deferred beyond this MVP. Use the standard local alert sound here.
     content.sound = .default
@@ -270,7 +386,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
 
     let dateComponents = Calendar.current.dateComponents(
       [.calendar, .timeZone, .year, .month, .day, .hour, .minute, .second],
-      from: date
+      from: deliveryDate
     )
     let request = UNNotificationRequest(
       identifier: notificationIdentifier(
@@ -285,53 +401,6 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
     )
     try await center.add(request)
   }
-
-  #if E2E
-    static func deliverAcceleratedNotification() async -> Bool {
-      guard
-        E2ERuntime.notificationAccelerationEnabled,
-        let reminder = E2ENotificationDeliveryStore.shared.take()
-      else {
-        return false
-      }
-
-      let content = UNMutableNotificationContent()
-      content.title = reminder.reminderNumber == 1
-        ? "Medication reminder"
-        : "Medication reminder 2"
-      content.body = "\(MediNagDateFormatting.reminderTime(reminder.date)) • \(reminder.event.medicationName)"
-      content.sound = .default
-      content.interruptionLevel = .timeSensitive
-      content.categoryIdentifier = MediNagNotification.category
-      content.userInfo = [
-        MediNagNotification.eventID: reminder.event.id,
-        MediNagNotification.medicationName: reminder.event.medicationName,
-        MediNagNotification.reminderTime: reminder.date.timeIntervalSince1970,
-        MediNagNotification.reminderNumber: reminder.reminderNumber,
-      ]
-      do {
-        try await UNUserNotificationCenter.current().add(
-          UNNotificationRequest(
-            identifier: notificationIdentifier(
-              eventID: reminder.event.id,
-              reminderNumber: reminder.reminderNumber
-            ),
-            content: content,
-            // Give the UI test time to terminate the app after iOS
-            // acknowledges the request. SpringBoard then owns both delivery
-            // and presentation, just as it does for the real calendar trigger.
-            trigger: UNTimeIntervalNotificationTrigger(
-              timeInterval: 1.5,
-              repeats: false
-            )
-          )
-        )
-        return true
-      } catch {
-        return false
-      }
-    }
-  #endif
 
   private static func notificationIdentifier(
     eventID: String,
@@ -356,42 +425,13 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
   }
 }
 
-#if E2E
-  private struct E2EArmedNotification: Sendable {
-    let event: MedicationEvent
-    let date: Date
-    let reminderNumber: Int
-  }
+enum NotificationSchedulingError: LocalizedError {
+  case pendingRequestMismatch(expected: Int, actual: Int)
 
-  private final class E2ENotificationDeliveryStore: @unchecked Sendable {
-    static let shared = E2ENotificationDeliveryStore()
-
-    private let lock = NSLock()
-    private var reminder: E2EArmedNotification?
-
-    func arm(event: MedicationEvent, date: Date, reminderNumber: Int) {
-      lock.withLock {
-        reminder = E2EArmedNotification(
-          event: event,
-          date: date,
-          reminderNumber: reminderNumber
-        )
-      }
-    }
-
-    func take() -> E2EArmedNotification? {
-      lock.withLock {
-        defer { reminder = nil }
-        return reminder
-      }
-    }
-
-    func cancel(eventID: String) {
-      lock.withLock {
-        if reminder?.event.id == eventID {
-          reminder = nil
-        }
-      }
+  var errorDescription: String? {
+    switch self {
+    case .pendingRequestMismatch(let expected, let actual):
+      "iOS retained \(actual) of \(expected) expected medication reminders."
     }
   }
-#endif
+}

@@ -456,7 +456,19 @@ service cloud.firestore {
           || followsAdministrator(administratorId);
         allow create: if followsAdministrator(administratorId)
           && validClientIncident(administratorId);
-        allow update, delete: if false;
+        allow update: if followsAdministrator(administratorId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'lastOccurredAt',
+            'occurrenceCount',
+            'context',
+            'updatedAt'
+          ])
+          && request.resource.data.lastOccurredAt is timestamp
+          && request.resource.data.occurrenceCount
+            == resource.data.occurrenceCount + 1
+          && request.resource.data.context is map
+          && request.resource.data.updatedAt is timestamp;
+        allow delete: if false;
       }
     }
 

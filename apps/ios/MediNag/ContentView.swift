@@ -368,6 +368,7 @@ private struct TodayView: View {
           }
 
           NotificationReadinessCard(viewModel: viewModel)
+          ReminderDiagnosticsCard(diagnostics: viewModel.reminderDiagnostics)
 
           if let next = viewModel.nextEvent {
             NextDoseCard(
@@ -425,6 +426,56 @@ private struct TodayView: View {
   }
 }
 
+private struct ReminderDiagnosticsCard: View {
+  let diagnostics: AppViewModel.ReminderDiagnostics
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Label("Reminder diagnostics", systemImage: "stethoscope")
+        .font(.headline)
+        .foregroundStyle(MediNagColor.ink)
+      diagnosticsRow("Patient time zone", diagnostics.patientTimeZone.isEmpty ? "Not reported" : diagnostics.patientTimeZone)
+      diagnosticsRow(
+        "Pending with iOS",
+        "\(diagnostics.actualPendingCount) of \(diagnostics.expectedPendingCount)"
+      )
+      diagnosticsRow("Next reminder", format(diagnostics.nextReminder))
+      diagnosticsRow("Scheduled through", format(diagnostics.scheduledThrough))
+      diagnosticsRow("Last refresh", format(diagnostics.lastReconciledAt))
+      if diagnostics.missedEventCount > 0 {
+        diagnosticsRow("Missed before registration", String(diagnostics.missedEventCount))
+          .foregroundStyle(MediNagColor.warning)
+      }
+    }
+    .padding(18)
+    .background(.white, in: RoundedRectangle(cornerRadius: 18))
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("reminder-diagnostics")
+  }
+
+  private func diagnosticsRow(_ label: String, _ value: String) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text(label).foregroundStyle(MediNagColor.muted)
+      Spacer()
+      Text(value)
+        .foregroundStyle(MediNagColor.ink)
+        .multilineTextAlignment(.trailing)
+    }
+    .font(.caption)
+  }
+
+  private func format(_ date: Date?) -> String {
+    guard let date else { return "Not available" }
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .short
+    if let timeZone = TimeZone(identifier: diagnostics.patientTimeZone) {
+      formatter.timeZone = timeZone
+    }
+    return formatter.string(from: date)
+  }
+}
+
 private struct NotificationReadinessCard: View {
   @ObservedObject var viewModel: AppViewModel
 
@@ -444,26 +495,20 @@ private struct NotificationReadinessCard: View {
         Text(
           viewModel.notificationReadiness == .ready
             ? "Reminders are ready"
-            : "Allow medication reminders"
+            : readinessTitle
         )
         .font(.headline)
         .accessibilityIdentifier("notification-readiness")
-        #if E2E
-          .accessibilityValue("Notification requests acknowledged: \(viewModel.acknowledgedNotificationCount)")
-          .onTapGesture {
-            Task { await viewModel.advanceReminderClock() }
-          }
-        #endif
         Text(
           viewModel.notificationReadiness == .ready
-            ? "This iPhone can present scheduled dose alerts."
-            : "Notifications are required for the medication nag loop."
+            ? "iOS has \(viewModel.reminderDiagnostics.actualPendingCount) scheduled dose alert\(viewModel.reminderDiagnostics.actualPendingCount == 1 ? "" : "s")."
+            : readinessDetail
         )
         .font(.caption)
         .foregroundStyle(MediNagColor.muted)
       }
       Spacer()
-      if viewModel.notificationReadiness != .ready {
+      if viewModel.notificationReadiness == .needsPermission {
         Button("Allow") {
           Task { await viewModel.requestNotifications() }
         }
@@ -474,6 +519,28 @@ private struct NotificationReadinessCard: View {
     }
     .padding(18)
     .background(.white, in: RoundedRectangle(cornerRadius: 18))
+  }
+
+  private var readinessTitle: String {
+    switch viewModel.notificationReadiness {
+    case .unknown: "Checking reminders"
+    case .needsPermission: "Allow medication reminders"
+    case .ready: "Reminders are ready"
+    case .denied: "Notifications are disabled"
+    case .noScheduledReminders: "No future reminders are registered"
+    case .failed: "Reminder registration failed"
+    }
+  }
+
+  private var readinessDetail: String {
+    switch viewModel.notificationReadiness {
+    case .unknown: "MediNag is checking notification permission and pending requests."
+    case .needsPermission: "Notifications are required for the medication nag loop."
+    case .ready: "iOS has confirmed the pending medication reminders."
+    case .denied: "Enable notifications in Settings so medication alerts can appear."
+    case .noScheduledReminders: "Permission may be enabled, but iOS has no future dose request yet."
+    case .failed: "MediNag could not confirm the reminders expected on this iPhone."
+    }
   }
 }
 
