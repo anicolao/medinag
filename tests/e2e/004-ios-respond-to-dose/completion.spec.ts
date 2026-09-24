@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { TestStepHelper } from '../helpers/test-step-helper';
 
 test.setTimeout(10_000);
@@ -37,6 +38,14 @@ test('US-004 completion returns to the administrator dashboard', async ({ page }
           await expect(page.getByTestId('system-incidents')).toHaveText(
             'No open reminder-system incidents.'
           )
+      },
+      {
+        claim: 'web.no-sms',
+        check: async () => {
+          const captureFile = process.env.MEDINAG_E2E_SMS_CAPTURE_FILE;
+          if (!captureFile) throw new Error('MEDINAG_E2E_SMS_CAPTURE_FILE is required.');
+          expect(readFileSync(captureFile, 'utf8')).toBe('');
+        }
       }
     ]
   });

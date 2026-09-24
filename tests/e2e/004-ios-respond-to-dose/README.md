@@ -177,3 +177,4 @@
 - [x] The dashboard Firestore listener receives the completed occurrence
 - [x] The administrator sees matching pending-request coverage from iOS
 - [x] No reminder-system incident remains open
+- [x] The healthy path issues no administrator SMS request

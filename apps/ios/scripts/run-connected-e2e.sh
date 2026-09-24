@@ -56,9 +56,10 @@ export MEDINAG_E2E_MEDICATION_NAME="Morning Prescription Doses"
 export MEDINAG_E2E_SCHEDULED_TIME="08:00"
 export MEDINAG_E2E_TIME_ZONE="America/Toronto"
 export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/apps/ios/DerivedData/ConnectedE2E}"
+export MEDINAG_E2E_SMS_CAPTURE_FILE="$(mktemp /tmp/medinag-e2e-sms.XXXXXX)"
 
 npm run functions:build
-npx firebase emulators:exec \
+node scripts/with-captured-sms-gateway.mjs -- npx firebase emulators:exec \
   --project "$MEDINAG_E2E_PROJECT_ID" \
   --only auth,firestore,functions \
   "apps/ios/scripts/run-connected-e2e-session.sh"

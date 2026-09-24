@@ -287,6 +287,7 @@ export const reconcileCoverageIncident = onDocumentWritten(
       if (incident.data().status !== 'open') continue;
       if (![
         'notification_reconciliation_failed',
+        'notification_authorization_denied',
         'schedule_coverage_low',
         'device_coverage_write_failed',
         'background_refresh_failed',

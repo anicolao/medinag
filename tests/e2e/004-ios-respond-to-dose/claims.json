@@ -191,7 +191,8 @@
       "claims": [
         { "id": "web.completed-occurrence", "text": "The dashboard Firestore listener receives the completed occurrence", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the medication and Completed state" },
         { "id": "web.healthy-coverage", "text": "The administrator sees matching pending-request coverage from iOS", "environment": "connected-emulators", "assertion": "completion.spec.ts checks Ready and confirmed iOS reminders" },
-        { "id": "web.no-open-incident", "text": "No reminder-system incident remains open", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the empty incident state" }
+        { "id": "web.no-open-incident", "text": "No reminder-system incident remains open", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the empty incident state" },
+        { "id": "web.no-sms", "text": "The healthy path issues no administrator SMS request", "environment": "connected-emulators", "assertion": "completion.spec.ts checks the captured SMS gateway is empty" }
       ]
     }
   ]
