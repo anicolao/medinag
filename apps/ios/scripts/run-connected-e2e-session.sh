@@ -9,7 +9,12 @@ simulator_id="${MEDINAG_SIMULATOR_ID:?MEDINAG_SIMULATOR_ID is required}"
 xcodebuild_command="$developer_directory/usr/bin/xcodebuild"
 
 cd "$repository_root"
-eval "$(node scripts/setup-e2e-environment.mjs --shell)"
+if [[ "${MEDINAG_E2E_WEB_SERVER_READY:-false}" != "true" ]]; then
+  eval "$(node scripts/setup-e2e-environment.mjs --shell)"
+  export MEDINAG_E2E_WEB_SERVER_READY=true
+  exec node scripts/with-web-server.mjs -- "$0"
+fi
+
 story="${MEDINAG_E2E_STORY:-dose-response}"
 if [[ "$story" == "notification-failure" ]]; then
   setup_spec="tests/e2e/005-notification-failure/setup.spec.ts"
