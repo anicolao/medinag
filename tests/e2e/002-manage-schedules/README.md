@@ -58,11 +58,11 @@
 - [x] A stable schedule code is visible
 - [x] A share link can be copied
 
-## The published dose has a live medication event
+## The published plan waits for a patient before creating occurrences
 
-![The published dose has a live medication event](./screenshots/005-event-created.png)
+![The published plan waits for a patient before creating occurrences](./screenshots/005-awaiting-patient-time-zone.png)
 
 **Verifications:**
 
-- [x] The Today route receives the Firestore event
-- [x] The event is waiting for a patient response
+- [x] No occurrence is fabricated in the administrator time zone
+- [x] The dashboard reports that no phone refresh has occurred
