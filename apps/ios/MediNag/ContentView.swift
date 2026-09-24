@@ -489,7 +489,7 @@ private struct NextDoseCard: View {
             .font(.caption2.bold())
             .tracking(1.4)
             .foregroundStyle(MediNagColor.teal)
-          Text(MediNagDateFormatting.reminderTime(event.scheduledTime))
+          Text(MediNagDateFormatting.wallTime(event.scheduledLocalTime))
             .font(.system(size: 42, weight: .bold, design: .rounded))
             .foregroundStyle(MediNagColor.ink)
         }
@@ -566,7 +566,7 @@ private struct EventRow: View {
 
   var body: some View {
     HStack(spacing: 14) {
-      Text(MediNagDateFormatting.reminderTime(event.scheduledTime))
+      Text(MediNagDateFormatting.wallTime(event.scheduledLocalTime))
         .font(.headline.monospacedDigit())
         .frame(width: 76, alignment: .leading)
       VStack(alignment: .leading, spacing: 3) {

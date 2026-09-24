@@ -32,6 +32,9 @@ public struct MedicationEvent: Identifiable, Codable, Equatable, Sendable {
   public let id: String
   public let scheduleID: String
   public let medicationName: String
+  public let occurrenceDate: String
+  public let scheduledLocalTime: String
+  public let timeZone: String
   public let scheduledTime: Date
   public var status: MedicationEventStatus
   public var snoozeCount: Int
@@ -42,6 +45,9 @@ public struct MedicationEvent: Identifiable, Codable, Equatable, Sendable {
     id: String,
     scheduleID: String,
     medicationName: String,
+    occurrenceDate: String = "",
+    scheduledLocalTime: String = "",
+    timeZone: String = "UTC",
     scheduledTime: Date,
     status: MedicationEventStatus,
     snoozeCount: Int,
@@ -51,6 +57,9 @@ public struct MedicationEvent: Identifiable, Codable, Equatable, Sendable {
     self.id = id
     self.scheduleID = scheduleID
     self.medicationName = medicationName
+    self.occurrenceDate = occurrenceDate
+    self.scheduledLocalTime = scheduledLocalTime
+    self.timeZone = timeZone
     self.scheduledTime = scheduledTime
     self.status = status
     self.snoozeCount = snoozeCount

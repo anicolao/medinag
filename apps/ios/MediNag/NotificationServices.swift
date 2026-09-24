@@ -75,6 +75,13 @@ enum MediNagNotification {
 }
 
 enum MediNagDateFormatting {
+  static func wallTime(_ value: String) -> String {
+    let parts = value.split(separator: ":").compactMap { Int($0) }
+    guard parts.count == 2 else { return value }
+    let hour = parts[0]
+    return "\(hour % 12 == 0 ? 12 : hour % 12):\(String(format: "%02d", parts[1])) \(hour >= 12 ? "PM" : "AM")"
+  }
+
   static func reminderTime(_ date: Date) -> String {
     let formatter = DateFormatter()
     formatter.dateStyle = .none

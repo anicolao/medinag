@@ -24,7 +24,8 @@ final class FirebasePatientDirectory: @unchecked Sendable {
   func ensurePatient(
     userID: String,
     displayName: String,
-    email: String
+    email: String,
+    timeZone: String
   ) async throws -> String? {
     let reference = database.document("patients/\(userID)")
     let snapshot = try await reference.getDocument()
@@ -33,6 +34,8 @@ final class FirebasePatientDirectory: @unchecked Sendable {
       try await reference.updateData([
         "displayName": displayName,
         "email": email,
+        "timeZone": timeZone,
+        "timeZoneUpdatedAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       ])
     } else {
@@ -41,6 +44,8 @@ final class FirebasePatientDirectory: @unchecked Sendable {
         "displayName": displayName,
         "email": email,
         "followingAdministratorUid": NSNull(),
+        "timeZone": timeZone,
+        "timeZoneUpdatedAt": FieldValue.serverTimestamp(),
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       ])
@@ -83,7 +88,12 @@ final class FirebasePatientDirectory: @unchecked Sendable {
     }
   }
 
-  func follow(_ plan: PublishedPlan, userID: String, displayName: String) async throws {
+  func follow(
+    _ plan: PublishedPlan,
+    userID: String,
+    displayName: String,
+    timeZone: String
+  ) async throws {
     let administrator = database.document("administrators/\(plan.id)")
     let patient = database.document("patients/\(userID)")
     _ = try await database.runTransaction { transaction, errorPointer in
@@ -104,6 +114,8 @@ final class FirebasePatientDirectory: @unchecked Sendable {
         ], forDocument: administrator)
         transaction.updateData([
           "followingAdministratorUid": plan.id,
+          "timeZone": timeZone,
+          "timeZoneUpdatedAt": FieldValue.serverTimestamp(),
           "updatedAt": FieldValue.serverTimestamp(),
         ], forDocument: patient)
         return nil
@@ -280,6 +292,9 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
     guard
       let scheduleID = data["scheduleId"] as? String,
       let medicationName = data["medicationName"] as? String,
+      let occurrenceDate = data["occurrenceDate"] as? String,
+      let scheduledLocalTime = data["scheduledLocalTime"] as? String,
+      let timeZone = data["timeZone"] as? String,
       let scheduledTime = data["scheduledTime"] as? Timestamp,
       let statusValue = data["status"] as? String,
       let status = MedicationEventStatus(rawValue: statusValue),
@@ -289,6 +304,9 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       id: id,
       scheduleID: scheduleID,
       medicationName: medicationName,
+      occurrenceDate: occurrenceDate,
+      scheduledLocalTime: scheduledLocalTime,
+      timeZone: timeZone,
       scheduledTime: scheduledTime.dateValue(),
       status: status,
       snoozeCount: snoozeCount,

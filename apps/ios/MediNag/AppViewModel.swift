@@ -139,7 +139,8 @@ final class AppViewModel: ObservableObject {
       try await directory.follow(
         plan,
         userID: user.uid,
-        displayName: user.displayName ?? "Patient"
+        displayName: user.displayName ?? "Patient",
+        timeZone: patientTimeZone.identifier
       )
       try await connect(plan: plan)
       actionNotice = "Following \(plan.administratorName)'s schedule."
@@ -281,7 +282,8 @@ final class AppViewModel: ObservableObject {
     async let followingAdministratorID = directory.ensurePatient(
       userID: userID,
       displayName: displayName,
-      email: email
+      email: email,
+      timeZone: patientTimeZone.identifier
     )
     async let discoveredPlans = directory.availablePlans(for: userID)
     let (administratorID, plans) = try await (
@@ -462,6 +464,14 @@ final class AppViewModel: ObservableObject {
     guard events.contains(where: { $0.id == interaction.eventID }) else { return }
     pendingNotificationInteraction = nil
     handleNotificationInteraction(interaction)
+  }
+
+  private var patientTimeZone: TimeZone {
+    #if E2E
+      E2ERuntime.reminderTimeZone
+    #else
+      .autoupdatingCurrent
+    #endif
   }
 }
 
