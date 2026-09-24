@@ -46,17 +46,30 @@ async function recordIncident(
 ): Promise<void> {
   const reference = incidentReference(administratorId, incidentId);
   const existing = await reference.get();
-  const sequence = Number(existing.data()?.alertSequence ?? 0) + 1;
+  const existingData = existing.data();
+  const lastAlert = existingData?.smsLastAttemptAt instanceof Timestamp
+    ? existingData.smsLastAttemptAt.toMillis()
+    : 0;
+  const severityIncreased = existingData?.severity === 'warning'
+    && input.severity === 'critical';
+  const cooldownElapsed = lastAlert > 0
+    && Date.now() - lastAlert >= 24 * 60 * 60 * 1000;
+  const shouldAlert = !existing.exists
+    || existingData?.status === 'resolved'
+    || severityIncreased
+    || cooldownElapsed;
+  const sequence = Number(existingData?.alertSequence ?? 0)
+    + (shouldAlert ? 1 : 0);
   await reference.set({
     ...input,
     administratorUid: administratorId,
     status: 'open',
-    firstOccurredAt: existing.data()?.firstOccurredAt ?? FieldValue.serverTimestamp(),
+    firstOccurredAt: existingData?.firstOccurredAt ?? FieldValue.serverTimestamp(),
     lastOccurredAt: FieldValue.serverTimestamp(),
     occurrenceCount: FieldValue.increment(1),
     alertSequence: sequence,
-    smsState: 'queued',
-    smsAttempts: Number(existing.data()?.smsAttempts ?? 0),
+    smsState: shouldAlert ? 'queued' : existingData?.smsState ?? 'queued',
+    smsAttempts: Number(existingData?.smsAttempts ?? 0),
     updatedAt: FieldValue.serverTimestamp()
   }, { merge: true });
 }
@@ -236,6 +249,57 @@ export const monitorDeviceCoverage = onSchedule(
         }
       });
     }));
+  }
+);
+
+export const reconcileCoverageIncident = onDocumentWritten(
+  'administrators/{administratorId}/deviceCoverage/{patientId}',
+  async (event) => {
+    const coverage = event.data?.after.data();
+    if (!coverage) return;
+    const administratorId = event.params.administratorId;
+    const patientId = event.params.patientId;
+    const ready = coverage.reconciliationStatus === 'ready'
+      && coverage.expectedPendingCount > 0
+      && coverage.expectedPendingCount === coverage.actualPendingCount;
+    if (!ready) {
+      await recordIncident(administratorId, `coverage-${patientId}`, {
+        code: 'notification_reconciliation_failed',
+        message: 'The patient phone does not have all expected reminders registered.',
+        severity: 'critical',
+        source: 'backend',
+        patientUid: patientId,
+        deviceId: typeof coverage.deviceId === 'string'
+          ? coverage.deviceId
+          : undefined,
+        context: {
+          expectedPendingCount: Number(coverage.expectedPendingCount ?? 0),
+          actualPendingCount: Number(coverage.actualPendingCount ?? 0)
+        }
+      });
+      return;
+    }
+    const incidents = await database.collection(
+      `administrators/${administratorId}/systemIncidents`
+    ).where('patientUid', '==', patientId).get();
+    const batch = database.batch();
+    for (const incident of incidents.docs) {
+      if (incident.data().status !== 'open') continue;
+      if (![
+        'notification_reconciliation_failed',
+        'schedule_coverage_low',
+        'device_coverage_write_failed',
+        'background_refresh_failed',
+        'background_refresh_expired'
+      ].includes(String(incident.data().code))) continue;
+      batch.update(incident.ref, {
+        status: 'resolved',
+        resolvedAt: FieldValue.serverTimestamp(),
+        resolution: 'Device coverage recovered and pending reminders match.',
+        updatedAt: FieldValue.serverTimestamp()
+      });
+    }
+    await batch.commit();
   }
 );
 
