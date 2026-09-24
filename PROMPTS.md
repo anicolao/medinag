@@ -71,3 +71,9 @@ Lori tried to link her account and it returned her to the schedule page but stil
 ```text
 Fix what needs fixing and tell us what the next steps are after updating the PR
 ```
+
+## Prompt 13
+
+```text
+OK we have rebased and merged PR6. Let's get going on the iOS MVP on a fresh branch
+```
