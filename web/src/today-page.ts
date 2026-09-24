@@ -64,6 +64,9 @@ function pageTemplate(
   const openIncidents = health.incidents
     .filter(({ status }) => status === 'open')
     .sort((left, right) => right.lastOccurredAt.getTime() - left.lastOccurredAt.getTime());
+  const resolvedIncidents = health.incidents
+    .filter(({ status }) => status === 'resolved')
+    .sort((left, right) => right.lastOccurredAt.getTime() - left.lastOccurredAt.getTime());
   const coverage = health.coverage[0];
   const eventMarkup = events.length > 0
     ? events.map((event) => eventCard(event, profile.patientDisplayName || 'the patient')).join('')
@@ -108,6 +111,16 @@ function pageTemplate(
       </article>
     `).join('')
     : '<p class="healthy-state">No open reminder-system incidents.</p>';
+  const resolvedIncidentsMarkup = resolvedIncidents.map((incident) => `
+    <article class="incident-card resolved" data-testid="resolved-system-incident">
+      <div>
+        <span>Resolved incident</span>
+        <h3>${escapeHtml(incident.message)}</h3>
+        <p>${escapeHtml(incident.code)} · recovered after ${incident.occurrenceCount} occurrence${incident.occurrenceCount === 1 ? '' : 's'}</p>
+      </div>
+      <span class="sms-state">SMS: ${escapeHtml(incident.smsState.replaceAll('_', ' '))}${incident.smsAttempts > 0 ? ` · attempt ${incident.smsAttempts}` : ''}${incident.smsProviderMessageId ? ` · ${escapeHtml(incident.smsProviderMessageId)}` : ''}</span>
+    </article>
+  `).join('');
   return `
     <div class="dashboard-shell">
       ${dashboardSidebar(account, 'today')}
@@ -139,7 +152,7 @@ function pageTemplate(
             <p>Phone coverage, failures, and administrator SMS escalation.</p>
           </div>
           <div data-testid="device-coverage">${healthMarkup}</div>
-          <div class="incident-list" data-testid="system-incidents">${incidentsMarkup}</div>
+          <div class="incident-list" data-testid="system-incidents">${incidentsMarkup}${resolvedIncidentsMarkup}</div>
         </section>
         <p class="page-notice" role="status" aria-live="polite">${escapeHtml(notice)}</p>
       </main>

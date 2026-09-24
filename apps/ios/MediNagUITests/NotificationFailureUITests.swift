@@ -102,6 +102,87 @@ final class NotificationFailureUITests: XCTestCase {
     )
   }
 
+  func testRestoredPermissionResolvesIncident() throws {
+    XCUIDevice.shared.orientation = .portrait
+    let environment = try ConnectedEnvironment()
+    let app = makeApplication(environment)
+    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    let tester = TestStepHelper(
+      testCase: self,
+      application: app,
+      storyID: "005-notification-failure",
+      startingStepIndex: 6
+    )
+    app.launch()
+
+    try tester.step(
+      "recovery-sign-in",
+      description: "Steve reinstalls MediNag after restoring notification permission",
+      verifications: [
+        .exists(
+          app.buttons["patient-google-sign-in"],
+          "The fresh installation offers the patient Google sign-in action"
+        )
+      ]
+    )
+    app.buttons["patient-google-sign-in"].tap()
+    try tester.step(
+      "recovery-authentication",
+      description: "Steve reconnects to his existing followed schedule",
+      verifications: [
+        .exists(
+          app.buttons["continue-after-authentication"],
+          "The Auth Emulator identity reconnects without recreating the relationship"
+        )
+      ]
+    )
+    app.buttons["continue-after-authentication"].tap()
+
+    try tester.step(
+      "recovery-event-received",
+      description: "The reinstalled app receives the existing medication event",
+      verifications: [
+        .labelContains(
+          app.staticTexts["next-dose-name"],
+          environment.medicationName,
+          "The existing followed plan and medication event arrive from Firestore"
+        ),
+        .exists(
+          app.buttons["allow-notifications"],
+          "Notification permission can be requested again on the fresh installation"
+        ),
+      ]
+    )
+    app.buttons["allow-notifications"].tap()
+    let permissionAlert = springboard.alerts.firstMatch
+    try tester.step(
+      "recovery-permission-prompt",
+      description: "iOS offers notification permission again",
+      verifications: [
+        .exists(permissionAlert, "The fresh system permission sheet is rendered by iOS"),
+        .exists(permissionAlert.buttons["Allow"], "The system offers an Allow action"),
+      ]
+    )
+    permissionAlert.buttons["Allow"].tap()
+
+    try tester.step(
+      "patient-recovered",
+      description: "Steve sees restored reminder coverage",
+      verifications: [
+        .labelContains(
+          app.staticTexts["notification-readiness"],
+          "Reminders are ready",
+          "The patient sees that reminders are ready"
+        ),
+        .labelContains(
+          app.staticTexts["pending-reminder-count"],
+          "of",
+          "iOS confirms the expected pending reminder requests"
+        ),
+      ]
+    )
+  }
+
   private func makeApplication(_ environment: ConnectedEnvironment) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += [

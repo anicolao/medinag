@@ -119,9 +119,13 @@ jobs:
         if: always()
         run: |
           mkdir -p apps/ios/DerivedData/NotificationFailureAttachments
+          mkdir -p apps/ios/DerivedData/NotificationRecoveryAttachments
           xcrun xcresulttool export attachments \
             --path apps/ios/DerivedData/NotificationFailure.xcresult \
             --output-path apps/ios/DerivedData/NotificationFailureAttachments
+          xcrun xcresulttool export attachments \
+            --path apps/ios/DerivedData/NotificationRecovery.xcresult \
+            --output-path apps/ios/DerivedData/NotificationRecoveryAttachments
 
       - name: Materialize notification-failure walkthrough
         run: |
@@ -131,7 +135,8 @@ jobs:
           apps/ios/scripts/export-walkthrough.sh \
             apps/ios/DerivedData/NotificationFailureAttachments \
             apps/ios/DerivedData/ActualFailureWalkthrough \
-            tests/e2e/005-notification-failure/claims.json
+            tests/e2e/005-notification-failure/claims.json \
+            apps/ios/DerivedData/NotificationRecoveryAttachments
 
       - name: Enforce zero-pixel notification-failure tolerance
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.record_screenshots) }}
@@ -151,7 +156,9 @@ jobs:
             apps/ios/DerivedData/SystemNotification.xcresult/
             apps/ios/DerivedData/ActualFailureWalkthrough/
             apps/ios/DerivedData/NotificationFailureAttachments/
+            apps/ios/DerivedData/NotificationRecoveryAttachments/
             apps/ios/DerivedData/NotificationFailure.xcresult/
+            apps/ios/DerivedData/NotificationRecovery.xcresult/
             tests/e2e/004-ios-respond-to-dose/screenshots/web/
             tests/e2e/005-notification-failure/screenshots/web/
             playwright-report/

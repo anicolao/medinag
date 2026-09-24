@@ -94,3 +94,56 @@
 - [x] The dashboard shows the same notification authorization incident
 - [x] The provider acceptance, message ID, and single attempt are recorded
 - [x] Exactly one authenticated Twilio-compatible request is captured
+
+## Steve reinstalls MediNag after restoring notification permission
+
+![Steve reinstalls MediNag after restoring notification permission](./screenshots/ios/006-recovery-sign-in.png)
+
+**Verifications:**
+
+- [x] The fresh installation offers the patient Google sign-in action
+
+## Steve reconnects to his existing followed schedule
+
+![Steve reconnects to his existing followed schedule](./screenshots/ios/007-recovery-authentication.png)
+
+**Verifications:**
+
+- [x] The Auth Emulator identity reconnects without recreating the relationship
+
+## The reinstalled app receives the existing medication event
+
+![The reinstalled app receives the existing medication event](./screenshots/ios/008-recovery-event-received.png)
+
+**Verifications:**
+
+- [x] The existing followed plan and medication event arrive from Firestore
+- [x] Notification permission can be requested again on the fresh installation
+
+## iOS offers notification permission again
+
+![iOS offers notification permission again](./screenshots/ios/009-recovery-permission-prompt.png)
+
+**Verifications:**
+
+- [x] The fresh system permission sheet is rendered by iOS
+- [x] The system offers an Allow action
+
+## Steve sees restored reminder coverage
+
+![Steve sees restored reminder coverage](./screenshots/ios/010-patient-recovered.png)
+
+**Verifications:**
+
+- [x] The patient sees that reminders are ready
+- [x] iOS confirms the expected pending reminder requests
+
+## Lori sees observed recovery without a duplicate SMS
+
+![Lori sees observed recovery without a duplicate SMS](./screenshots/web/002-administrator-sees-recovery.png)
+
+**Verifications:**
+
+- [x] The dashboard marks the authorization incident resolved after matching coverage
+- [x] The administrator sees ready iPhone reminder coverage
+- [x] Recovery sends no duplicate SMS request

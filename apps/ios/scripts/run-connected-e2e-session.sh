@@ -14,6 +14,7 @@ story="${MEDINAG_E2E_STORY:-dose-response}"
 if [[ "$story" == "notification-failure" ]]; then
   setup_spec="tests/e2e/005-notification-failure/setup.spec.ts"
   completion_spec="tests/e2e/005-notification-failure/completion.spec.ts"
+  recovery_spec="tests/e2e/005-notification-failure/recovery.spec.ts"
   native_test="MediNagUITests/NotificationFailureUITests/testDeniedPermissionAlertsAdministrator"
   result_name="NotificationFailure"
 else
@@ -22,11 +23,14 @@ else
   native_test="MediNagUITests/RespondToDoseUITests/testConnectedSystemNotificationDoseLoop"
   result_name="SystemNotification"
 fi
-if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
-  npx playwright test "$setup_spec" --update-snapshots
-else
-  npx playwright test "$setup_spec"
-fi
+run_playwright() {
+  if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
+    npx playwright test "$1" --update-snapshots
+  else
+    npx playwright test "$1"
+  fi
+}
+run_playwright "$setup_spec"
 npm run ios:generate
 
 run_xcodebuild() {
@@ -72,10 +76,24 @@ run_xcodebuild -quiet test-without-building \
   -only-testing:"$native_test" \
   -resultBundlePath "$result_bundle"
 
-if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
-  npx playwright test \
-    "$completion_spec" \
-    --update-snapshots
-else
-  npx playwright test "$completion_spec"
+run_playwright "$completion_spec"
+
+if [[ "$story" == "notification-failure" ]]; then
+  DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun simctl uninstall \
+    "$simulator_id" org.boardgamescafe.medinag
+  DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun simctl keychain \
+    "$simulator_id" reset
+  recovery_bundle="$derived_data_directory/NotificationRecovery.xcresult"
+  if [[ -d "$recovery_bundle" ]]; then
+    /usr/bin/find "$recovery_bundle" -depth -delete
+  fi
+  run_xcodebuild -quiet test-without-building \
+    -project apps/ios/MediNag.xcodeproj \
+    -scheme MediNag \
+    -configuration E2E \
+    -destination "platform=iOS Simulator,id=$simulator_id" \
+    -derivedDataPath "$derived_data_directory" \
+    -only-testing:MediNagUITests/NotificationFailureUITests/testRestoredPermissionResolvesIncident \
+    -resultBundlePath "$recovery_bundle"
+  run_playwright "$recovery_spec"
 fi
