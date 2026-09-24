@@ -86,10 +86,12 @@ jobs:
       - name: Export system-notification attachments
         if: always()
         run: |
-          mkdir -p apps/ios/DerivedData/SystemNotificationAttachments
-          xcrun xcresulttool export attachments \
-            --path apps/ios/DerivedData/SystemNotification.xcresult \
-            --output-path apps/ios/DerivedData/SystemNotificationAttachments
+          if [[ -d apps/ios/DerivedData/SystemNotification.xcresult ]]; then
+            mkdir -p apps/ios/DerivedData/SystemNotificationAttachments
+            xcrun xcresulttool export attachments \
+              --path apps/ios/DerivedData/SystemNotification.xcresult \
+              --output-path apps/ios/DerivedData/SystemNotificationAttachments
+          fi
 
       - name: Materialize complete walkthrough
         run: |
@@ -118,14 +120,18 @@ jobs:
       - name: Export notification-failure attachments
         if: always()
         run: |
-          mkdir -p apps/ios/DerivedData/NotificationFailureAttachments
-          mkdir -p apps/ios/DerivedData/NotificationRecoveryAttachments
-          xcrun xcresulttool export attachments \
-            --path apps/ios/DerivedData/NotificationFailure.xcresult \
-            --output-path apps/ios/DerivedData/NotificationFailureAttachments
-          xcrun xcresulttool export attachments \
-            --path apps/ios/DerivedData/NotificationRecovery.xcresult \
-            --output-path apps/ios/DerivedData/NotificationRecoveryAttachments
+          if [[ -d apps/ios/DerivedData/NotificationFailure.xcresult ]]; then
+            mkdir -p apps/ios/DerivedData/NotificationFailureAttachments
+            xcrun xcresulttool export attachments \
+              --path apps/ios/DerivedData/NotificationFailure.xcresult \
+              --output-path apps/ios/DerivedData/NotificationFailureAttachments
+          fi
+          if [[ -d apps/ios/DerivedData/NotificationRecovery.xcresult ]]; then
+            mkdir -p apps/ios/DerivedData/NotificationRecoveryAttachments
+            xcrun xcresulttool export attachments \
+              --path apps/ios/DerivedData/NotificationRecovery.xcresult \
+              --output-path apps/ios/DerivedData/NotificationRecoveryAttachments
+          fi
 
       - name: Materialize notification-failure walkthrough
         run: |

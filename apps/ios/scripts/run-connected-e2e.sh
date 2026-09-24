@@ -61,7 +61,8 @@ export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/ap
 export MEDINAG_E2E_SMS_CAPTURE_FILE="$(mktemp /tmp/medinag-e2e-sms.XXXXXX)"
 
 npm run functions:build
-node scripts/with-captured-sms-gateway.mjs -- npx firebase emulators:exec \
+node scripts/with-web-server.mjs -- \
+  node scripts/with-captured-sms-gateway.mjs -- npx firebase emulators:exec \
   --project "$MEDINAG_E2E_PROJECT_ID" \
   --only auth,firestore,functions \
   "apps/ios/scripts/run-connected-e2e-session.sh"
