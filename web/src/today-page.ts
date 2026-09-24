@@ -36,7 +36,7 @@ function eventCard(event: MedicationEvent, patientName: string): string {
     ? `Snoozed${event.snoozeCount > 0 ? ` ×${event.snoozeCount}` : ''}`
     : event.status[0].toUpperCase() + event.status.slice(1);
   const detail = event.status === 'completed' && event.completedAt
-      ? `Confirmed at ${formatInstant(event.completedAt, event.timeZone)}`
+      ? `${patientName} confirmed this dose.`
     : event.status === 'snoozed'
       ? `${patientName} asked to be reminded again.`
       : `Waiting for ${patientName} to respond.`;

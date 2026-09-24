@@ -114,16 +114,16 @@ test('US-002: an administrator publishes one medication plan', async ({ page }, 
   });
 
   await page.getByRole('link', { name: 'Today', exact: true }).click();
-  await tester.step('event-created', {
-    description: 'The published dose has a live medication event',
+  await tester.step('awaiting-patient-time-zone', {
+    description: 'The published plan waits for a patient before creating occurrences',
     verifications: [
       {
-        spec: 'The Today route receives the Firestore event',
-        check: async () => expect(page.getByTestId('today-event-list')).toContainText('Morning Prescription Doses')
+        spec: 'No occurrence is fabricated in the administrator time zone',
+        check: async () => expect(page.getByTestId('today-event-list')).toContainText('No doses scheduled for today')
       },
       {
-        spec: 'The event is waiting for a patient response',
-        check: async () => expect(page.getByTestId('today-event-list')).toContainText('Pending')
+        spec: 'The dashboard reports that no phone refresh has occurred',
+        check: async () => expect(page.getByTestId('device-coverage')).toContainText('No phone refresh has been reported')
       }
     ]
   });

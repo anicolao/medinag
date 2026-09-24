@@ -34,10 +34,8 @@
     <string>$(MEDINAG_E2E_ADMINISTRATOR_NAME)</string>
     <key>MEDINAG_E2E_MEDICATION_NAME</key>
     <string>$(MEDINAG_E2E_MEDICATION_NAME)</string>
-    <key>MEDINAG_E2E_SCHEDULED_DISPLAY_TIME</key>
-    <string>$(MEDINAG_E2E_SCHEDULED_DISPLAY_TIME)</string>
-    <key>MEDINAG_E2E_REPEAT_DISPLAY_TIME</key>
-    <string>$(MEDINAG_E2E_REPEAT_DISPLAY_TIME)</string>
+    <key>MEDINAG_E2E_SCHEDULED_TIME</key>
+    <string>$(MEDINAG_E2E_SCHEDULED_TIME)</string>
     <key>MEDINAG_E2E_TIME_ZONE</key>
     <string>$(MEDINAG_E2E_TIME_ZONE)</string>
     <key>XCTContainsUITests</key>

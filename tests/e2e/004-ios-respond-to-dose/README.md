@@ -10,11 +10,11 @@
 
 ## Deterministic preconditions
 
-- Backend: a fresh Firebase Authentication and Firestore emulator suite with security rules enabled
+- Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code
 - Data: Lori creates the schedule through the dashboard; no schedule or medication event is preloaded or encoded in the native test
-- Identity: unique Google administrator and patient identities are generated for the run through Firebase Auth; no UID, credential, or token is fixed in test source
+- Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI
 - Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
-- Clock: notification delivery is advanced on the app-background event; logical reminder times remain derived from the Firestore event
+- Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification
 - Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
 - Status bar: fixed at 8:00 AM with a Simulator override
 - System UI: notification permission and both reminders are rendered by iOS SpringBoard
@@ -40,15 +40,6 @@
 - [x] The dashboard confirms the production repository write
 - [x] The plan is explicitly published before the iPhone can discover it
 
-## The schedule materializes the pending event Steve will receive
-
-![The schedule materializes the pending event Steve will receive](./screenshots/web/002-event-observed-on-dashboard.png)
-
-**Verifications:**
-
-- [x] The pending event arrives through the dashboard Firestore listener
-- [x] The event is waiting for Steve’s response
-
 ## Steve signs into MediNag with Google
 
 ![Steve signs into MediNag with Google](./screenshots/ios/000-patient-sign-in.png)
@@ -58,9 +49,18 @@
 - [x] Google is the only sign-in action
 - [x] No household identifier is requested
 
+## MediNag signs into the isolated Firebase Auth Emulator identity
+
+![MediNag signs into the isolated Firebase Auth Emulator identity](./screenshots/ios/001-authentication-in-progress.png)
+
+**Verifications:**
+
+- [x] A visible progress state appears before the two-second condition limit
+- [x] The user controls when to continue to schedule selection
+
 ## Steve finds Lori's published schedule
 
-![Steve finds Lori's published schedule](./screenshots/ios/001-choose-schedule.png)
+![Steve finds Lori's published schedule](./screenshots/ios/002-choose-schedule.png)
 
 **Verifications:**
 
@@ -70,7 +70,7 @@
 
 ## The iPhone follows Lori's schedule and receives its Firestore event
 
-![The iPhone follows Lori's schedule and receives its Firestore event](./screenshots/ios/002-firestore-event-received.png)
+![The iPhone follows Lori's schedule and receives its Firestore event](./screenshots/ios/003-firestore-event-received.png)
 
 **Verifications:**
 
@@ -80,7 +80,7 @@
 
 ## iOS asks Steve to allow MediNag notifications
 
-![iOS asks Steve to allow MediNag notifications](./screenshots/ios/003-notification-permission.png)
+![iOS asks Steve to allow MediNag notifications](./screenshots/ios/004-notification-permission.png)
 
 **Verifications:**
 
@@ -89,39 +89,40 @@
 
 ## MediNag is ready and waits for the scheduled notification
 
-![MediNag is ready and waits for the scheduled notification](./screenshots/ios/004-waiting-for-first-reminder.png)
+![MediNag is ready and waits for the scheduled notification](./screenshots/ios/005-waiting-for-first-reminder.png)
 
 **Verifications:**
 
-- [x] Notification permission is ready
+- [x] Permission and real pending iOS requests are both confirmed
 - [x] The Firestore event remains visible while the app waits
 - [x] No response is available before a notification
 - [x] No completion is available before a notification
 
 ## With MediNag terminated, iOS retains the scheduled notification
 
-![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/005-first-system-notification.png)
+![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/006-first-system-notification.png)
 
 **Verifications:**
 
 - [x] The first reminder is rendered by SpringBoard
+- [x] The SpringBoard notification has finished arriving
 
 ## Tapping the notification cold-launches the response screen
 
-![Tapping the notification cold-launches the response screen](./screenshots/ios/006-first-reminder-response.png)
+![Tapping the notification cold-launches the response screen](./screenshots/ios/007-first-reminder-response.png)
 
 **Verifications:**
 
 - [x] The response screen is visible
 - [x] The reminder sequence is correct
-- [x] The reminder uses the logical scheduled time
+- [x] The first reminder uses the medication occurrence time
 - [x] Yes, I will is available
 - [x] Yes, I did is available
 - [x] Neither response has greater visual weight
 
 ## Yes, I will writes the snoozed response back to Firestore
 
-![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/007-dose-snoozed-in-firestore.png)
+![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/008-dose-snoozed-in-firestore.png)
 
 **Verifications:**
 
@@ -132,30 +133,41 @@
 
 ## With MediNag terminated, iOS retains the repeat notification
 
-![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/008-repeat-system-notification.png)
+![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/009-repeat-system-notification.png)
 
 **Verifications:**
 
 - [x] The repeat is rendered by SpringBoard
+- [x] The repeat notification has finished arriving
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 
-![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/009-repeat-reminder-response.png)
+![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/010-repeat-reminder-response.png)
 
 **Verifications:**
 
 - [x] The response screen is visible
 - [x] The reminder sequence is correct
-- [x] The reminder uses the logical scheduled time
+- [x] The repeat displays the response-relative snooze expiry
 - [x] Yes, I will is available
 - [x] Yes, I did is available
 - [x] Neither response has greater visual weight
 
 ## Yes, I did completes the real event and cancels further reminders
 
-![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/010-dose-completed-in-firestore.png)
+![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/011-dose-completed-in-firestore.png)
 
 **Verifications:**
 
 - [x] The Firestore listener receives completion
 - [x] The app confirms notification cancellation
+
+## Lori sees Steve's completion and healthy iPhone coverage
+
+![Lori sees Steve's completion and healthy iPhone coverage](./screenshots/web/002-completion-returned-to-dashboard.png)
+
+**Verifications:**
+
+- [x] The dashboard Firestore listener receives the completed occurrence
+- [x] The administrator sees matching pending-request coverage from iOS
+- [x] No reminder-system incident remains open

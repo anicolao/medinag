@@ -27,7 +27,7 @@ final class RespondToDoseUITests: XCTestCase {
 
     try tester.step(
       "authentication-in-progress",
-      description: "MediNag begins real Google and Firebase authentication",
+      description: "MediNag signs into the isolated Firebase Auth Emulator identity",
       verifications: [
         .exists(
           app.otherElements["authentication-progress-screen"],
@@ -98,7 +98,7 @@ final class RespondToDoseUITests: XCTestCase {
         .labelContains(
           app.staticTexts["notification-readiness"],
           "Reminders are ready",
-          "Notification permission is ready"
+          "Permission and real pending iOS requests are both confirmed"
         ),
         .labelContains(
           app.staticTexts["next-dose-name"],
@@ -110,9 +110,8 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
-    app.staticTexts["notification-readiness"].tap()
-    waitForNotificationAcknowledgement(app, count: 1)
     XCUIDevice.shared.press(.home)
+    app.terminate()
     let firstNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
     ]
@@ -121,17 +120,22 @@ final class RespondToDoseUITests: XCTestCase {
       firstNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
       "SpringBoard did not receive the notification built from the Firestore event"
     )
-    app.terminate()
     try tester.step(
       "first-system-notification",
       description: "With MediNag terminated, iOS retains the scheduled notification",
       verifications: [
         .exists(firstNotificationTitle, "The first reminder is rendered by SpringBoard"),
+        .hittable(firstNotification, "The SpringBoard notification has finished arriving"),
       ],
-      screenshotElement: firstNotification
+      screenshotElement: firstNotification,
+      trimAnimatedSystemEdge: true
     )
 
     firstNotification.tap()
+    XCTAssertTrue(
+      app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
+      "Tapping the first notification did not cold-launch MediNag"
+    )
     try tester.step(
       "first-reminder-response",
       description: "Tapping the notification cold-launches the response screen",
@@ -158,11 +162,8 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
-    app.staticTexts["notification-readiness"].tap()
-    // Tapping the first system notification cold-launches a fresh app process,
-    // so its acknowledgement sequence restarts at one.
-    waitForNotificationAcknowledgement(app, count: 1)
     XCUIDevice.shared.press(.home)
+    app.terminate()
     let repeatNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
     ]
@@ -171,24 +172,29 @@ final class RespondToDoseUITests: XCTestCase {
       repeatNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
       "SpringBoard did not receive reminder 2 from the snoozed Firestore event"
     )
-    app.terminate()
     try tester.step(
       "repeat-system-notification",
       description: "With MediNag terminated, iOS retains the repeat notification",
       verifications: [
         .exists(repeatNotificationTitle, "The repeat is rendered by SpringBoard"),
+        .hittable(repeatNotification, "The repeat notification has finished arriving"),
       ],
-      screenshotElement: repeatNotification
+      screenshotElement: repeatNotification,
+      trimAnimatedSystemEdge: true
     )
 
     repeatNotification.tap()
+    XCTAssertTrue(
+      app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
+      "Tapping reminder 2 did not cold-launch MediNag"
+    )
     try tester.step(
       "repeat-reminder-response",
       description: "Tapping reminder 2 cold-launches the app after logical time advances",
       verifications: reminderVerifications(
         app,
         sequence: "REMINDER 2",
-        time: environment.repeatDisplayTime
+        time: nil
       )
     )
 
@@ -206,6 +212,18 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
+    tester.documentPriorStep(
+      "completion-returned-to-dashboard",
+      index: 2,
+      description: "Lori sees Steve's completion and healthy iPhone coverage",
+      verifications: [
+        "The dashboard Firestore listener receives the completed occurrence",
+        "The administrator sees matching pending-request coverage from iOS",
+        "No reminder-system incident remains open",
+      ],
+      surface: "web"
+    )
+
     try tester.generateDocs()
   }
 
@@ -213,7 +231,8 @@ final class RespondToDoseUITests: XCTestCase {
     let app = XCUIApplication()
     app.launchArguments += [
       "-e2e",
-      "-e2e-deliver-notification-on-background",
+      "-e2e-logical-now", environment.logicalNow,
+      "-e2e-time-scale", "0.01",
       "-firebase-emulator-project-id", environment.projectID,
       "-firebase-emulator-api-key", environment.apiKey,
       "-firebase-emulator-app-id", environment.appID,
@@ -264,28 +283,17 @@ final class RespondToDoseUITests: XCTestCase {
       ],
       surface: "web"
     )
-    tester.documentPriorStep(
-      "event-observed-on-dashboard",
-      index: 2,
-      description: "The schedule materializes the pending event Steve will receive",
-      verifications: [
-        "The pending event arrives through the dashboard Firestore listener",
-        "The event is waiting for Steve’s response",
-      ],
-      surface: "web"
-    )
     return tester
   }
 
   private func reminderVerifications(
     _ app: XCUIApplication,
     sequence: String,
-    time: String
+    time: String?
   ) -> [StepVerification] {
-    [
+    var verifications: [StepVerification] = [
       .exists(app.otherElements["dose-reminder-alert"], "The response screen is visible"),
       .labelContains(app.staticTexts["reminder-sequence"], sequence, "The reminder sequence is correct"),
-      .labelContains(app.staticTexts["reminder-time"], time, "The reminder uses the logical scheduled time"),
       .exists(app.buttons["reminder-yes-i-will"], "Yes, I will is available"),
       .exists(app.buttons["reminder-yes-i-did"], "Yes, I did is available"),
       .sameSize(
@@ -294,26 +302,27 @@ final class RespondToDoseUITests: XCTestCase {
         "Neither response has greater visual weight"
       ),
     ]
+    if let time {
+      verifications.insert(
+        .labelContains(
+          app.staticTexts["reminder-time"],
+          time,
+          "The first reminder uses the medication occurrence time"
+        ),
+        at: 2
+      )
+    } else {
+      verifications.insert(
+        .exists(
+          app.staticTexts["reminder-time"],
+          "The repeat displays the response-relative snooze expiry"
+        ),
+        at: 2
+      )
+    }
+    return verifications
   }
 
-  private func waitForNotificationAcknowledgement(
-    _ app: XCUIApplication,
-    count: Int
-  ) {
-    let readiness = app.staticTexts["notification-readiness"]
-    let receipt = XCTNSPredicateExpectation(
-      predicate: NSPredicate(
-        format: "value CONTAINS %@",
-        "Notification requests acknowledged: \(count)"
-      ),
-      object: readiness
-    )
-    XCTAssertEqual(
-      XCTWaiter.wait(for: [receipt], timeout: TestStepHelper.conditionTimeout),
-      .completed,
-      "iOS did not acknowledge notification request \(count)"
-    )
-  }
 }
 
 private struct ConnectedEnvironment {
@@ -326,8 +335,8 @@ private struct ConnectedEnvironment {
   let administratorName: String
   let medicationName: String
   let scheduledDisplayTime: String
-  let repeatDisplayTime: String
   let timeZoneIdentifier: String
+  let logicalNow: String
 
   init() throws {
     projectID = try requiredConfiguration("MEDINAG_E2E_PROJECT_ID")
@@ -340,9 +349,34 @@ private struct ConnectedEnvironment {
     administratorID = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_ID")
     administratorName = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_NAME")
     medicationName = try requiredConfiguration("MEDINAG_E2E_MEDICATION_NAME")
-    scheduledDisplayTime = try requiredConfiguration("MEDINAG_E2E_SCHEDULED_DISPLAY_TIME")
-    repeatDisplayTime = try requiredConfiguration("MEDINAG_E2E_REPEAT_DISPLAY_TIME")
     timeZoneIdentifier = try requiredConfiguration("MEDINAG_E2E_TIME_ZONE")
+    let scheduledTime = try requiredConfiguration("MEDINAG_E2E_SCHEDULED_TIME")
+    guard
+      let timeZone = TimeZone(identifier: timeZoneIdentifier),
+      scheduledTime.count == 5,
+      let hour = Int(scheduledTime.prefix(2)),
+      let minute = Int(scheduledTime.suffix(2))
+    else {
+      throw XCTSkip("The connected E2E schedule time is invalid.")
+    }
+    scheduledDisplayTime = String(format: "%d:%02d", hour, minute)
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    guard let firstOccurrence = calendar.nextDate(
+      after: Date(),
+      matching: DateComponents(hour: hour, minute: minute),
+      matchingPolicy: .nextTime
+    ) else {
+      throw XCTSkip("The first connected occurrence could not be resolved.")
+    }
+    logicalNow = ISO8601DateFormatter().string(
+      // Ten logical minutes are six real seconds at the E2E scale. That leaves
+      // enough time to verify iOS accepted the requests and terminate the app,
+      // while both the first alert and the configured ten-minute snooze still
+      // arrive inside their two-second condition limits. The production
+      // scheduler and calendar trigger remain unchanged.
+      from: firstOccurrence.addingTimeInterval(-10 * 60)
+    )
   }
 }
 

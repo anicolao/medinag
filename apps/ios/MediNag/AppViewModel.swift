@@ -60,7 +60,7 @@ final class AppViewModel: ObservableObject {
   private let directory = FirebasePatientDirectory()
   private let healthReporter: SystemHealthReporter
   private let refreshCoordinator: ReminderRefreshCoordinator
-  private let clock: any Clock
+  private let timeline: any NotificationTimeline
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
   private var pendingNotificationInteraction: NotificationInteraction?
@@ -82,7 +82,7 @@ final class AppViewModel: ObservableObject {
     #endif
     let notifications = LocalNotificationScheduler(timeline: timeline)
     let healthReporter = SystemHealthReporter()
-    self.clock = timeline
+    self.timeline = timeline
     self.notifications = notifications
     self.liveNotifications = notifications
     self.healthReporter = healthReporter
@@ -388,7 +388,7 @@ final class AppViewModel: ObservableObject {
     confirmedAccessAdministratorID = nil
     let repository = FirebaseFollowedPlanRepository(administratorID: plan.id)
     coordinator = DoseCoordinator(
-      clock: clock,
+      clock: timeline,
       eventStore: repository,
       notifications: notifications,
       snoozeInterval: TimeInterval(plan.snoozeIntervalMinutes * 60),
@@ -568,6 +568,7 @@ final class AppViewModel: ObservableObject {
   private func handleNotificationInteraction(_ interaction: NotificationInteraction) {
     switch interaction.kind {
     case .opened:
+      timeline.didReceiveNotification(at: interaction.reminderTime)
       activeReminder = ReminderPresentation(
         eventID: interaction.eventID,
         medicationName: interaction.medicationName,

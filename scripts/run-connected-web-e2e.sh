@@ -20,7 +20,8 @@ export MEDINAG_E2E_PATIENT_NAME="Steve"
 export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX)"
 export MEDINAG_E2E_PLAYWRIGHT_TARGET="${1:-tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts}"
 
+npm run functions:build
 exec npx firebase emulators:exec \
   --project "$MEDINAG_E2E_PROJECT_ID" \
-  --only auth,firestore \
+  --only auth,firestore,functions \
   "scripts/run-connected-web-e2e-session.sh"

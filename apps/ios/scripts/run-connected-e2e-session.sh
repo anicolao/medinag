@@ -44,8 +44,7 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_ADMINISTRATOR_ID="$MEDINAG_E2E_ADMINISTRATOR_ID" \
   MEDINAG_E2E_ADMINISTRATOR_NAME="$MEDINAG_E2E_ADMINISTRATOR_NAME" \
   MEDINAG_E2E_MEDICATION_NAME="$MEDINAG_E2E_MEDICATION_NAME" \
-  MEDINAG_E2E_SCHEDULED_DISPLAY_TIME="$MEDINAG_E2E_SCHEDULED_DISPLAY_TIME" \
-  MEDINAG_E2E_REPEAT_DISPLAY_TIME="$MEDINAG_E2E_REPEAT_DISPLAY_TIME" \
+  MEDINAG_E2E_SCHEDULED_TIME="$MEDINAG_E2E_SCHEDULED_TIME" \
   MEDINAG_E2E_TIME_ZONE="$MEDINAG_E2E_TIME_ZONE"
 
 result_bundle="$derived_data_directory/SystemNotification.xcresult"
@@ -60,3 +59,11 @@ run_xcodebuild -quiet test-without-building \
   -derivedDataPath "$derived_data_directory" \
   -only-testing:MediNagUITests/RespondToDoseUITests/testConnectedSystemNotificationDoseLoop \
   -resultBundlePath "$result_bundle"
+
+if [[ "${MEDINAG_E2E_UPDATE_SNAPSHOTS:-false}" == "true" ]]; then
+  npx playwright test \
+    tests/e2e/004-ios-respond-to-dose/completion.spec.ts \
+    --update-snapshots
+else
+  npx playwright test tests/e2e/004-ios-respond-to-dose/completion.spec.ts
+fi

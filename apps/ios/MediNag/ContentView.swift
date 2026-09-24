@@ -58,8 +58,9 @@ private struct AuthenticationProgressView: View {
         )
 
         VStack(spacing: 18) {
-          ProgressView()
-            .controlSize(.large)
+          Image(systemName: "lock.shield.fill")
+            .font(.system(size: 34, weight: .semibold))
+            .foregroundStyle(MediNagColor.teal)
             .accessibilityHidden(true)
           Text("Connecting to Firebase…")
             .font(.headline)
@@ -439,9 +440,11 @@ private struct ReminderDiagnosticsCard: View {
         "Pending with iOS",
         "\(diagnostics.actualPendingCount) of \(diagnostics.expectedPendingCount)"
       )
+      .accessibilityElement(children: .combine)
+      .accessibilityIdentifier("pending-reminder-count")
       diagnosticsRow("Next reminder", format(diagnostics.nextReminder))
       diagnosticsRow("Scheduled through", format(diagnostics.scheduledThrough))
-      diagnosticsRow("Last refresh", format(diagnostics.lastReconciledAt))
+      diagnosticsRow("Last refresh", formatRefresh(diagnostics.lastReconciledAt))
       if diagnostics.missedEventCount > 0 {
         diagnosticsRow("Missed before registration", String(diagnostics.missedEventCount))
           .foregroundStyle(MediNagColor.warning)
@@ -472,6 +475,22 @@ private struct ReminderDiagnosticsCard: View {
     if let timeZone = TimeZone(identifier: diagnostics.patientTimeZone) {
       formatter.timeZone = timeZone
     }
+    return formatter.string(from: date)
+  }
+
+  private func formatRefresh(_ date: Date?) -> String {
+    guard let date else { return "Not available" }
+    var calendar = Calendar.current
+    if let timeZone = TimeZone(identifier: diagnostics.patientTimeZone) {
+      calendar.timeZone = timeZone
+    }
+    if calendar.isDateInToday(date) {
+      return "Today"
+    }
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    formatter.timeZone = calendar.timeZone
     return formatter.string(from: date)
   }
 }

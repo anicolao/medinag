@@ -32,7 +32,7 @@ jobs:
           java-version: "21"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci && npm ci --prefix functions
 
       - name: Validate Firebase configuration
         run: npm run firebase:validate

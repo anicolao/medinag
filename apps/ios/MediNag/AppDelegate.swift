@@ -78,6 +78,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
+    NotificationDeliveryLedger.record(
+      identifier: response.notification.request.identifier
+    )
     center.removeDeliveredNotifications(
       withIdentifiers: [response.notification.request.identifier]
     )

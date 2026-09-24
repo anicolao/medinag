@@ -69,22 +69,5 @@ test('US-004: Lori schedules the dose Steve receives on iOS', async ({ page }, t
   await page.getByRole('button', { name: 'Publish schedule' }).click();
   await expect(page.getByText('Published', { exact: true })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Today', exact: true }).click();
-  await tester.step('event-observed-on-dashboard', {
-    description: 'The schedule materializes the pending event Steve will receive',
-    verifications: [
-      {
-        spec: 'The pending event arrives through the dashboard Firestore listener',
-        check: async () =>
-          await expect(page.getByTestId('today-event-list')).toContainText(medicationName)
-      },
-      {
-        spec: 'The event is waiting for Steve’s response',
-        check: async () =>
-          await expect(page.getByTestId('today-event-list')).toContainText('Pending')
-      }
-    ]
-  });
-
   tester.generateDocs();
 });

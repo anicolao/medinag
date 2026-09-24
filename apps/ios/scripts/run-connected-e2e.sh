@@ -54,12 +54,11 @@ export MEDINAG_E2E_PATIENT_NAME="Steve"
 export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX)"
 export MEDINAG_E2E_MEDICATION_NAME="Morning Prescription Doses"
 export MEDINAG_E2E_SCHEDULED_TIME="08:00"
-export MEDINAG_E2E_SCHEDULED_DISPLAY_TIME="8:00"
-export MEDINAG_E2E_REPEAT_DISPLAY_TIME="8:10"
 export MEDINAG_E2E_TIME_ZONE="America/Toronto"
 export MEDINAG_E2E_DERIVED_DATA="${MEDINAG_E2E_DERIVED_DATA:-$repository_root/apps/ios/DerivedData/ConnectedE2E}"
 
+npm run functions:build
 npx firebase emulators:exec \
   --project "$MEDINAG_E2E_PROJECT_ID" \
-  --only auth,firestore \
+  --only auth,firestore,functions \
   "apps/ios/scripts/run-connected-e2e-session.sh"

@@ -5,6 +5,8 @@ import MediNagCore
 #if E2E
   enum E2ERuntime {
     private static let timeZoneKey = "medinag.e2e.time-zone"
+    private static let logicalNowKey = "medinag.e2e.logical-now"
+    private static let timeScaleKey = "medinag.e2e.time-scale"
 
     static var googleIDToken: String? {
       guard
@@ -41,17 +43,20 @@ import MediNagCore
     }
 
     static func notificationTimeline() -> any NotificationTimeline {
+      let defaults = UserDefaults.standard
+      let arguments = ProcessInfo.processInfo.arguments
+      if
+        let logicalNowValue = arguments.e2eLaunchValue(after: "-e2e-logical-now"),
+        let scaleValue = arguments.e2eLaunchValue(after: "-e2e-time-scale")
+      {
+        defaults.set(logicalNowValue, forKey: logicalNowKey)
+        defaults.set(scaleValue, forKey: timeScaleKey)
+      }
       guard
-        let value = ProcessInfo.processInfo.arguments.e2eLaunchValue(
-          after: "-e2e-logical-now"
-        ),
-        let logicalNow = ISO8601DateFormatter().date(from: value),
-        let scaleValue = ProcessInfo.processInfo.arguments.e2eLaunchValue(
-          after: "-e2e-time-scale"
-        ),
-        let scale = Double(scaleValue),
-        scale > 0,
-        scale <= 1
+        let logicalNowValue = defaults.string(forKey: logicalNowKey),
+        let logicalNow = ISO8601DateFormatter().date(from: logicalNowValue),
+        let scaleValue = defaults.string(forKey: timeScaleKey),
+        let scale = Double(scaleValue), scale > 0, scale <= 1
       else {
         return SystemNotificationTimeline()
       }
@@ -79,6 +84,35 @@ enum MediNagNotification {
   static let reminderNumber = "medinagReminderNumber"
 }
 
+enum NotificationDeliveryLedger {
+  private static let key = "medinag.notification-delivery-identifiers"
+  private static let lock = NSLock()
+
+  static var identifiers: Set<String> {
+    lock.withLock {
+      Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+    }
+  }
+
+  static func record(identifier: String) {
+    guard identifier.hasPrefix("medinag.dose.") else { return }
+    lock.withLock {
+      var values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+      values.insert(identifier)
+      UserDefaults.standard.set(Array(values), forKey: key)
+    }
+  }
+
+  static func remove(eventID: String) {
+    let prefix = "medinag.dose.\(eventID)."
+    lock.withLock {
+      let values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+        .filter { !$0.hasPrefix(prefix) }
+      UserDefaults.standard.set(Array(values), forKey: key)
+    }
+  }
+}
+
 enum MediNagDateFormatting {
   static func wallTime(_ value: String) -> String {
     let parts = value.split(separator: ":").compactMap { Int($0) }
@@ -100,31 +134,52 @@ enum MediNagDateFormatting {
 
 protocol NotificationTimeline: Clock {
   func deliveryDate(for logicalDeadline: Date) -> Date
+  func didReceiveNotification(at logicalDeadline: Date)
 }
 
 struct SystemNotificationTimeline: NotificationTimeline {
   var now: Date { Date() }
   func deliveryDate(for logicalDeadline: Date) -> Date { logicalDeadline }
+  func didReceiveNotification(at logicalDeadline: Date) {}
 }
 
 #if E2E
   final class ScaledNotificationTimeline: NotificationTimeline, @unchecked Sendable {
     private let logicalAnchor: Date
-    private let realAnchor: Date
     private let scale: Double
+    private let lock = NSLock()
+    private var realAnchor: Date?
 
-    init(logicalNow: Date, scale: Double, realNow: Date = Date()) {
+    init(logicalNow: Date, scale: Double) {
       logicalAnchor = logicalNow
-      realAnchor = realNow
       self.scale = scale
     }
 
     var now: Date {
-      logicalAnchor.addingTimeInterval(Date().timeIntervalSince(realAnchor) / scale)
+      lock.withLock {
+        guard let realAnchor else { return logicalAnchor }
+        return logicalAnchor.addingTimeInterval(
+          Date().timeIntervalSince(realAnchor) / scale
+        )
+      }
     }
 
     func deliveryDate(for logicalDeadline: Date) -> Date {
-      realAnchor.addingTimeInterval(logicalDeadline.timeIntervalSince(logicalAnchor) * scale)
+      lock.withLock {
+        let anchor = realAnchor ?? Date()
+        realAnchor = anchor
+        return anchor.addingTimeInterval(
+          logicalDeadline.timeIntervalSince(logicalAnchor) * scale
+        )
+      }
+    }
+
+    func didReceiveNotification(at logicalDeadline: Date) {
+      lock.withLock {
+        realAnchor = Date().addingTimeInterval(
+          -logicalDeadline.timeIntervalSince(logicalAnchor) * scale
+        )
+      }
     }
   }
 #endif
@@ -204,7 +259,7 @@ final class NotificationResponseRouter {
   }
 }
 
-final class LocalNotificationScheduler: NotificationScheduling, @unchecked Sendable {
+actor LocalNotificationScheduler: NotificationScheduling {
   private let center: UNUserNotificationCenter
   private let timeline: any NotificationTimeline
 
@@ -277,6 +332,7 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
       .filter { $0.hasPrefix(prefix) }
     center.removePendingNotificationRequests(withIdentifiers: pendingIdentifiers)
     center.removeDeliveredNotifications(withIdentifiers: deliveredIdentifiers)
+    NotificationDeliveryLedger.remove(eventID: eventID)
   }
 
   func reconcile(
@@ -302,8 +358,18 @@ final class LocalNotificationScheduler: NotificationScheduling, @unchecked Senda
       }
       return Desired(event: event, logicalDate: event.scheduledTime, reminderNumber: 1)
     }
+    let deliveredIdentifiers = Set(
+      await center.deliveredNotifications().map { $0.request.identifier }
+    ).union(NotificationDeliveryLedger.identifiers)
     let future = desired.filter { $0.logicalDate > timeline.now }
-    let missed = desired.filter { $0.logicalDate <= timeline.now }.map(\.event.id)
+    let missed = desired.filter {
+      let identifier = Self.notificationIdentifier(
+        eventID: $0.event.id,
+        reminderNumber: $0.reminderNumber
+      )
+      return $0.logicalDate <= timeline.now
+        && !deliveredIdentifiers.contains(identifier)
+    }.map(\.event.id)
     let expectedIdentifiers = Set(future.map {
       Self.notificationIdentifier(
         eventID: $0.event.id,
