@@ -58,7 +58,8 @@ final class AppViewModel: ObservableObject {
   private var coordinator: DoseCoordinator?
   private var confirmedAccessAdministratorID: String?
   private let directory = FirebasePatientDirectory()
-  private let healthReporter = SystemHealthReporter()
+  private let healthReporter: SystemHealthReporter
+  private let refreshCoordinator: ReminderRefreshCoordinator
   private let clock: any Clock
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
@@ -80,9 +81,15 @@ final class AppViewModel: ObservableObject {
       let timeline = SystemNotificationTimeline()
     #endif
     let notifications = LocalNotificationScheduler(timeline: timeline)
+    let healthReporter = SystemHealthReporter()
     self.clock = timeline
     self.notifications = notifications
     self.liveNotifications = notifications
+    self.healthReporter = healthReporter
+    self.refreshCoordinator = ReminderRefreshCoordinator(
+      notifications: notifications,
+      healthReporter: healthReporter
+    )
     installNotificationRouter()
     Task { await boot() }
   }
@@ -227,6 +234,26 @@ final class AppViewModel: ObservableObject {
       await reportIncident(
         code: "notification_reconciliation_failed",
         message: "The patient iPhone could not register its expected reminders.",
+        severity: "critical",
+        context: ["error": error.localizedDescription]
+      )
+    }
+  }
+
+  func refreshOnForeground() async {
+    guard state == .ready, let userID = Auth.auth().currentUser?.uid else { return }
+    do {
+      try await directory.updateTimeZone(
+        userID: userID,
+        timeZone: patientTimeZone.identifier
+      )
+      await refreshNotificationReadiness()
+      await scheduleUnfinishedEventsIfReady()
+    } catch {
+      actionNotice = "Could not refresh reminders: \(error.localizedDescription)"
+      await reportIncident(
+        code: "foreground_refresh_failed",
+        message: "The patient iPhone could not refresh medication reminders.",
         severity: "critical",
         context: ["error": error.localizedDescription]
       )
@@ -479,10 +506,17 @@ final class AppViewModel: ObservableObject {
   }
 
   private func reconcileNotifications() async throws {
-    guard let liveNotifications else { return }
-    let result = try await liveNotifications.reconcile(
+    guard
+      liveNotifications != nil,
+      let plan = currentPlan,
+      let patientID = Auth.auth().currentUser?.uid
+    else { return }
+    let result = try await refreshCoordinator.refresh(
       events: events,
-      snoozeInterval: TimeInterval(snoozeMinutes * 60),
+      administratorID: plan.id,
+      patientID: patientID,
+      timeZone: patientTimeZone.identifier,
+      snoozeIntervalMinutes: snoozeMinutes,
       maximumReminderCount: maximumReminderCount
     )
     reminderDiagnostics = ReminderDiagnostics(
@@ -500,42 +534,6 @@ final class AppViewModel: ObservableObject {
       : .noScheduledReminders
     if !result.missedEventIDs.isEmpty {
       actionNotice = "A medication time was missed before this iPhone could register it."
-      await reportIncident(
-        code: "medication_occurrence_missed",
-        message: "A medication occurrence passed before the patient iPhone registered it.",
-        severity: "critical",
-        context: ["eventCount": String(result.missedEventIDs.count)]
-      )
-    }
-    if
-      let plan = currentPlan,
-      let patientID = Auth.auth().currentUser?.uid,
-      let scheduledThrough = result.scheduledThrough
-    {
-      let ready = result.expectedPendingCount > 0
-        && result.actualPendingCount == result.expectedPendingCount
-      do {
-        try await healthReporter.reportCoverage(
-          administratorID: plan.id,
-          patientID: patientID,
-          timeZone: patientTimeZone.identifier,
-          scheduledThrough: scheduledThrough,
-          expectedPendingCount: result.expectedPendingCount,
-          actualPendingCount: result.actualPendingCount,
-          ready: ready
-        )
-        await healthReporter.flushOutbox(
-          administratorID: plan.id,
-          patientID: patientID
-        )
-      } catch {
-        await reportIncident(
-          code: "device_coverage_write_failed",
-          message: "The patient iPhone could not report reminder coverage.",
-          severity: "warning",
-          context: ["error": error.localizedDescription]
-        )
-      }
     }
   }
 

@@ -158,6 +158,35 @@ final class FirebasePatientDirectory: @unchecked Sendable {
     ])
   }
 
+  func updateTimeZone(userID: String, timeZone: String) async throws {
+    try await database.document("patients/\(userID)").updateData([
+      "timeZone": timeZone,
+      "timeZoneUpdatedAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    ])
+  }
+
+  func backgroundRefreshContext(userID: String) async throws -> BackgroundRefreshContext? {
+    let patient = try await database.document("patients/\(userID)").getDocument()
+    guard
+      let administratorID = patient.data()?["followingAdministratorUid"] as? String
+    else { return nil }
+    let administrator = try await database.document(
+      "administrators/\(administratorID)"
+    ).getDocument()
+    guard
+      let data = administrator.data(),
+      data["published"] as? Bool == true,
+      data["patientUid"] as? String == userID
+    else { return nil }
+    return BackgroundRefreshContext(
+      administratorID: administratorID,
+      patientID: userID,
+      snoozeIntervalMinutes: data["snoozeIntervalMinutes"] as? Int ?? 10,
+      maximumReminderCount: data["maxReminders"] as? Int ?? 3
+    )
+  }
+
   func observeAccess(
     administratorID: String,
     userID: String,
@@ -239,6 +268,13 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       }
   }
 
+  func fetchEvents() async throws -> [MedicationEvent] {
+    let snapshot = try await database.collection(
+      "administrators/\(administratorID)/medicationEvents"
+    ).order(by: "scheduledTime").getDocuments()
+    return snapshot.documents.compactMap(Self.event)
+  }
+
   func snooze(eventID: String, at date: Date) async throws -> MedicationEvent {
     let reference = eventReference(eventID: eventID)
     let snapshot = try await reference.getDocument()
@@ -314,6 +350,13 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       completedAt: (data["completedAt"] as? Timestamp)?.dateValue()
     )
   }
+}
+
+struct BackgroundRefreshContext: Sendable {
+  let administratorID: String
+  let patientID: String
+  let snoozeIntervalMinutes: Int
+  let maximumReminderCount: Int
 }
 
 enum PatientRepositoryError: LocalizedError {

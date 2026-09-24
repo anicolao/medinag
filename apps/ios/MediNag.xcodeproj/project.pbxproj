@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */; };
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
 		24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */; };
 		26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */; };
@@ -49,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationModelsTests.swift; sourceTree = "<group>"; };
+		14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderRefreshCoordinator.swift; sourceTree = "<group>"; };
 		1C4984FB11665ABC22BE0FC3 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		308089DAB1637436AB191692 /* MediNag.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNag.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				D84D3ED11E3629FD0FC1A856 /* Info.plist */,
 				8FD40690383616CF75360A1A /* MediNagApp.swift */,
 				A8187B68655A62CA3923A2B4 /* NotificationServices.swift */,
+				14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */,
 				67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */,
 				0E8A51B7B4F47C9CD032BDE4 /* Resources */,
 			);
@@ -344,6 +347,7 @@
 				3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */,
 				372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */,
 				EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */,
+				09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */,
 				A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

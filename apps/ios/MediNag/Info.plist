@@ -20,6 +20,10 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>FirebaseAppDelegateProxyEnabled</key>
     <false/>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>org.boardgamescafe.medinag.reminder-refresh</string>
+    </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>UILaunchScreen</key>
@@ -30,6 +34,10 @@
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
     </array>
 </dict>
 </plist>
