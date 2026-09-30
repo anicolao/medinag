@@ -101,12 +101,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     else {
       return
     }
+    let timeZoneIdentifier = content.userInfo[
+      MediNagNotification.timeZone
+    ] as? String ?? TimeZone.autoupdatingCurrent.identifier
     await NotificationResponseRouter.shared.route(
       actionIdentifier: response.actionIdentifier,
       eventID: eventID,
       medicationName: medicationName,
       reminderTime: Date(timeIntervalSince1970: reminderTimestamp),
-      reminderNumber: reminderNumber
+      reminderNumber: reminderNumber,
+      timeZoneIdentifier: timeZoneIdentifier
     )
   }
 }

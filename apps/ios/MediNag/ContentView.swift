@@ -156,7 +156,12 @@ private struct ReminderAlertView: View {
           .tracking(1.5)
           .foregroundStyle(MediNagColor.teal)
           .accessibilityIdentifier("reminder-sequence")
-        Text(MediNagDateFormatting.reminderTime(reminder.scheduledTime))
+        Text(
+          MediNagDateFormatting.reminderTime(
+            reminder.scheduledTime,
+            timeZoneIdentifier: reminder.timeZoneIdentifier
+          )
+        )
           .font(.system(size: 52, weight: .bold, design: .rounded))
           .foregroundStyle(MediNagColor.ink)
           .accessibilityIdentifier("reminder-time")

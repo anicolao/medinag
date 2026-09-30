@@ -82,6 +82,7 @@ enum MediNagNotification {
   static let medicationName = "medinagMedicationName"
   static let reminderTime = "medinagReminderTime"
   static let reminderNumber = "medinagReminderNumber"
+  static let timeZone = "medinagTimeZone"
 }
 
 enum NotificationDeliveryLedger {
@@ -203,6 +204,7 @@ struct NotificationInteraction: Sendable {
   let medicationName: String
   let reminderTime: Date
   let reminderNumber: Int
+  let timeZoneIdentifier: String
 }
 
 @MainActor
@@ -222,7 +224,8 @@ final class NotificationResponseRouter {
     eventID: String,
     medicationName: String,
     reminderTime: Date,
-    reminderNumber: Int
+    reminderNumber: Int,
+    timeZoneIdentifier: String
   ) {
     let kind: NotificationInteractionKind
     switch actionIdentifier {
@@ -240,7 +243,8 @@ final class NotificationResponseRouter {
       eventID: eventID,
       medicationName: medicationName,
       reminderTime: reminderTime,
-      reminderNumber: reminderNumber
+      reminderNumber: reminderNumber,
+      timeZoneIdentifier: timeZoneIdentifier
     )
     guard let handler else {
       pendingInteractions.append(interaction)
@@ -394,6 +398,8 @@ actor LocalNotificationScheduler: NotificationScheduling {
         abs($0.timeIntervalSince(deliveryDate)) < 0.5
           && existing?.content.userInfo[MediNagNotification.reminderTime] as? TimeInterval
             == item.logicalDate.timeIntervalSince1970
+          && existing?.content.userInfo[MediNagNotification.timeZone] as? String
+            == item.event.timeZone
       } ?? false
       if !unchanged {
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
@@ -448,6 +454,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
       MediNagNotification.medicationName: event.medicationName,
       MediNagNotification.reminderTime: date.timeIntervalSince1970,
       MediNagNotification.reminderNumber: reminderNumber,
+      MediNagNotification.timeZone: event.timeZone,
     ]
 
     let dateComponents = Calendar.current.dateComponents(

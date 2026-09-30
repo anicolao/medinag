@@ -12,6 +12,7 @@ final class AppViewModel: ObservableObject {
     let medicationName: String
     let scheduledTime: Date
     let reminderNumber: Int
+    let timeZoneIdentifier: String
   }
 
   enum State: Equatable {
@@ -298,7 +299,8 @@ final class AppViewModel: ObservableObject {
         eventID: reminder.eventID,
         medicationName: reminder.medicationName,
         reminderTime: reminder.scheduledTime,
-        reminderNumber: reminder.reminderNumber
+        reminderNumber: reminder.reminderNumber,
+        timeZoneIdentifier: reminder.timeZoneIdentifier
       )
       activeReminder = nil
       actionNotice = "Recording your response…"
@@ -585,7 +587,8 @@ final class AppViewModel: ObservableObject {
         eventID: interaction.eventID,
         medicationName: interaction.medicationName,
         scheduledTime: interaction.reminderTime,
-        reminderNumber: interaction.reminderNumber
+        reminderNumber: interaction.reminderNumber,
+        timeZoneIdentifier: interaction.timeZoneIdentifier
       )
     case .response(let response):
       guard events.contains(where: { $0.id == interaction.eventID }) else {
