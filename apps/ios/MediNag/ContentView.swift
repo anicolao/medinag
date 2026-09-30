@@ -22,6 +22,9 @@ struct ContentView: View {
         case .choosingSchedule:
           ScheduleSelectionView(viewModel: viewModel)
 
+        case .connectingSchedule:
+          ScheduleConnectionProgressView(viewModel: viewModel)
+
         case .ready:
           TodayView(viewModel: viewModel)
 
@@ -42,6 +45,50 @@ struct ContentView: View {
     }
     .fontDesign(.rounded)
     .tint(MediNagColor.teal)
+  }
+}
+
+private struct ScheduleConnectionProgressView: View {
+  @ObservedObject var viewModel: AppViewModel
+
+  var body: some View {
+    NavigationStack {
+      VStack(alignment: .leading, spacing: 28) {
+        BrandHeader(
+          eyebrow: "SCHEDULE CONNECTION",
+          title: "Preparing your reminders",
+          detail: "MediNag is following \(viewModel.currentPlan?.administratorName ?? "your administrator") and listening for the published medication events."
+        )
+
+        VStack(spacing: 18) {
+          ProgressView()
+            .controlSize(.large)
+          Text("Connected to Firebase")
+            .font(.headline)
+            .foregroundStyle(MediNagColor.ink)
+          Text("Continue now. Medication events will appear as soon as the backend publishes them.")
+            .font(.subheadline)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(MediNagColor.muted)
+          Button("Continue to my schedule") {
+            viewModel.continueAfterFollowing()
+          }
+          .buttonStyle(PrimaryButtonStyle())
+          .accessibilityIdentifier("continue-after-following")
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(.white, in: RoundedRectangle(cornerRadius: 22))
+        .shadow(color: .black.opacity(0.06), radius: 24, y: 12)
+
+        Spacer()
+      }
+      .padding(24)
+      .background(MediNagColor.background)
+      .navigationBarHidden(true)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier("schedule-connection-progress-screen")
+    }
   }
 }
 

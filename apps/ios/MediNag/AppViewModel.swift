@@ -19,6 +19,7 @@ final class AppViewModel: ObservableObject {
     case signedOut
     case authenticating
     case choosingSchedule
+    case connectingSchedule
     case ready
     case configurationMissing
     case failed(String)
@@ -159,12 +160,17 @@ final class AppViewModel: ObservableObject {
         displayName: user.displayName ?? "Patient",
         timeZone: patientTimeZone.identifier
       )
-      try await connect(plan: plan)
-      actionNotice = "Following \(plan.administratorName)'s schedule."
+      try await connect(plan: plan, revealWhenConnected: false)
+      actionNotice = "Connected to \(plan.administratorName)'s schedule."
     } catch {
       actionNotice = error.localizedDescription
       await refreshAvailablePlans()
     }
+  }
+
+  func continueAfterFollowing() {
+    guard state == .connectingSchedule else { return }
+    state = .ready
   }
 
   func changeSchedule() async {
@@ -384,7 +390,10 @@ final class AppViewModel: ObservableObject {
     }
   }
 
-  private func connect(plan: PublishedPlan) async throws {
+  private func connect(
+    plan: PublishedPlan,
+    revealWhenConnected: Bool = true
+  ) async throws {
     disconnectListeners()
     currentPlan = plan
     confirmedAccessAdministratorID = nil
@@ -439,7 +448,7 @@ final class AppViewModel: ObservableObject {
         }
       }
     })
-    state = .ready
+    state = revealWhenConnected ? .ready : .connectingSchedule
     if notificationReadiness == .denied {
       await reportIncident(
         code: "notification_authorization_denied",

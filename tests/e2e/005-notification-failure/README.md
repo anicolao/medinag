@@ -57,9 +57,18 @@
 - [x] Lori's published plan is visible from Firebase
 - [x] The published plan identifies the medication
 
+## MediNag connects Steve to Lori's published schedule
+
+![MediNag connects Steve to Lori's published schedule](./screenshots/ios/003-failure-connection-progress.png)
+
+**Verifications:**
+
+- [x] A visible connection state appears before the event synchronization condition
+- [x] Steve explicitly continues while backend events materialize
+
 ## The iPhone follows Lori's schedule before requesting permission
 
-![The iPhone follows Lori's schedule before requesting permission](./screenshots/ios/003-failure-event-received.png)
+![The iPhone follows Lori's schedule before requesting permission](./screenshots/ios/004-failure-event-received.png)
 
 **Verifications:**
 
@@ -68,7 +77,7 @@
 
 ## iOS asks whether MediNag may send notifications
 
-![iOS asks whether MediNag may send notifications](./screenshots/ios/004-failure-permission-prompt.png)
+![iOS asks whether MediNag may send notifications](./screenshots/ios/005-failure-permission-prompt.png)
 
 **Verifications:**
 
@@ -77,7 +86,7 @@
 
 ## Steve sees that medication notifications are disabled
 
-![Steve sees that medication notifications are disabled](./screenshots/ios/005-patient-not-ready.png)
+![Steve sees that medication notifications are disabled](./screenshots/ios/006-patient-not-ready.png)
 
 **Verifications:**
 
@@ -97,7 +106,7 @@
 
 ## Steve reinstalls MediNag after restoring notification permission
 
-![Steve reinstalls MediNag after restoring notification permission](./screenshots/ios/006-recovery-sign-in.png)
+![Steve reinstalls MediNag after restoring notification permission](./screenshots/ios/007-recovery-sign-in.png)
 
 **Verifications:**
 
@@ -105,7 +114,7 @@
 
 ## Steve reconnects to his existing followed schedule
 
-![Steve reconnects to his existing followed schedule](./screenshots/ios/007-recovery-authentication.png)
+![Steve reconnects to his existing followed schedule](./screenshots/ios/008-recovery-authentication.png)
 
 **Verifications:**
 
@@ -113,7 +122,7 @@
 
 ## The reinstalled app receives the existing medication event
 
-![The reinstalled app receives the existing medication event](./screenshots/ios/008-recovery-event-received.png)
+![The reinstalled app receives the existing medication event](./screenshots/ios/009-recovery-event-received.png)
 
 **Verifications:**
 
@@ -122,7 +131,7 @@
 
 ## iOS offers notification permission again
 
-![iOS offers notification permission again](./screenshots/ios/009-recovery-permission-prompt.png)
+![iOS offers notification permission again](./screenshots/ios/010-recovery-permission-prompt.png)
 
 **Verifications:**
 
@@ -131,7 +140,7 @@
 
 ## Steve sees restored reminder coverage
 
-![Steve sees restored reminder coverage](./screenshots/ios/010-patient-recovered.png)
+![Steve sees restored reminder coverage](./screenshots/ios/011-patient-recovered.png)
 
 **Verifications:**
 

@@ -54,6 +54,22 @@ final class RespondToDoseUITests: XCTestCase {
     planOption.tap()
     app.buttons["follow-schedule"].tap()
 
+    try tester.step(
+      "schedule-connection-in-progress",
+      description: "MediNag connects Steve to Lori's published schedule",
+      verifications: [
+        .exists(
+          app.otherElements["schedule-connection-progress-screen"],
+          "A visible connection state appears before the two-second condition limit"
+        ),
+        .exists(
+          app.buttons["continue-after-following"],
+          "Steve controls when to continue while backend events materialize"
+        ),
+      ]
+    )
+    app.buttons["continue-after-following"].tap()
+
     let eventStatus = app.staticTexts.matching(
       NSPredicate(
         format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
@@ -310,6 +326,10 @@ struct ConnectedEnvironment {
     administratorName = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_NAME")
     medicationName = try requiredConfiguration("MEDINAG_E2E_MEDICATION_NAME")
     timeZoneIdentifier = try requiredConfiguration("MEDINAG_E2E_TIME_ZONE")
+    let configuredNow = try requiredConfiguration("MEDINAG_E2E_LOGICAL_NOW")
+    guard let now = ISO8601DateFormatter().date(from: configuredNow) else {
+      throw XCTSkip("The connected E2E logical clock is invalid.")
+    }
     let scheduledTime = try requiredConfiguration("MEDINAG_E2E_SCHEDULED_TIME")
     guard
       let timeZone = TimeZone(identifier: timeZoneIdentifier),
@@ -323,7 +343,7 @@ struct ConnectedEnvironment {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = timeZone
     guard let firstOccurrence = calendar.nextDate(
-      after: Date(),
+      after: now,
       matching: DateComponents(hour: hour, minute: minute),
       matchingPolicy: .nextTime
     ) else {

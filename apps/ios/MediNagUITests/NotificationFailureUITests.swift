@@ -50,6 +50,22 @@ final class NotificationFailureUITests: XCTestCase {
     app.buttons["follow-schedule"].tap()
 
     try tester.step(
+      "failure-connection-progress",
+      description: "MediNag connects Steve to Lori's published schedule",
+      verifications: [
+        .exists(
+          app.otherElements["schedule-connection-progress-screen"],
+          "A visible connection state appears before the event synchronization condition"
+        ),
+        .exists(
+          app.buttons["continue-after-following"],
+          "Steve explicitly continues while backend events materialize"
+        ),
+      ]
+    )
+    app.buttons["continue-after-following"].tap()
+
+    try tester.step(
       "failure-event-received",
       description: "The iPhone follows Lori's schedule before requesting permission",
       verifications: [
@@ -111,7 +127,7 @@ final class NotificationFailureUITests: XCTestCase {
       testCase: self,
       application: app,
       storyID: "005-notification-failure",
-      startingStepIndex: 6
+      startingStepIndex: 7
     )
     app.launch()
 

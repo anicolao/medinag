@@ -60,9 +60,19 @@
       ]
     },
     {
+      "id": "failure-connection-progress",
+      "surface": "ios",
+      "image": "003-failure-connection-progress.png",
+      "description": "MediNag connects Steve to Lori's published schedule",
+      "claims": [
+        { "id": "failure.follow-progress", "text": "A visible connection state appears before the event synchronization condition", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the schedule connection progress screen" },
+        { "id": "failure.follow-continue", "text": "Steve explicitly continues while backend events materialize", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks and taps the visible continue button" }
+      ]
+    },
+    {
       "id": "failure-event-received",
       "surface": "ios",
-      "image": "003-failure-event-received.png",
+      "image": "004-failure-event-received.png",
       "description": "The iPhone follows Lori's schedule before requesting permission",
       "claims": [
         { "id": "failure.event-visible", "text": "The medication event arrives through the Firestore listener", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the medication label" },
@@ -72,7 +82,7 @@
     {
       "id": "failure-permission-prompt",
       "surface": "ios",
-      "image": "004-failure-permission-prompt.png",
+      "image": "005-failure-permission-prompt.png",
       "description": "iOS asks whether MediNag may send notifications",
       "claims": [
         { "id": "failure.system-prompt", "text": "The notification permission sheet is rendered by iOS", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the SpringBoard alert" },
@@ -82,7 +92,7 @@
     {
       "id": "patient-not-ready",
       "surface": "ios",
-      "image": "005-patient-not-ready.png",
+      "image": "006-patient-not-ready.png",
       "description": "Steve sees that medication notifications are disabled",
       "claims": [
         { "id": "failure.disabled-visible", "text": "The patient sees that notifications are disabled", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the readiness label" },
@@ -104,7 +114,7 @@
     {
       "id": "recovery-sign-in",
       "surface": "ios",
-      "image": "006-recovery-sign-in.png",
+      "image": "007-recovery-sign-in.png",
       "description": "Steve reinstalls MediNag after restoring notification permission",
       "claims": [
         { "id": "recovery.sign-in", "text": "The fresh installation offers the patient Google sign-in action", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the sign-in button after reinstall" }
@@ -113,7 +123,7 @@
     {
       "id": "recovery-authentication",
       "surface": "ios",
-      "image": "007-recovery-authentication.png",
+      "image": "008-recovery-authentication.png",
       "description": "Steve reconnects to his existing followed schedule",
       "claims": [
         { "id": "recovery.auth", "text": "The Auth Emulator identity reconnects without recreating the relationship", "environment": "connected-emulators", "assertion": "NotificationFailureUITests continues the existing patient identity" }
@@ -122,7 +132,7 @@
     {
       "id": "recovery-event-received",
       "surface": "ios",
-      "image": "008-recovery-event-received.png",
+      "image": "009-recovery-event-received.png",
       "description": "The reinstalled app receives the existing medication event",
       "claims": [
         { "id": "recovery.event", "text": "The existing followed plan and medication event arrive from Firestore", "environment": "connected-emulators", "assertion": "NotificationFailureUITests checks the medication label" },
@@ -132,7 +142,7 @@
     {
       "id": "recovery-permission-prompt",
       "surface": "ios",
-      "image": "009-recovery-permission-prompt.png",
+      "image": "010-recovery-permission-prompt.png",
       "description": "iOS offers notification permission again",
       "claims": [
         { "id": "recovery.system-prompt", "text": "The fresh system permission sheet is rendered by iOS", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the SpringBoard alert" },
@@ -142,7 +152,7 @@
     {
       "id": "patient-recovered",
       "surface": "ios",
-      "image": "010-patient-recovered.png",
+      "image": "011-patient-recovered.png",
       "description": "Steve sees restored reminder coverage",
       "claims": [
         { "id": "recovery.ready", "text": "The patient sees that reminders are ready", "environment": "ios-simulator", "assertion": "NotificationFailureUITests checks the readiness state" },

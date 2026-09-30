@@ -173,7 +173,15 @@ async function reconcileAdministrator(
 
 async function reconcileWithIncident(administratorId: string): Promise<void> {
   try {
-    await reconcileAdministrator(administratorId);
+    const configuredNow = process.env.MEDINAG_E2E_LOGICAL_NOW;
+    if (configuredNow && process.env.FUNCTIONS_EMULATOR !== 'true') {
+      throw new Error('MEDINAG_E2E_LOGICAL_NOW is only valid in the Firebase emulator.');
+    }
+    const now = configuredNow ? new Date(configuredNow) : new Date();
+    if (Number.isNaN(now.getTime())) {
+      throw new Error('MEDINAG_E2E_LOGICAL_NOW must be an ISO-8601 timestamp.');
+    }
+    await reconcileAdministrator(administratorId, now);
   } catch (error) {
     logger.error('Medication occurrence reconciliation failed.', {
       administratorId,

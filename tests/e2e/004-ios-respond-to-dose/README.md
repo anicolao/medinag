@@ -74,9 +74,18 @@
 - [x] Lori is discoverable by name
 - [x] The published dose summary identifies the plan
 
+## MediNag connects Steve to Lori's published schedule
+
+![MediNag connects Steve to Lori's published schedule](./screenshots/ios/003-schedule-connection-in-progress.png)
+
+**Verifications:**
+
+- [x] A visible connection state appears before the two-second condition limit
+- [x] Steve controls when to continue while backend events materialize
+
 ## The iPhone follows Lori's schedule and receives its Firestore event
 
-![The iPhone follows Lori's schedule and receives its Firestore event](./screenshots/ios/003-firestore-event-received.png)
+![The iPhone follows Lori's schedule and receives its Firestore event](./screenshots/ios/004-firestore-event-received.png)
 
 **Verifications:**
 
@@ -86,7 +95,7 @@
 
 ## iOS asks Steve to allow MediNag notifications
 
-![iOS asks Steve to allow MediNag notifications](./screenshots/ios/004-notification-permission.png)
+![iOS asks Steve to allow MediNag notifications](./screenshots/ios/005-notification-permission.png)
 
 **Verifications:**
 
@@ -95,7 +104,7 @@
 
 ## MediNag is ready and waits for the scheduled notification
 
-![MediNag is ready and waits for the scheduled notification](./screenshots/ios/005-waiting-for-first-reminder.png)
+![MediNag is ready and waits for the scheduled notification](./screenshots/ios/006-waiting-for-first-reminder.png)
 
 **Verifications:**
 
@@ -106,7 +115,7 @@
 
 ## With MediNag terminated, iOS retains the scheduled notification
 
-![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/006-first-system-notification.png)
+![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/007-first-system-notification.png)
 
 **Verifications:**
 
@@ -115,7 +124,7 @@
 
 ## Tapping the notification cold-launches the response screen
 
-![Tapping the notification cold-launches the response screen](./screenshots/ios/007-first-reminder-response.png)
+![Tapping the notification cold-launches the response screen](./screenshots/ios/008-first-reminder-response.png)
 
 **Verifications:**
 
@@ -128,7 +137,7 @@
 
 ## Yes, I will writes the snoozed response back to Firestore
 
-![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/008-dose-snoozed-in-firestore.png)
+![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/009-dose-snoozed-in-firestore.png)
 
 **Verifications:**
 
@@ -139,7 +148,7 @@
 
 ## With MediNag terminated, iOS retains the repeat notification
 
-![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/009-repeat-system-notification.png)
+![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/010-repeat-system-notification.png)
 
 **Verifications:**
 
@@ -148,7 +157,7 @@
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 
-![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/010-repeat-reminder-response.png)
+![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/011-repeat-reminder-response.png)
 
 **Verifications:**
 
@@ -161,7 +170,7 @@
 
 ## Yes, I did completes the real event and cancels further reminders
 
-![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/011-dose-completed-in-firestore.png)
+![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/012-dose-completed-in-firestore.png)
 
 **Verifications:**
 
