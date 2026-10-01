@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const externalWebServer = process.env.MEDINAG_E2E_EXTERNAL_WEB_SERVER === 'true';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -45,7 +47,7 @@ export default defineConfig({
     }
   },
   snapshotPathTemplate: '{testDir}/{testFileDir}/screenshots/{arg}{ext}',
-  webServer: {
+  webServer: externalWebServer ? undefined : {
     command: 'npm run dev',
     url: 'http://127.0.0.1:5174',
     reuseExistingServer: !process.env.CI,

@@ -1,0 +1,13 @@
+{
+  "id": "US-005",
+  "title": "A notification failure alerts the administrator",
+  "narrative": "As Lori and Steve, we want a disabled notification permission to be visible to both of us and to alert Lori exactly once.",
+  "surfaces": {
+    "web": { "status": "covered" },
+    "ios": { "status": "covered" },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "watchOS is deferred until after the iOS MVP."
+    }
+  }
+}

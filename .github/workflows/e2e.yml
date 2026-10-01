@@ -32,7 +32,7 @@ jobs:
           java-version: "21"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci && npm ci --prefix functions
 
       - name: Validate Firebase configuration
         run: npm run firebase:validate
@@ -43,11 +43,14 @@ jobs:
       - name: Check types
         run: npm run check
 
+      - name: Audit E2E truthfulness
+        run: npm run test:e2e:audit
+
       - name: Build dashboard
         run: npm run build
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e:connected
         env:
           CI: true
 

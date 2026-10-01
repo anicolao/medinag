@@ -1,13 +1,14 @@
 {
-  "title": "Link Lori's Google account",
-  "narrative": "As Lori, I want to link my existing schedules to my Google account so that my work is preserved and ready to sync with Steve's devices.",
+  "id": "US-003",
+  "title": "Become an administrator with Google",
+  "narrative": "As a family member, I want to sign in with Google so that I can publish one medication plan.",
   "surfaces": {
     "web": {
       "status": "covered"
     },
     "ios": {
       "status": "not-applicable",
-      "reason": "Phase 1 establishes the shared Firebase contract before the iOS client is implemented."
+      "reason": "This story covers administrator onboarding in the web dashboard."
     },
     "watchos": {
       "status": "not-applicable",

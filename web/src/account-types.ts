@@ -1,13 +1,11 @@
-export type AdvisorAccountKind =
-  | 'preview'
-  | 'anonymous'
-  | 'google'
-  | 'migration-error';
+export type AdministratorAccountKind = 'signed-out' | 'google' | 'unavailable';
 
-export interface AdvisorAccount {
-  readonly kind: AdvisorAccountKind;
+export interface AdministratorAccount {
+  readonly kind: AdministratorAccountKind;
+  readonly userId: string;
   readonly displayName: string;
   readonly email: string;
   readonly notice: string;
-  linkGoogle(): Promise<void>;
+  signInWithGoogle(): Promise<void>;
+  signOut(): Promise<void>;
 }

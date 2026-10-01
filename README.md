@@ -1,121 +1,101 @@
-# MediNag (`medinag`)
+# MediNag
 
-> **An intrusive, high-assurance medication nagging and escalation system for iOS, watchOS, and the Web.**
+MediNag is a medication reminder system with a web dashboard for the person who
+publishes a schedule and an iPhone app for the person who follows it.
 
-`medinag` is designed to ensure strict medication compliance for **Steve** (the subject) while providing a centralized management dashboard and automated SMS escalation safety net for **Lori** (the advisor).
+The current product model is deliberately simple:
 
----
+- anyone can sign into the dashboard with Google and publish one schedule;
+- anyone can sign into the iPhone app with Google and follow one published
+  schedule;
+- one administrator schedule has at most one patient follower;
+- reminder responses synchronize through Firestore in real time.
 
-## 📖 Documentation
+The approved journey and visual design are in [UX_DESIGN.md](UX_DESIGN.md).
+Cross-platform test requirements are in [E2E_GUIDE.md](E2E_GUIDE.md).
 
-Detailed project documentation is available in the repository:
-
-- 🎯 **[VISION.md](file:///home/svorkoetter/medinag/VISION.md)**: Product vision, user personas, core philosophy, and future roadmap.
-- 📐 **[MVP_DESIGN.md](file:///home/svorkoetter/medinag/MVP_DESIGN.md)**: Technical architecture, data schemas, Swift iOS/watchOS client design, Firebase Cloud Functions escalation engine, and Web Admin dashboard specs.
-- 🧪 **[E2E_GUIDE.md](E2E_GUIDE.md)**: Cross-platform user-story walkthrough, screenshot, and synchronization requirements.
-
----
-
-## 🏗 System Overview
-
-```mermaid
-graph TD
-    subgraph Advisor Interface
-        A[Web Admin Dashboard] -->|Configures Schedule & Rules| B[(Firebase Firestore)]
-    end
-
-    subgraph Subject Devices
-        B -->|Syncs Schedule & Logs Doses| C[iOS / watchOS Swift App]
-        C -->|Presents Intrusive Nag| D{Steve's Response}
-        D -->|'Yes, I Will'| E[Snooze Notification]
-        D -->|'Yes, I Did'| F[Log Confirmation to Firestore]
-    end
-
-    subgraph Safety Escalation Engine
-        B -->|Monitors Unconfirmed Doses| G[Firebase Cloud Functions]
-        G -->|Missed Window Deadline| H[Twilio SMS Gateway]
-        H -->|SMS Alert| I[Lori's Phone]
-    end
-```
-
----
-
-## 🛠 Tech Stack
-
-- **Mobile Client**: Swift / SwiftUI for iOS and watchOS (User Notifications Framework, WatchKit / WatchConnectivity).
-- **Backend & Database**: Firebase Firestore (Realtime DB/Firestore) + Firebase Cloud Functions (Node.js/TypeScript).
-- **Escalation Gateway**: Twilio REST API (SMS notifications to Lori).
-- **Web Admin Dashboard**: Lightweight Web Interface (HTML5 / Vanilla JS or Vite React) for schedule and policy management.
-
----
-
-## 🚀 Repository Layout
+## Repository layout
 
 ```text
-~/medinag/
-├── README.md           # Project overview & quick reference
-├── VISION.md           # Product philosophy & roadmap
-├── MVP_DESIGN.md       # Full technical architecture & specifications
-├── apps/               # (Future) Swift iOS & watchOS codebase
-├── backend/            # (Future) Firebase Cloud Functions & Firestore security rules
-├── tests/e2e/          # Playwright stories, walkthroughs, and screenshots
-└── web/                # Web Admin Dashboard for Lori
+apps/ios/     SwiftUI iPhone MVP, notification integration, and native tests
+tests/e2e/    Reviewable user-story walkthroughs and exact screenshots
+ux/mockups/   Approved UX mockup boards
+web/          Vite/TypeScript administrator dashboard
 ```
 
-## Run the Web Dashboard
+watchOS and SMS escalation are planned but not yet implemented.
+
+## Web dashboard
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5174`. Use `npm run check`, `npm run build`, and
-`npm run test:e2e` to run the same validations used by CI.
+Open `http://127.0.0.1:5174`. The dashboard requires Firebase configuration and
+Google Sign-In; it does not fall back to fake browser data.
 
-### Firebase Development
+The administrator can add, edit, pause, and resume recurring doses; configure
+the snooze interval, reminder limit, escalation deadline, time zone, name, plan
+name, and SMS destination; publish the plan; share its stable code/link; and
+disconnect its patient follower.
+
+## iPhone app
+
+The iPhone app uses Google Sign-In, discovers published schedules, claims the
+selected schedule's patient slot, subscribes to its doses and events, and writes
+snooze/completion responses back to Firestore. The administrator's snooze and
+maximum-reminder defaults drive local notification scheduling. See
+[apps/ios/README.md](apps/ios/README.md) for generation, Simulator, physical-device,
+and signing instructions.
+
+```bash
+npm run ios:core:check
+npm run ios:generate
+```
+
+## Firebase
 
 Firebase CLI `15.24.0` and the Firebase Web SDK are pinned in `package.json`.
-The repository is connected to the production Firebase project `medinag`.
-Firestore rules and indexes, anonymous preview authentication, and the local
-Auth and Firestore emulators are managed as code:
+The configured production project is `medinag`. Auth and Firestore emulators are
+used for normal E2E testing.
 
 ```bash
 npm run firebase:emulators
-npm run firebase:validate
-npm run firebase:deploy
-```
-
-The emulator requires Java 21, which is included in the Nix development shell.
-Copy `.env.example` to `.env.local` and provide the Firebase web-app
-configuration to exercise the production backend locally. Without configuration,
-the dashboard deliberately uses browser-local preview data so deterministic E2E
-tests never mutate production.
-
-GitHub Pages builds receive every Firebase web-app configuration field through
-Actions secrets named `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
-`VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,
-`VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`,
-`VITE_FIREBASE_PROJECT_NUMBER`, and `VITE_FIREBASE_CONFIG_VERSION`. The dashboard
-signs each preview browser into Firebase anonymously and stores schedules beneath
-that account's UID. Firestore rules prevent one preview session from reading or
-changing another session's schedules.
-
-### Linking Lori's Google Account
-
-An anonymous dashboard shows a **Continue with Google** action above Lori's
-schedules. Firebase links the Google credential to the current anonymous user,
-which normally preserves the UID, then migrates schedules from
-`admins/{uid}/schedules` to `households/{uid}/schedules`. If the Gmail credential
-already belongs to another Firebase user, the dashboard signs into that account
-and copies the schedules captured before sign-in. Existing legacy documents are
-left intact as rollback evidence; all subsequent reads and writes use the
-household path.
-
-Household membership records assign `advisor` or `subject` roles. Advisors can
-manage schedules, subjects have read-only schedule access, and subject writes to
-medication events are restricted to valid snooze and completion transitions.
-Run the complete Auth/Firestore rules suite with:
-
-```bash
 nix develop -c npm run firebase:validate
 ```
+
+The GitHub Pages workflow receives the production web-app configuration through
+the `VITE_FIREBASE_*` Actions secrets. Google is the only application sign-in
+provider. Legacy schedule documents are read only during administrator sign-in
+so existing doses can be copied into the new `administrators/{uid}/doses`
+schema; all new reads and writes use the administrator/patient model.
+
+## Real connected E2E testing
+
+For an interactive isolated environment spanning the dashboard and iPhone app:
+
+```bash
+npm run e2e:local
+```
+
+This starts fresh Auth and Firestore emulators, opens Lori's localhost dashboard,
+and launches the iPhone app. Add a dose and publish the plan in the browser, then
+sign into the phone, choose Lori's schedule, and follow it. The real Firestore
+snapshot listener delivers the dose and medication event to the app.
+
+For automated coverage:
+
+```bash
+npm run test:e2e:connected
+npm run ios:e2e:connected
+```
+
+The full story creates both Google identities through the Auth emulator, enters
+and publishes the schedule through the visible web UI, discovers and follows it
+through the visible iPhone UI, uses system-rendered notifications, and returns
+the patient responses to Firestore. It uses event-driven waits only, enforces a
+two-second condition timeout, and compares screenshots with zero-pixel tolerance.
+
+Hardcoded schedules, events, identities, relationships, fake repositories, and
+browser-storage seed data are forbidden in E2E tests.

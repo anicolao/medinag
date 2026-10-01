@@ -1,0 +1,21 @@
+{
+  "id": "US-004",
+  "title": "Lori schedules and Steve responds to a dose",
+  "narrative": "As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard.",
+  "production_paths": [
+    "Firebase Auth",
+    "Firestore schedule and medication-event writes",
+    "Firestore snapshot listeners",
+    "iOS local-notification lifecycle"
+  ],
+  "surfaces": {
+    "web": { "status": "covered" },
+    "ios": {
+      "status": "covered"
+    },
+    "watchos": {
+      "status": "not-applicable",
+      "reason": "watchOS is deferred until after the iOS MVP."
+    }
+  }
+}
