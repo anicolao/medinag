@@ -1,5 +1,6 @@
 .env
 .env.local
+.twilio-secrets
 node_modules/
 .firebase/
 .build/

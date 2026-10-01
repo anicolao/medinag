@@ -17,7 +17,8 @@ initializeApp();
 const database = getFirestore();
 const horizonDays = 7;
 const twilioAccountSid = defineSecret('TWILIO_ACCOUNT_SID');
-const twilioAuthToken = defineSecret('TWILIO_AUTH_TOKEN');
+const twilioApiKeySid = defineSecret('TWILIO_API_KEY_SID');
+const twilioApiKeySecret = defineSecret('TWILIO_API_KEY_SECRET');
 const twilioFromNumber = defineSecret('TWILIO_FROM_NUMBER');
 
 interface IncidentInput {
@@ -317,7 +318,12 @@ async function sendTwilioSms(to: string, body: string): Promise<{
   providerState: string;
 }> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID ?? twilioAccountSid.value();
-  const authToken = process.env.TWILIO_AUTH_TOKEN ?? twilioAuthToken.value();
+  const apiKeySid = process.env.TWILIO_API_KEY_SID
+    ?? process.env.TWILIO_ACCOUNT_SID
+    ?? twilioApiKeySid.value();
+  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET
+    ?? process.env.TWILIO_AUTH_TOKEN
+    ?? twilioApiKeySecret.value();
   const from = process.env.TWILIO_FROM_NUMBER ?? twilioFromNumber.value();
   const baseUrl = process.env.MEDINAG_TWILIO_BASE_URL ?? 'https://api.twilio.com';
   const response = await fetch(
@@ -325,7 +331,7 @@ async function sendTwilioSms(to: string, body: string): Promise<{
     {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${apiKeySid}:${apiKeySecret}`).toString('base64')}`,
         'content-type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({ To: to, From: from, Body: body })
@@ -341,7 +347,12 @@ async function sendTwilioSms(to: string, body: string): Promise<{
 export const alertAdministrator = onDocumentWritten(
   {
     document: 'administrators/{administratorId}/systemIncidents/{incidentId}',
-    secrets: [twilioAccountSid, twilioAuthToken, twilioFromNumber]
+    secrets: [
+      twilioAccountSid,
+      twilioApiKeySid,
+      twilioApiKeySecret,
+      twilioFromNumber
+    ]
   },
   async (event) => {
     const incident = event.data?.after.data();
