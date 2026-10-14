@@ -1,10 +1,17 @@
 import BackgroundTasks
 import GoogleSignIn
+import OSLog
 import UIKit
 @preconcurrency import UserNotifications
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
   static let reminderRefreshIdentifier = "org.boardgamescafe.medinag.reminder-refresh"
+  static let reminderRefreshQueue = DispatchQueue.main
+  static private(set) var reminderRefreshRegistrationSucceeded: Bool?
+  private static let logger = Logger(
+    subsystem: "org.boardgamescafe.medinag",
+    category: "BackgroundRefresh"
+  )
 
   func application(
     _ application: UIApplication,
@@ -13,15 +20,21 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     FirebaseBootstrap.configure()
     LocalNotificationScheduler.registerCategories()
     UNUserNotificationCenter.current().delegate = self
-    BGTaskScheduler.shared.register(
+    let registered = BGTaskScheduler.shared.register(
       forTaskWithIdentifier: Self.reminderRefreshIdentifier,
-      using: nil
+      using: Self.reminderRefreshQueue
     ) { task in
       guard let refreshTask = task as? BGAppRefreshTask else {
         task.setTaskCompleted(success: false)
         return
       }
       Self.handleReminderRefresh(refreshTask)
+    }
+    Self.reminderRefreshRegistrationSucceeded = registered
+    if !registered {
+      Self.logger.fault(
+        "Could not register the daily reminder refresh task."
+      )
     }
     Self.scheduleReminderRefresh()
 

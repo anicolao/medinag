@@ -1,4 +1,5 @@
 import MediNagCore
+import Dispatch
 import XCTest
 @testable import MediNag
 
@@ -19,5 +20,10 @@ final class MedicationModelsTests: XCTestCase {
     ).replacingOccurrences(of: "\u{202f}", with: " ")
 
     XCTAssertEqual(displayTime, "8:00 AM")
+  }
+
+  @MainActor
+  func testBackgroundRefreshHandlerUsesMainQueue() {
+    XCTAssertTrue(AppDelegate.reminderRefreshQueue === DispatchQueue.main)
   }
 }

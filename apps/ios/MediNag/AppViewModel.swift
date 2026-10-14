@@ -36,6 +36,7 @@ final class AppViewModel: ObservableObject {
   }
 
   struct ReminderDiagnostics: Equatable {
+    var backgroundRefreshRegistered = true
     var lastReconciledAt: Date?
     var patientTimeZone = ""
     var scheduledThrough: Date?
@@ -450,6 +451,16 @@ final class AppViewModel: ObservableObject {
         }
       }
     })
+    if AppDelegate.reminderRefreshRegistrationSucceeded == false {
+      reminderDiagnostics.backgroundRefreshRegistered = false
+      notificationReadiness = .failed
+      actionNotice = "Daily background reminder refresh could not be registered. Your administrator has been alerted."
+      await reportIncident(
+        code: "background_refresh_registration_failed",
+        message: "The patient iPhone could not register its daily background reminder refresh task.",
+        severity: "critical"
+      )
+    }
     state = revealWhenConnected ? .ready : .connectingSchedule
     if notificationReadiness == .denied {
       await reportIncident(
@@ -533,6 +544,7 @@ final class AppViewModel: ObservableObject {
       maximumReminderCount: maximumReminderCount
     )
     reminderDiagnostics = ReminderDiagnostics(
+      backgroundRefreshRegistered: AppDelegate.reminderRefreshRegistrationSucceeded != false,
       lastReconciledAt: Date(),
       patientTimeZone: patientTimeZone.identifier,
       scheduledThrough: result.scheduledThrough,

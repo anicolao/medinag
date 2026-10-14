@@ -490,6 +490,13 @@ private struct ReminderDiagnosticsCard: View {
         .foregroundStyle(MediNagColor.ink)
       diagnosticsRow("Patient time zone", diagnostics.patientTimeZone.isEmpty ? "Not reported" : diagnostics.patientTimeZone)
       diagnosticsRow(
+        "Daily background refresh",
+        diagnostics.backgroundRefreshRegistered ? "Registered" : "Registration failed"
+      )
+      .foregroundStyle(
+        diagnostics.backgroundRefreshRegistered ? MediNagColor.ink : MediNagColor.warning
+      )
+      diagnosticsRow(
         "Pending with iOS",
         "\(diagnostics.actualPendingCount) of \(diagnostics.expectedPendingCount)"
       )
