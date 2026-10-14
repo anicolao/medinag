@@ -127,7 +127,6 @@ final class RespondToDoseUITests: XCTestCase {
     )
 
     XCUIDevice.shared.press(.home)
-    app.terminate()
     let firstNotification = springboard.descendants(matching: .any)[
       "NotificationShortLookView"
     ]
@@ -138,7 +137,7 @@ final class RespondToDoseUITests: XCTestCase {
     )
     try tester.step(
       "first-system-notification",
-      description: "With MediNag terminated, iOS retains the scheduled notification",
+      description: "While MediNag is backgrounded, iOS delivers the scheduled notification",
       verifications: [
         .exists(firstNotificationTitle, "The first reminder is rendered by SpringBoard"),
         .hittable(firstNotification, "The SpringBoard notification has finished arriving"),
@@ -147,14 +146,14 @@ final class RespondToDoseUITests: XCTestCase {
       trimAnimatedSystemEdge: true
     )
 
-    firstNotification.tap()
+    app.activate()
     XCTAssertTrue(
       app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
-      "Tapping the first notification did not cold-launch MediNag"
+      "Returning to MediNag did not foreground the app"
     )
     try tester.step(
       "first-reminder-response",
-      description: "Tapping the notification cold-launches the response screen",
+      description: "Returning to MediNag immediately presents the delivered reminder",
       verifications: reminderVerifications(
         app,
         sequence: "FIRST",

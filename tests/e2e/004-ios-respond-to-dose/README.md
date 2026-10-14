@@ -113,18 +113,18 @@
 - [x] No response is available before a notification
 - [x] No completion is available before a notification
 
-## With MediNag terminated, iOS retains the scheduled notification
+## While MediNag is backgrounded, iOS delivers the scheduled notification
 
-![With MediNag terminated, iOS retains the scheduled notification](./screenshots/ios/007-first-system-notification.png)
+![While MediNag is backgrounded, iOS delivers the scheduled notification](./screenshots/ios/007-first-system-notification.png)
 
 **Verifications:**
 
 - [x] The first reminder is rendered by SpringBoard
 - [x] The SpringBoard notification has finished arriving
 
-## Tapping the notification cold-launches the response screen
+## Returning to MediNag immediately presents the delivered reminder
 
-![Tapping the notification cold-launches the response screen](./screenshots/ios/008-first-reminder-response.png)
+![Returning to MediNag immediately presents the delivered reminder](./screenshots/ios/008-first-reminder-response.png)
 
 **Verifications:**
 

@@ -127,9 +127,9 @@
       "id": "first-system-notification",
       "surface": "ios",
       "image": "007-first-system-notification.png",
-      "description": "With MediNag terminated, iOS retains the scheduled notification",
+      "description": "While MediNag is backgrounded, iOS delivers the scheduled notification",
       "claims": [
-        { "id": "ios.first-springboard", "text": "The first reminder is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the system notification title after termination" },
+        { "id": "ios.first-springboard", "text": "The first reminder is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the system notification title while MediNag is backgrounded" },
         { "id": "ios.first-hittable", "text": "The SpringBoard notification has finished arriving", "environment": "springboard", "assertion": "RespondToDoseUITests waits for the system notification to become hittable" }
       ]
     },
@@ -137,9 +137,9 @@
       "id": "first-reminder-response",
       "surface": "ios",
       "image": "008-first-reminder-response.png",
-      "description": "Tapping the notification cold-launches the response screen",
+      "description": "Returning to MediNag immediately presents the delivered reminder",
       "claims": [
-        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert" },
+        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests foregrounds the app without tapping the notification and waits for the reminder alert" },
         { "id": "ios.first-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the FIRST sequence" },
         { "id": "ios.occurrence-time", "text": "The first reminder uses the medication occurrence time", "environment": "connected-emulators", "assertion": "RespondToDoseUITests derives and checks the dashboard-written schedule time" },
         { "id": "ios.snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },

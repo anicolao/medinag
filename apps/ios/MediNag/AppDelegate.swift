@@ -80,50 +80,76 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     GIDSignIn.sharedInstance.handle(url)
   }
 
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    Task {
+      let center = UNUserNotificationCenter.current()
+      let handledIdentifiers = NotificationDeliveryLedger.identifiers
+      let delivered = await center.deliveredNotifications()
+        .filter {
+          $0.request.identifier.hasPrefix("medinag.dose.")
+            && !handledIdentifiers.contains($0.request.identifier)
+        }
+        .sorted { $0.date > $1.date }
+      guard let notification = delivered.first else { return }
+      await Self.route(
+        notification,
+        actionIdentifier: UNNotificationDefaultActionIdentifier,
+        center: center,
+        removeFromNotificationCenter: true
+      )
+    }
+  }
+
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    [.banner, .list, .sound]
+    await Self.route(
+      notification,
+      actionIdentifier: UNNotificationDefaultActionIdentifier,
+      center: center,
+      removeFromNotificationCenter: false
+    )
+    return [.banner, .list, .sound]
   }
 
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
-    NotificationDeliveryLedger.record(
-      identifier: response.notification.request.identifier
-    )
-    center.removeDeliveredNotifications(
-      withIdentifiers: [response.notification.request.identifier]
-    )
-    let content = response.notification.request.content
-    guard
-      let eventID = content.userInfo[
-        MediNagNotification.eventID
-      ] as? String,
-      let medicationName = content.userInfo[
-        MediNagNotification.medicationName
-      ] as? String,
-      let reminderTimestamp = content.userInfo[
-        MediNagNotification.reminderTime
-      ] as? TimeInterval,
-      let reminderNumber = content.userInfo[
-        MediNagNotification.reminderNumber
-      ] as? Int
-    else {
+    let identifier = response.notification.request.identifier
+    let alreadyHandled = NotificationDeliveryLedger.identifiers.contains(identifier)
+    if
+      alreadyHandled,
+      response.actionIdentifier == UNNotificationDefaultActionIdentifier
+    {
+      center.removeDeliveredNotifications(withIdentifiers: [identifier])
       return
     }
-    let timeZoneIdentifier = content.userInfo[
-      MediNagNotification.timeZone
-    ] as? String ?? TimeZone.autoupdatingCurrent.identifier
-    await NotificationResponseRouter.shared.route(
+    await Self.route(
+      response.notification,
       actionIdentifier: response.actionIdentifier,
-      eventID: eventID,
-      medicationName: medicationName,
-      reminderTime: Date(timeIntervalSince1970: reminderTimestamp),
-      reminderNumber: reminderNumber,
-      timeZoneIdentifier: timeZoneIdentifier
+      center: center,
+      removeFromNotificationCenter: true
     )
+  }
+
+  private nonisolated static func route(
+    _ notification: UNNotification,
+    actionIdentifier: String,
+    center: UNUserNotificationCenter,
+    removeFromNotificationCenter: Bool
+  ) async {
+    let identifier = notification.request.identifier
+    guard identifier.hasPrefix("medinag.dose.") else { return }
+    guard let interaction = NotificationInteraction(
+      actionIdentifier: actionIdentifier,
+      userInfo: notification.request.content.userInfo
+    ) else { return }
+    NotificationDeliveryLedger.record(identifier: identifier)
+    if removeFromNotificationCenter {
+      center.removeDeliveredNotifications(withIdentifiers: [identifier])
+    }
+    await NotificationResponseRouter.shared.route(interaction)
   }
 }

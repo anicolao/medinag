@@ -205,6 +205,56 @@ struct NotificationInteraction: Sendable {
   let reminderTime: Date
   let reminderNumber: Int
   let timeZoneIdentifier: String
+
+  init(
+    kind: NotificationInteractionKind,
+    eventID: String,
+    medicationName: String,
+    reminderTime: Date,
+    reminderNumber: Int,
+    timeZoneIdentifier: String
+  ) {
+    self.kind = kind
+    self.eventID = eventID
+    self.medicationName = medicationName
+    self.reminderTime = reminderTime
+    self.reminderNumber = reminderNumber
+    self.timeZoneIdentifier = timeZoneIdentifier
+  }
+
+  init?(
+    actionIdentifier: String,
+    userInfo: [AnyHashable: Any]
+  ) {
+    let interactionKind: NotificationInteractionKind
+    switch actionIdentifier {
+    case UNNotificationDefaultActionIdentifier:
+      interactionKind = .opened
+    case MediNagNotification.yesIWill:
+      interactionKind = .response(.yesIWill)
+    case MediNagNotification.yesIDid:
+      interactionKind = .response(.yesIDid)
+    default:
+      return nil
+    }
+    guard
+      let eventID = userInfo[MediNagNotification.eventID] as? String,
+      let medicationName = userInfo[MediNagNotification.medicationName] as? String,
+      let reminderTimestamp = userInfo[MediNagNotification.reminderTime] as? TimeInterval,
+      let reminderNumber = userInfo[MediNagNotification.reminderNumber] as? Int
+    else {
+      return nil
+    }
+    self.init(
+      kind: interactionKind,
+      eventID: eventID,
+      medicationName: medicationName,
+      reminderTime: Date(timeIntervalSince1970: reminderTimestamp),
+      reminderNumber: reminderNumber,
+      timeZoneIdentifier: userInfo[MediNagNotification.timeZone] as? String
+        ?? TimeZone.autoupdatingCurrent.identifier
+    )
+  }
 }
 
 @MainActor
@@ -227,25 +277,21 @@ final class NotificationResponseRouter {
     reminderNumber: Int,
     timeZoneIdentifier: String
   ) {
-    let kind: NotificationInteractionKind
-    switch actionIdentifier {
-    case UNNotificationDefaultActionIdentifier:
-      kind = .opened
-    case MediNagNotification.yesIWill:
-      kind = .response(.yesIWill)
-    case MediNagNotification.yesIDid:
-      kind = .response(.yesIDid)
-    default:
-      return
-    }
     let interaction = NotificationInteraction(
-      kind: kind,
-      eventID: eventID,
-      medicationName: medicationName,
-      reminderTime: reminderTime,
-      reminderNumber: reminderNumber,
-      timeZoneIdentifier: timeZoneIdentifier
+      actionIdentifier: actionIdentifier,
+      userInfo: [
+        MediNagNotification.eventID: eventID,
+        MediNagNotification.medicationName: medicationName,
+        MediNagNotification.reminderTime: reminderTime.timeIntervalSince1970,
+        MediNagNotification.reminderNumber: reminderNumber,
+        MediNagNotification.timeZone: timeZoneIdentifier,
+      ]
     )
+    guard let interaction else { return }
+    route(interaction)
+  }
+
+  func route(_ interaction: NotificationInteraction) {
     guard let handler else {
       pendingInteractions.append(interaction)
       return
