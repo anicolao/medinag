@@ -60,6 +60,40 @@ run_xcodebuild() {
     "$xcodebuild_command" "$@"
 }
 
+run_native_test() {
+  local test_name="$1"
+  local bundle="$2"
+  local test_results
+  if run_xcodebuild -quiet test-without-building \
+    -project apps/ios/MediNag.xcodeproj \
+    -scheme MediNag \
+    -configuration E2E \
+    -destination "platform=iOS Simulator,id=$simulator_id" \
+    -derivedDataPath "$derived_data_directory" \
+    -only-testing:"$test_name" \
+    -resultBundlePath "$bundle"; then
+    return
+  fi
+
+  test_results=$(DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun \
+    xcresulttool get test-results tests --path "$bundle" --format json \
+    2>/dev/null || true)
+  if [[ "$test_results" != *"Timed out while launching application via Xcode"* ]]; then
+    return 1
+  fi
+
+  echo "Xcode timed out before XCUIApplication launched; retrying once without a fixed delay."
+  /usr/bin/find "$bundle" -depth -delete
+  run_xcodebuild -quiet test-without-building \
+    -project apps/ios/MediNag.xcodeproj \
+    -scheme MediNag \
+    -configuration E2E \
+    -destination "platform=iOS Simulator,id=$simulator_id" \
+    -derivedDataPath "$derived_data_directory" \
+    -only-testing:"$test_name" \
+    -resultBundlePath "$bundle"
+}
+
 run_xcodebuild -quiet build-for-testing \
   -project apps/ios/MediNag.xcodeproj \
   -scheme MediNag \
@@ -85,14 +119,7 @@ result_bundle="$derived_data_directory/$result_name.xcresult"
 if [[ -d "$result_bundle" ]]; then
   /usr/bin/find "$result_bundle" -depth -delete
 fi
-run_xcodebuild -quiet test-without-building \
-  -project apps/ios/MediNag.xcodeproj \
-  -scheme MediNag \
-  -configuration E2E \
-  -destination "platform=iOS Simulator,id=$simulator_id" \
-  -derivedDataPath "$derived_data_directory" \
-  -only-testing:"$native_test" \
-  -resultBundlePath "$result_bundle"
+run_native_test "$native_test" "$result_bundle"
 
 run_playwright "$completion_spec"
 
@@ -105,13 +132,8 @@ if [[ "$story" == "notification-failure" ]]; then
   if [[ -d "$recovery_bundle" ]]; then
     /usr/bin/find "$recovery_bundle" -depth -delete
   fi
-  run_xcodebuild -quiet test-without-building \
-    -project apps/ios/MediNag.xcodeproj \
-    -scheme MediNag \
-    -configuration E2E \
-    -destination "platform=iOS Simulator,id=$simulator_id" \
-    -derivedDataPath "$derived_data_directory" \
-    -only-testing:MediNagUITests/NotificationFailureUITests/testRestoredPermissionResolvesIncident \
-    -resultBundlePath "$recovery_bundle"
+  run_native_test \
+    MediNagUITests/NotificationFailureUITests/testRestoredPermissionResolvesIncident \
+    "$recovery_bundle"
   run_playwright "$recovery_spec"
 fi
