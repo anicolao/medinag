@@ -118,6 +118,8 @@ if (process.argv.includes('--shell')) {
     VITE_FIREBASE_MESSAGING_SENDER_ID: firebaseConfig.messagingSenderId,
     VITE_FIREBASE_APP_ID: firebaseConfig.appId,
     VITE_USE_FIREBASE_EMULATOR: 'true',
+    VITE_FIREBASE_AUTH_EMULATOR_HOST: authHost,
+    VITE_FIREBASE_FIRESTORE_EMULATOR_HOST: firestoreHost,
     VITE_FIREBASE_EMULATOR_GOOGLE_ID_TOKEN_BASE64: authMode === 'administrator'
       ? Buffer.from(administratorGoogleIdToken, 'utf8').toString('base64')
       : '',

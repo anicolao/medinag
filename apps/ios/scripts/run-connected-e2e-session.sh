@@ -15,6 +15,15 @@ if [[ "${MEDINAG_E2E_WEB_SERVER_READY:-false}" != "true" ]]; then
   exec node scripts/with-web-server.mjs -- "$0"
 fi
 
+export MEDINAG_E2E_ALARM_MONITOR_PORT="${MEDINAG_E2E_ALARM_MONITOR_PORT:-18181}"
+node scripts/monitor-ios-alarms.mjs &
+alarm_monitor_pid=$!
+cleanup_alarm_monitor() {
+  kill "$alarm_monitor_pid" 2>/dev/null || true
+  wait "$alarm_monitor_pid" 2>/dev/null || true
+}
+trap cleanup_alarm_monitor EXIT INT TERM
+
 story="${MEDINAG_E2E_STORY:-dose-response}"
 if [[ "$story" == "notification-failure" ]]; then
   setup_spec="tests/e2e/005-notification-failure/setup.spec.ts"
@@ -67,7 +76,10 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_MEDICATION_NAME="$MEDINAG_E2E_MEDICATION_NAME" \
   MEDINAG_E2E_SCHEDULED_TIME="$MEDINAG_E2E_SCHEDULED_TIME" \
   MEDINAG_E2E_TIME_ZONE="$MEDINAG_E2E_TIME_ZONE" \
-  MEDINAG_E2E_LOGICAL_NOW="$MEDINAG_E2E_LOGICAL_NOW"
+  MEDINAG_E2E_LOGICAL_NOW="$MEDINAG_E2E_LOGICAL_NOW" \
+  MEDINAG_E2E_AUTH_PORT="$MEDINAG_E2E_AUTH_PORT" \
+  MEDINAG_E2E_FIRESTORE_PORT="$MEDINAG_E2E_FIRESTORE_PORT" \
+  MEDINAG_E2E_ALARM_MONITOR_PORT="$MEDINAG_E2E_ALARM_MONITOR_PORT"
 
 result_bundle="$derived_data_directory/$result_name.xcresult"
 if [[ -d "$result_bundle" ]]; then

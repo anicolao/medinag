@@ -45,7 +45,10 @@ disconnect its patient follower.
 The iPhone app uses Google Sign-In, discovers published schedules, claims the
 selected schedule's patient slot, subscribes to its doses and events, and writes
 snooze/completion responses back to Firestore. The administrator's snooze and
-maximum-reminder defaults drive local notification scheduling. See
+maximum-reminder defaults drive local alarm scheduling. On iOS 26, AlarmKit owns
+each urgent reminder, bypasses silent mode and Focus, and loops MediNag's custom
+spoken alarm until the patient acts; older iOS versions retain a weaker
+time-sensitive notification fallback. See
 [apps/ios/README.md](apps/ios/README.md) for generation, Simulator, physical-device,
 and signing instructions.
 
@@ -93,7 +96,7 @@ npm run ios:e2e:connected
 
 The full story creates both Google identities through the Auth emulator, enters
 and publishes the schedule through the visible web UI, discovers and follows it
-through the visible iPhone UI, uses system-rendered notifications, and returns
+through the visible iPhone UI, uses system-rendered AlarmKit alerts, and returns
 the patient responses to Firestore. It uses event-driven waits only, enforces a
 two-second condition timeout, and compares screenshots with zero-pixel tolerance.
 

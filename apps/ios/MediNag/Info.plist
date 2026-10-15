@@ -26,6 +26,8 @@
     </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSAlarmKitUsageDescription</key>
+    <string>MediNag schedules medication alarms that continue until you respond.</string>
     <key>UILaunchScreen</key>
     <dict>
         <key>UIColorName</key>

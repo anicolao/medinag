@@ -24,6 +24,7 @@
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
+		C07D6F3001CD658C697C7615 /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
 		CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */; };
 		E28224FE8A4B50DE1A5DE5E6 /* NotificationFailureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */; };
 		E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */; };
@@ -78,6 +79,7 @@
 		D8EDA23C6B76FF5E6490770D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
 		E827A83DB040E02286EA2824 /* TestStepHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStepHelper.swift; sourceTree = "<group>"; };
+		EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */ = {isa = PBXFileReference; path = MediNagAlarm.caf; sourceTree = "<group>"; };
 		FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "005-notification-failure-claims.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -109,6 +111,7 @@
 		0E8A51B7B4F47C9CD032BDE4 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */,
 				1C4984FB11665ABC22BE0FC3 /* README.md */,
 			);
 			path = Resources;
@@ -324,6 +327,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */,
+				C07D6F3001CD658C697C7615 /* MediNagAlarm.caf in Resources */,
 				BED3126F79F402470EC3C662 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

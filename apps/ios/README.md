@@ -7,7 +7,7 @@ review and direct use.
 ## Pinned environment
 
 - Xcode 26.6
-- iOS 26.5 / iPhone 17 Simulator
+- iOS 26.3 / iPhone 17 Simulator
 - XcodeGen 2.46.0
 - Firebase Apple SDK 12.17.0
 - Google Sign-In iOS SDK 9.2.0
@@ -21,7 +21,13 @@ review and direct use.
 - Live Firestore dose and medication-event listeners.
 - Automatic recovery when the administrator disconnects the patient.
 - Today, next-dose, notification-readiness, pending, snoozed, and completed states.
-- System-rendered local notifications that cold-launch the response screen.
+- iOS 26 AlarmKit reminders that keep sounding through silent mode and Focus,
+  remain owned by iOS when MediNag is suspended or terminated, and open the
+  response screen from the system Respond action.
+- A bundled 14.9-second spoken-and-bell alarm sound that AlarmKit loops until
+  the patient acts. The Simulator uses Apple's default alarm tone because the
+  iOS 26 Simulator crashes SpringBoard when loading any external AlarmKit sound;
+  every physical-device and TestFlight build uses `MediNagAlarm.caf`.
 - Equal-weight `Yes, I did` and `Yes, I will` actions, available only after a
   notification is opened.
 - Administrator-configured snooze interval and maximum reminder count, including
@@ -32,7 +38,12 @@ review and direct use.
 - Event-driven native tests and exact RGBA screenshot comparison with zero
   differing pixels.
 
-Critical Alerts, APNs, watchOS, SMS verification, and SMS escalation are deferred.
+AlarmKit requires iOS 26. On older supported iOS versions MediNag uses a
+time-sensitive, one-shot local-notification fallback, which cannot offer the same
+continuous alarm guarantee. Critical Alerts and APNs are not used. AlarmKit
+alerts are forwarded to a paired Apple Watch according to the user's system
+notification settings. Administrator incident reporting and SMS escalation are
+implemented by the Firebase backend.
 
 ## Generate and check
 
@@ -51,7 +62,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
   -project apps/ios/MediNag.xcodeproj \
   -scheme MediNag \
   -configuration E2E \
-  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.3' \
   -derivedDataPath apps/ios/DerivedData
 ```
 
@@ -125,18 +136,19 @@ npm run ios:e2e:connected
 
 The test drives the same browser and phone journey, then:
 
-1. requests notification permission through the app and native system sheet;
-2. backgrounds and terminates MediNag before the first notification;
-3. opens the 8:00 AM system notification and chooses `Yes, I will`;
+1. requests alarm permission through the app and native system sheet;
+2. backgrounds MediNag before the first alarm;
+3. opens the 8:00 AM AlarmKit alert and chooses `Yes, I will`;
 4. verifies the Firestore snooze and configured 10-minute repeat;
 5. backgrounds and terminates the app again;
 6. opens reminder 2 at the logical 8:10 AM time and chooses `Yes, I did`;
-7. verifies Firestore completion and notification cancellation.
+7. verifies Firestore completion and alarm cancellation.
 
-E2E notification delivery advances on the app-background event and then waits for
-the actual SpringBoard notification. Production uses calendar notifications owned
-by iOS, so they survive suspension or termination. No test sleeps or fixed polling
-delays are used.
+The affine E2E clock only compresses the dates supplied to the production
+AlarmKit scheduler. The test then waits on actual `mobiletimerd` and ClockAngel
+delivery events; it never manufactures an alert. Production alarms are owned by
+iOS, so they survive suspension or termination and keep sounding until the
+system action is used. No test sleeps or fixed polling delays are used.
 
 The checked-in walkthrough is
 `tests/e2e/004-ios-respond-to-dose/README.md`; CI exports XCTest attachments and

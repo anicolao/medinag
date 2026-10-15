@@ -11,8 +11,8 @@
 ## Evidence environments
 
 - **connected-emulators:** Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.
-- **ios-simulator:** Pinned iPhone 17 / iOS 26.5 Simulator using the production notification scheduler and a scaled timeline.
-- **springboard:** The iOS Simulator SpringBoard with MediNag terminated before notification delivery.
+- **ios-simulator:** Pinned iPhone 17 / iOS 26.3 Simulator using the production AlarmKit scheduler and a scaled timeline.
+- **springboard:** The iOS Simulator system alarm UI with MediNag backgrounded or terminated before alarm delivery.
 
 ## Deterministic preconditions
 
@@ -21,10 +21,10 @@
 - Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI
 - Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
 - Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification
-- Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
+- Device: iPhone 17 on iOS 26.3, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
 - Status bar: fixed at 8:00 AM with a Simulator override
-- System UI: notification permission and both reminders are rendered by iOS SpringBoard
-- Lifecycle: the UI test terminates MediNag before it captures or taps either notification
+- System UI: AlarmKit authorization and both reminders are rendered and sounded by iOS
+- Lifecycle: the UI test backgrounds MediNag before the first alarm and terminates it before the repeat alarm
 - Snooze interval: 10 minutes from the administrator profile written through the dashboard
 
 ## Lori opens a fresh dashboard connected to Firebase
@@ -93,38 +93,46 @@
 - [x] The real medication event is pending
 - [x] The app offers notification permission
 
-## iOS asks Steve to allow MediNag notifications
+## iOS asks Steve to allow MediNag alarms
 
-![iOS asks Steve to allow MediNag notifications](./screenshots/ios/005-notification-permission.png)
+![iOS asks Steve to allow MediNag alarms](./screenshots/ios/005-notification-permission.png)
 
 **Verifications:**
 
 - [x] The permission prompt is rendered by iOS
 - [x] The system offers an Allow action
 
-## MediNag is ready and waits for the scheduled notification
+## MediNag is ready while iOS owns the scheduled alarm
 
-![MediNag is ready and waits for the scheduled notification](./screenshots/ios/006-waiting-for-first-reminder.png)
+![MediNag is ready while iOS owns the scheduled alarm](./screenshots/ios/006-waiting-for-first-reminder.png)
 
 **Verifications:**
 
-- [x] Permission and real pending iOS requests are both confirmed
+- [x] Alarm permission and real scheduled AlarmKit alarms are confirmed
 - [x] The Firestore event remains visible while the app waits
-- [x] No response is available before a notification
-- [x] No completion is available before a notification
+- [x] No response is available before an alarm
+- [x] No completion is available before an alarm
 
-## While MediNag is backgrounded, iOS delivers the scheduled notification
+## MediNag is backgrounded while the alarm remains owned by iOS
 
-![While MediNag is backgrounded, iOS delivers the scheduled notification](./screenshots/ios/007-first-system-notification.png)
+![MediNag is backgrounded while the alarm remains owned by iOS](./screenshots/ios/007-app-backgrounded.png)
 
 **Verifications:**
 
-- [x] The first reminder is rendered by SpringBoard
-- [x] The SpringBoard notification has finished arriving
+- [x] The Home Screen confirms MediNag is backgrounded
 
-## Returning to MediNag immediately presents the delivered reminder
+## While MediNag is backgrounded, iOS sounds and presents the scheduled alarm
 
-![Returning to MediNag immediately presents the delivered reminder](./screenshots/ios/008-first-reminder-response.png)
+![While MediNag is backgrounded, iOS sounds and presents the scheduled alarm](./screenshots/ios/008-first-system-alarm.png)
+
+**Verifications:**
+
+- [x] The first reminder is rendered by AlarmKit
+- [x] The system-owned Respond action is ready
+
+## The system Respond action immediately opens the medication response
+
+![The system Respond action immediately opens the medication response](./screenshots/ios/009-first-reminder-response.png)
 
 **Verifications:**
 
@@ -137,7 +145,7 @@
 
 ## Yes, I will writes the snoozed response back to Firestore
 
-![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/009-dose-snoozed-in-firestore.png)
+![Yes, I will writes the snoozed response back to Firestore](./screenshots/ios/010-dose-snoozed-in-firestore.png)
 
 **Verifications:**
 
@@ -146,18 +154,18 @@
 - [x] The Firestore listener receives the snoozed state
 - [x] The response screen is dismissed
 
-## With MediNag terminated, iOS retains the repeat notification
+## With MediNag terminated, iOS retains and sounds the repeat alarm
 
-![With MediNag terminated, iOS retains the repeat notification](./screenshots/ios/010-repeat-system-notification.png)
+![With MediNag terminated, iOS retains and sounds the repeat alarm](./screenshots/ios/011-repeat-system-alarm.png)
 
 **Verifications:**
 
-- [x] The repeat is rendered by SpringBoard
-- [x] The repeat notification has finished arriving
+- [x] The repeat is rendered by AlarmKit
+- [x] The repeat Respond action is ready
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 
-![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/011-repeat-reminder-response.png)
+![Tapping reminder 2 cold-launches the app after logical time advances](./screenshots/ios/012-repeat-reminder-response.png)
 
 **Verifications:**
 
@@ -170,7 +178,7 @@
 
 ## Yes, I did completes the real event and cancels further reminders
 
-![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/012-dose-completed-in-firestore.png)
+![Yes, I did completes the real event and cancels further reminders](./screenshots/ios/013-dose-completed-in-firestore.png)
 
 **Verifications:**
 

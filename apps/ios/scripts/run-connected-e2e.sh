@@ -24,6 +24,10 @@ export MEDINAG_SIMULATOR_ID="$($xcrun_command simctl create \
   com.apple.CoreSimulator.SimDeviceType.iPhone-17 \
   "$runtime_id")"
 cleanup() {
+  if [[ "${MEDINAG_E2E_KEEP_SIMULATOR:-false}" == "true" ]]; then
+    echo "Keeping MediNag E2E Simulator $MEDINAG_SIMULATOR_ID for inspection."
+    return
+  fi
   "$xcrun_command" simctl delete "$MEDINAG_SIMULATOR_ID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
@@ -47,8 +51,10 @@ trap cleanup EXIT INT TERM
   --cellularMode active --cellularBars 4
 
 export MEDINAG_E2E_PROJECT_ID="demo-medinag"
-export MEDINAG_E2E_AUTH_HOST="127.0.0.1:9099"
-export MEDINAG_E2E_FIRESTORE_HOST="127.0.0.1:8080"
+export MEDINAG_E2E_AUTH_PORT="${MEDINAG_E2E_AUTH_PORT:-9099}"
+export MEDINAG_E2E_FIRESTORE_PORT="${MEDINAG_E2E_FIRESTORE_PORT:-8080}"
+export MEDINAG_E2E_AUTH_HOST="127.0.0.1:$MEDINAG_E2E_AUTH_PORT"
+export MEDINAG_E2E_FIRESTORE_HOST="127.0.0.1:$MEDINAG_E2E_FIRESTORE_PORT"
 export MEDINAG_E2E_ADMINISTRATOR_NAME="Lori"
 export MEDINAG_E2E_PATIENT_NAME="Steve"
 export MEDINAG_E2E_STATE_FILE="$(mktemp /tmp/medinag-e2e-state.XXXXXX)"
@@ -64,5 +70,6 @@ export MEDINAG_E2E_SMS_CAPTURE_FILE="$(mktemp /tmp/medinag-e2e-sms.XXXXXX)"
 npm run functions:build
 node scripts/with-captured-sms-gateway.mjs -- npx firebase emulators:exec \
   --project "$MEDINAG_E2E_PROJECT_ID" \
+  --config "${MEDINAG_E2E_FIREBASE_CONFIG:-firebase.json}" \
   --only auth,firestore,functions \
   "apps/ios/scripts/run-connected-e2e-session.sh"

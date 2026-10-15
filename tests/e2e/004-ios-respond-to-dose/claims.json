@@ -12,8 +12,8 @@
   },
   "environments": {
     "connected-emulators": "Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.",
-    "ios-simulator": "Pinned iPhone 17 / iOS 26.5 Simulator using the production notification scheduler and a scaled timeline.",
-    "springboard": "The iOS Simulator SpringBoard with MediNag terminated before notification delivery."
+    "ios-simulator": "Pinned iPhone 17 / iOS 26.3 Simulator using the production AlarmKit scheduler and a scaled timeline.",
+    "springboard": "The iOS Simulator system alarm UI with MediNag backgrounded or terminated before alarm delivery."
   },
   "preconditions": [
     "Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code",
@@ -21,10 +21,10 @@
     "Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI",
     "Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded",
     "Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification",
-    "Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type",
+    "Device: iPhone 17 on iOS 26.3, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type",
     "Status bar: fixed at 8:00 AM with a Simulator override",
-    "System UI: notification permission and both reminders are rendered by iOS SpringBoard",
-    "Lifecycle: the UI test terminates MediNag before it captures or taps either notification",
+    "System UI: AlarmKit authorization and both reminders are rendered and sounded by iOS",
+    "Lifecycle: the UI test backgrounds MediNag before the first alarm and terminates it before the repeat alarm",
     "Snooze interval: 10 minutes from the administrator profile written through the dashboard"
   ],
   "steps": [
@@ -105,9 +105,9 @@
       "id": "notification-permission",
       "surface": "ios",
       "image": "005-notification-permission.png",
-      "description": "iOS asks Steve to allow MediNag notifications",
+      "description": "iOS asks Steve to allow MediNag alarms",
       "claims": [
-        { "id": "ios.system-permission", "text": "The permission prompt is rendered by iOS", "environment": "springboard", "assertion": "RespondToDoseUITests checks the SpringBoard alert" },
+        { "id": "ios.system-permission", "text": "The permission prompt is rendered by iOS", "environment": "springboard", "assertion": "RespondToDoseUITests checks the AlarmKit authorization alert" },
         { "id": "ios.system-allow", "text": "The system offers an Allow action", "environment": "springboard", "assertion": "RespondToDoseUITests checks the SpringBoard Allow button" }
       ]
     },
@@ -115,31 +115,40 @@
       "id": "waiting-for-first-reminder",
       "surface": "ios",
       "image": "006-waiting-for-first-reminder.png",
-      "description": "MediNag is ready and waits for the scheduled notification",
+      "description": "MediNag is ready while iOS owns the scheduled alarm",
       "claims": [
-        { "id": "ios.pending-requests", "text": "Permission and real pending iOS requests are both confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production readiness state" },
+        { "id": "ios.pending-alarms", "text": "Alarm permission and real scheduled AlarmKit alarms are confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production readiness state" },
         { "id": "ios.event-visible", "text": "The Firestore event remains visible while the app waits", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the medication label" },
-        { "id": "ios.no-early-snooze", "text": "No response is available before a notification", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
-        { "id": "ios.no-early-completion", "text": "No completion is available before a notification", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
+        { "id": "ios.no-early-snooze", "text": "No response is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
+        { "id": "ios.no-early-completion", "text": "No completion is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
       ]
     },
     {
-      "id": "first-system-notification",
+      "id": "app-backgrounded",
       "surface": "ios",
-      "image": "007-first-system-notification.png",
-      "description": "While MediNag is backgrounded, iOS delivers the scheduled notification",
+      "image": "007-app-backgrounded.png",
+      "description": "MediNag is backgrounded while the alarm remains owned by iOS",
       "claims": [
-        { "id": "ios.first-springboard", "text": "The first reminder is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the system notification title while MediNag is backgrounded" },
-        { "id": "ios.first-hittable", "text": "The SpringBoard notification has finished arriving", "environment": "springboard", "assertion": "RespondToDoseUITests waits for the system notification to become hittable" }
+        { "id": "ios.home-screen", "text": "The Home Screen confirms MediNag is backgrounded", "environment": "springboard", "assertion": "RespondToDoseUITests verifies the MediNag Home Screen icon" }
+      ]
+    },
+    {
+      "id": "first-system-alarm",
+      "surface": "ios",
+      "image": "008-first-system-alarm.png",
+      "description": "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
+      "claims": [
+        { "id": "ios.first-alarmkit", "text": "The first reminder is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes mobiletimerd requesting the alert and ClockAngel rendering its expanded view" },
+        { "id": "ios.first-respond", "text": "The system-owned Respond action is ready", "environment": "springboard", "assertion": "RespondToDoseUITests captures and taps the AlarmKit system aperture's custom action" }
       ]
     },
     {
       "id": "first-reminder-response",
       "surface": "ios",
-      "image": "008-first-reminder-response.png",
-      "description": "Returning to MediNag immediately presents the delivered reminder",
+      "image": "009-first-reminder-response.png",
+      "description": "The system Respond action immediately opens the medication response",
       "claims": [
-        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests foregrounds the app without tapping the notification and waits for the reminder alert" },
+        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests taps the AlarmKit Respond action and waits for the reminder alert" },
         { "id": "ios.first-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the FIRST sequence" },
         { "id": "ios.occurrence-time", "text": "The first reminder uses the medication occurrence time", "environment": "connected-emulators", "assertion": "RespondToDoseUITests derives and checks the dashboard-written schedule time" },
         { "id": "ios.snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },
@@ -150,7 +159,7 @@
     {
       "id": "dose-snoozed-in-firestore",
       "surface": "ios",
-      "image": "009-dose-snoozed-in-firestore.png",
+      "image": "010-dose-snoozed-in-firestore.png",
       "description": "Yes, I will writes the snoozed response back to Firestore",
       "claims": [
         { "id": "ios.snooze-count", "text": "The snooze count increments", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the snapshot-driven snooze count" },
@@ -160,19 +169,19 @@
       ]
     },
     {
-      "id": "repeat-system-notification",
+      "id": "repeat-system-alarm",
       "surface": "ios",
-      "image": "010-repeat-system-notification.png",
-      "description": "With MediNag terminated, iOS retains the repeat notification",
+      "image": "011-repeat-system-alarm.png",
+      "description": "With MediNag terminated, iOS retains and sounds the repeat alarm",
       "claims": [
-        { "id": "ios.repeat-springboard", "text": "The repeat is rendered by SpringBoard", "environment": "springboard", "assertion": "RespondToDoseUITests observes the repeat notification title after termination" },
-        { "id": "ios.repeat-hittable", "text": "The repeat notification has finished arriving", "environment": "springboard", "assertion": "RespondToDoseUITests waits for the repeat notification to become hittable" }
+        { "id": "ios.repeat-alarmkit", "text": "The repeat is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes a second mobiletimerd alert request and ClockAngel render after termination" },
+        { "id": "ios.repeat-respond", "text": "The repeat Respond action is ready", "environment": "springboard", "assertion": "RespondToDoseUITests captures and taps the second AlarmKit system aperture action" }
       ]
     },
     {
       "id": "repeat-reminder-response",
       "surface": "ios",
-      "image": "011-repeat-reminder-response.png",
+      "image": "012-repeat-reminder-response.png",
       "description": "Tapping reminder 2 cold-launches the app after logical time advances",
       "claims": [
         { "id": "ios.repeat-response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert" },
@@ -186,7 +195,7 @@
     {
       "id": "dose-completed-in-firestore",
       "surface": "ios",
-      "image": "012-dose-completed-in-firestore.png",
+      "image": "013-dose-completed-in-firestore.png",
       "description": "Yes, I did completes the real event and cancels further reminders",
       "claims": [
         { "id": "ios.completed-snapshot", "text": "The Firestore listener receives completion", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the completed event status" },

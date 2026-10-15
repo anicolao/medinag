@@ -6,7 +6,7 @@ final class RespondToDoseUITests: XCTestCase {
     continueAfterFailure = false
   }
 
-  func testConnectedSystemNotificationDoseLoop() throws {
+  func testConnectedSystemNotificationDoseLoop() async throws {
     XCUIDevice.shared.orientation = .portrait
     let environment = try ConnectedEnvironment()
     let app = makeApplication(environment)
@@ -99,7 +99,7 @@ final class RespondToDoseUITests: XCTestCase {
     let permissionAlert = springboard.alerts.firstMatch
     try tester.step(
       "notification-permission",
-      description: "iOS asks Steve to allow MediNag notifications",
+      description: "iOS asks Steve to allow MediNag alarms",
       verifications: [
         .exists(permissionAlert, "The permission prompt is rendered by iOS"),
         .exists(permissionAlert.buttons["Allow"], "The system offers an Allow action"),
@@ -109,51 +109,59 @@ final class RespondToDoseUITests: XCTestCase {
 
     try tester.step(
       "waiting-for-first-reminder",
-      description: "MediNag is ready and waits for the scheduled notification",
+      description: "MediNag is ready while iOS owns the scheduled alarm",
       verifications: [
         .labelContains(
           app.staticTexts["notification-readiness"],
           "Reminders are ready",
-          "Permission and real pending iOS requests are both confirmed"
+          "Alarm permission and real scheduled AlarmKit alarms are confirmed"
         ),
         .labelContains(
           app.staticTexts["next-dose-name"],
           environment.medicationName,
           "The Firestore event remains visible while the app waits"
         ),
-        .notExists(app.buttons["yes-i-will"], "No response is available before a notification"),
-        .notExists(app.buttons["yes-i-did"], "No completion is available before a notification"),
+        .notExists(app.buttons["yes-i-will"], "No response is available before an alarm"),
+        .notExists(app.buttons["yes-i-did"], "No completion is available before an alarm"),
       ]
     )
 
     XCUIDevice.shared.press(.home)
-    let firstNotification = springboard.descendants(matching: .any)[
-      "NotificationShortLookView"
-    ]
-    let firstNotificationTitle = springboard.staticTexts["Medication reminder"].firstMatch
-    XCTAssertTrue(
-      firstNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
-      "SpringBoard did not receive the notification built from the Firestore event"
+    try tester.step(
+      "app-backgrounded",
+      description: "MediNag is backgrounded while the alarm remains owned by iOS",
+      verifications: [
+        .exists(springboard.icons["MediNag"], "The Home Screen confirms MediNag is backgrounded"),
+      ]
+    )
+    let firstAlertObserved = try await waitForAlarmSignal(
+      "alert", after: 0, environment: environment
+    )
+    let firstRenderObserved = try await waitForAlarmSignal(
+      "rendered", after: 0, environment: environment
     )
     try tester.step(
-      "first-system-notification",
-      description: "While MediNag is backgrounded, iOS delivers the scheduled notification",
+      "first-system-alarm",
+      description: "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
       verifications: [
-        .exists(firstNotificationTitle, "The first reminder is rendered by SpringBoard"),
-        .hittable(firstNotification, "The SpringBoard notification has finished arriving"),
+        StepVerification(spec: "The first reminder is rendered by AlarmKit") {
+          firstRenderObserved
+        },
+        StepVerification(spec: "The system-owned Respond action is ready") {
+          firstAlertObserved && firstRenderObserved
+        },
       ],
-      screenshotElement: firstNotification,
       trimAnimatedSystemEdge: true
     )
 
-    app.activate()
+    tapAlarmRespondAction(in: springboard)
     XCTAssertTrue(
       app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
-      "Returning to MediNag did not foreground the app"
+      "Responding to the AlarmKit alert did not foreground MediNag"
     )
     try tester.step(
       "first-reminder-response",
-      description: "Returning to MediNag immediately presents the delivered reminder",
+      description: "The system Respond action immediately opens the medication response",
       verifications: reminderVerifications(
         app,
         sequence: "FIRST",
@@ -177,28 +185,28 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
-    XCUIDevice.shared.press(.home)
     app.terminate()
-    let repeatNotification = springboard.descendants(matching: .any)[
-      "NotificationShortLookView"
-    ]
-    let repeatNotificationTitle = springboard.staticTexts["Medication reminder 2"].firstMatch
-    XCTAssertTrue(
-      repeatNotification.waitForExistence(timeout: TestStepHelper.conditionTimeout),
-      "SpringBoard did not receive reminder 2 from the snoozed Firestore event"
+    let repeatAlertObserved = try await waitForAlarmSignal(
+      "alert", after: 1, environment: environment
+    )
+    let repeatRenderObserved = try await waitForAlarmSignal(
+      "rendered", after: 1, environment: environment
     )
     try tester.step(
-      "repeat-system-notification",
-      description: "With MediNag terminated, iOS retains the repeat notification",
+      "repeat-system-alarm",
+      description: "With MediNag terminated, iOS retains and sounds the repeat alarm",
       verifications: [
-        .exists(repeatNotificationTitle, "The repeat is rendered by SpringBoard"),
-        .hittable(repeatNotification, "The repeat notification has finished arriving"),
+        StepVerification(spec: "The repeat is rendered by AlarmKit") {
+          repeatRenderObserved
+        },
+        StepVerification(spec: "The repeat Respond action is ready") {
+          repeatAlertObserved && repeatRenderObserved
+        },
       ],
-      screenshotElement: repeatNotification,
       trimAnimatedSystemEdge: true
     )
 
-    repeatNotification.tap()
+    tapAlarmRespondAction(in: springboard)
     XCTAssertTrue(
       app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
       "Tapping reminder 2 did not cold-launch MediNag"
@@ -234,14 +242,14 @@ final class RespondToDoseUITests: XCTestCase {
     app.launchArguments += [
       "-e2e",
       "-e2e-logical-now", environment.logicalNow,
-      "-e2e-time-scale", "0.01",
+      "-e2e-time-scale", "0.003",
       "-firebase-emulator-project-id", environment.projectID,
       "-firebase-emulator-api-key", environment.apiKey,
       "-firebase-emulator-app-id", environment.appID,
       "-firebase-emulator-messaging-sender-id", environment.messagingSenderID,
       "-firebase-emulator-host", "127.0.0.1",
-      "-firebase-auth-emulator-port", "9099",
-      "-firebase-firestore-emulator-port", "8080",
+      "-firebase-auth-emulator-port", environment.authPort,
+      "-firebase-firestore-emulator-port", environment.firestorePort,
       "-e2e-google-id-token-base64", environment.googleIDTokenBase64,
       "-e2e-time-zone", environment.timeZoneIdentifier,
       "-AppleLanguages", "(en)",
@@ -298,6 +306,30 @@ final class RespondToDoseUITests: XCTestCase {
     return verifications
   }
 
+  private func waitForAlarmSignal(
+    _ event: String,
+    after count: Int,
+    environment: ConnectedEnvironment
+  ) async throws -> Bool {
+    var request = URLRequest(
+      url: URL(
+        string: "http://127.0.0.1:\(environment.alarmMonitorPort)/wait/\(event)?after=\(count)"
+      )!
+    )
+    request.timeoutInterval = TestStepHelper.conditionTimeout
+    let (_, response) = try await URLSession.shared.data(for: request)
+    return (response as? HTTPURLResponse)?.statusCode == 200
+  }
+
+  private func tapAlarmRespondAction(in springboard: XCUIApplication) {
+    // AlarmKit's compact system aperture is intentionally outside the normal
+    // XCTest accessibility tree. This coordinate is the centre of the custom
+    // secondary action (the pills button), not the trailing system Stop button.
+    springboard.coordinate(
+      withNormalizedOffset: CGVector(dx: 0.72, dy: 0.055)
+    ).tap()
+  }
+
 }
 
 struct ConnectedEnvironment {
@@ -306,6 +338,9 @@ struct ConnectedEnvironment {
   let appID: String
   let messagingSenderID: String
   let googleIDTokenBase64: String
+  let authPort: String
+  let firestorePort: String
+  let alarmMonitorPort: String
   let administratorID: String
   let administratorName: String
   let medicationName: String
@@ -321,6 +356,9 @@ struct ConnectedEnvironment {
     googleIDTokenBase64 = try requiredConfiguration(
       "MEDINAG_E2E_GOOGLE_ID_TOKEN_BASE64"
     )
+    authPort = try requiredConfiguration("MEDINAG_E2E_AUTH_PORT")
+    firestorePort = try requiredConfiguration("MEDINAG_E2E_FIRESTORE_PORT")
+    alarmMonitorPort = try requiredConfiguration("MEDINAG_E2E_ALARM_MONITOR_PORT")
     administratorID = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_ID")
     administratorName = try requiredConfiguration("MEDINAG_E2E_ADMINISTRATOR_NAME")
     medicationName = try requiredConfiguration("MEDINAG_E2E_MEDICATION_NAME")
@@ -349,12 +387,11 @@ struct ConnectedEnvironment {
       throw XCTSkip("The first connected occurrence could not be resolved.")
     }
     logicalNow = ISO8601DateFormatter().string(
-      // Ten logical minutes are six real seconds at the E2E scale. That leaves
-      // enough time to verify iOS accepted the requests and terminate the app,
-      // while both the first alert and the configured ten-minute snooze still
-      // arrive inside their two-second condition limits. The production
-      // scheduler and calendar trigger remain unchanged.
-      from: firstOccurrence.addingTimeInterval(-10 * 60)
+      // Five logical minutes are 0.9 real seconds at the E2E scale, and the
+      // configured ten-minute snooze is 1.8 seconds. The clock only compresses
+      // dates supplied to the production AlarmKit scheduler; iOS still owns,
+      // renders, sounds, and routes both alarms.
+      from: firstOccurrence.addingTimeInterval(-5 * 60)
     )
   }
 }

@@ -28,8 +28,10 @@ final class ReminderRefreshCoordinator: @unchecked Sendable {
       snoozeInterval: TimeInterval(snoozeIntervalMinutes * 60),
       maximumReminderCount: maximumReminderCount
     )
-    let ready = result.expectedPendingCount > 0
-      && result.actualPendingCount == result.expectedPendingCount
+    // Zero pending alarms is healthy while AlarmKit owns an alarm that is
+    // actively presenting, and after the final dose has been completed. A
+    // mismatch—not an empty queue—is the reconciliation failure condition.
+    let ready = result.actualPendingCount == result.expectedPendingCount
     if let scheduledThrough = result.scheduledThrough {
       try await healthReporter.reportCoverage(
         administratorID: administratorID,

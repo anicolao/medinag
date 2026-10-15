@@ -404,7 +404,6 @@ export const reconcileCoverageIncident = onDocumentWritten(
     const administratorId = event.params.administratorId;
     const patientId = event.params.patientId;
     const ready = coverage.reconciliationStatus === 'ready'
-      && coverage.expectedPendingCount > 0
       && coverage.expectedPendingCount === coverage.actualPendingCount;
     if (!ready) {
       await recordIncident(administratorId, `coverage-${patientId}`, {

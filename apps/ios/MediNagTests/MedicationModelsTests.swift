@@ -1,10 +1,27 @@
 import MediNagCore
+import CryptoKit
 import Dispatch
 import UserNotifications
 import XCTest
 @testable import MediNag
 
 final class MedicationModelsTests: XCTestCase {
+  func testProductionAlarmSoundIsBundledAndUnchanged() throws {
+    let applicationBundle = Bundle(for: AppDelegate.self)
+    let soundURL = try XCTUnwrap(
+      applicationBundle.url(forResource: "MediNagAlarm", withExtension: "caf")
+    )
+    let digest = SHA256.hash(data: try Data(contentsOf: soundURL))
+      .map { String(format: "%02x", $0) }
+      .joined()
+
+    XCTAssertEqual(MediNagAlarm.soundName, "MediNagAlarm.caf")
+    XCTAssertEqual(
+      digest,
+      "69f3609a33ec179636384a393c79a5625080db8bddb26565bc1e4b943c7323e3"
+    )
+  }
+
   func testDoseResponseIdentifiersRemainStableForNotificationRouting() {
     XCTAssertEqual(DoseResponse.yesIWill.rawValue, "yesIWill")
     XCTAssertEqual(DoseResponse.yesIDid.rawValue, "yesIDid")

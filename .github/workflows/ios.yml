@@ -80,7 +80,7 @@ jobs:
         env:
           CI: true
           MEDINAG_E2E_DERIVED_DATA: apps/ios/DerivedData
-          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-3
           MEDINAG_E2E_UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots }}
 
       - name: Export system-notification attachments
@@ -114,7 +114,7 @@ jobs:
         env:
           CI: true
           MEDINAG_E2E_DERIVED_DATA: apps/ios/DerivedData
-          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-3
           MEDINAG_E2E_UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.record_screenshots }}
 
       - name: Export notification-failure attachments

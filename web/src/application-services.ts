@@ -96,10 +96,15 @@ function createFirebase(): { app: FirebaseApp; auth: Auth; database: Firestore }
     ? initializeFirestore(app, { experimentalForceLongPolling: true })
     : getFirestore(app);
   if (useEmulator && !emulatorsConnected) {
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
+    const authEmulatorHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST
+      ?? '127.0.0.1:9099';
+    const firestoreEmulatorHost = import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST
+      ?? '127.0.0.1:8080';
+    const [firestoreHostname, firestorePort = '8080'] = firestoreEmulatorHost.split(':');
+    connectAuthEmulator(auth, `http://${authEmulatorHost}`, {
       disableWarnings: true
     });
-    connectFirestoreEmulator(database, '127.0.0.1', 8080);
+    connectFirestoreEmulator(database, firestoreHostname, Number(firestorePort));
     emulatorsConnected = true;
   }
   return { app, auth, database };

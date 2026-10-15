@@ -239,11 +239,12 @@ final class AppViewModel: ObservableObject {
         ? "Notifications are registered with iOS."
         : "Notification permission is enabled, but no future reminders are registered."
     } catch {
+      print("MediNag notification reconciliation failed: \(error.localizedDescription)")
       notificationReadiness = .failed
       actionNotice = error.localizedDescription
       await reportIncident(
         code: "notification_reconciliation_failed",
-        message: "The patient iPhone could not register its expected reminders.",
+        message: "The patient iPhone could not register its expected reminders: \(error.localizedDescription)",
         severity: "critical",
         context: ["error": error.localizedDescription]
       )
@@ -253,6 +254,9 @@ final class AppViewModel: ObservableObject {
   func refreshOnForeground() async {
     guard state == .ready, let userID = Auth.auth().currentUser?.uid else { return }
     do {
+      if let interaction = await liveNotifications?.claimAlarmInteraction(events: events) {
+        handleNotificationInteraction(interaction)
+      }
       try await directory.updateTimeZone(
         userID: userID,
         timeZone: patientTimeZone.identifier
@@ -445,6 +449,12 @@ final class AppViewModel: ObservableObject {
         switch result {
         case .success(let events):
           self?.events = events
+          if
+            let scheduler = self?.liveNotifications,
+            let interaction = await scheduler.claimAlarmInteraction(events: events)
+          {
+            self?.handleNotificationInteraction(interaction)
+          }
           self?.consumePendingNotificationInteractionIfPossible()
           await self?.scheduleUnfinishedEventsIfReady()
         case .failure(let error): self?.actionNotice = error.localizedDescription
@@ -511,6 +521,8 @@ final class AppViewModel: ObservableObject {
 
   private func scheduleUnfinishedEventsIfReady() async {
     guard
+      !isWorking,
+      activeReminder == nil,
       notificationReadiness == .ready
         || notificationReadiness == .noScheduledReminders
         || notificationReadiness == .failed
@@ -518,11 +530,12 @@ final class AppViewModel: ObservableObject {
     do {
       try await reconcileNotifications()
     } catch {
+      print("MediNag notification reconciliation failed: \(error.localizedDescription)")
       notificationReadiness = .failed
       actionNotice = error.localizedDescription
       await reportIncident(
         code: "notification_reconciliation_failed",
-        message: "The patient iPhone could not register its expected reminders.",
+        message: "The patient iPhone could not register its expected reminders: \(error.localizedDescription)",
         severity: "critical",
         context: ["error": error.localizedDescription]
       )
