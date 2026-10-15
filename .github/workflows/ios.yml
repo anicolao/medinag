@@ -42,7 +42,11 @@ jobs:
   connected-e2e:
     name: Dashboard → Firebase → iOS notification → Firebase
     runs-on: macos-26
-    timeout-minutes: 25
+    # A fresh iOS 26.5 simulator can spend five minutes in first-boot data
+    # migration on GitHub's arm64 hosts, and this job intentionally runs two
+    # isolated real-system stories. Product condition waits remain capped at
+    # two seconds by the E2E harness; this is only the hosted job budget.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
