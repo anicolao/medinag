@@ -74,7 +74,7 @@ npm run ios:generate
 "$xcrun_command" simctl ui "$device_id" increase_contrast enabled
 "$xcrun_command" simctl ui "$device_id" content_size medium
 "$xcrun_command" simctl status_bar "$device_id" override \
-  --time '2026-08-03T08:00:00.000-04:00' \
+  --time '8:00' \
   --batteryState charged \
   --batteryLevel 100 \
   --wifiMode active \

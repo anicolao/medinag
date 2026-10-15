@@ -52,7 +52,7 @@ trap cleanup EXIT INT TERM
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" increase_contrast enabled
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" content_size medium
 "$xcrun_command" simctl status_bar "$MEDINAG_SIMULATOR_ID" override \
-  --time '2026-08-03T08:00:00.000-04:00' \
+  --time '8:00' \
   --batteryState charged --batteryLevel 100 \
   --wifiMode active --wifiBars 3 \
   --cellularMode active --cellularBars 4
