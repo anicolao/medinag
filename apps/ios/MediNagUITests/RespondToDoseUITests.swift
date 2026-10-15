@@ -70,13 +70,7 @@ final class RespondToDoseUITests: XCTestCase {
     )
     app.buttons["continue-after-following"].tap()
 
-    let eventStatus = app.staticTexts.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
-        "event-",
-        "-status"
-      )
-    ).firstMatch
+    let eventStatus = eventStatusElement(in: app)
     try tester.step(
       "firestore-event-received",
       description: "The iPhone follows Lori's schedule and receives its Firestore event",
@@ -123,7 +117,8 @@ final class RespondToDoseUITests: XCTestCase {
         ),
         .notExists(app.buttons["yes-i-will"], "No response is available before an alarm"),
         .notExists(app.buttons["yes-i-did"], "No completion is available before an alarm"),
-      ]
+      ],
+      screenshotElement: app.otherElements["reminder-diagnostics"]
     )
 
     XCUIDevice.shared.press(.home)
@@ -132,7 +127,8 @@ final class RespondToDoseUITests: XCTestCase {
       description: "MediNag is backgrounded while the alarm remains owned by iOS",
       verifications: [
         .exists(springboard.icons["MediNag"], "The Home Screen confirms MediNag is backgrounded"),
-      ]
+      ],
+      screenshotCrop: .belowSystemAlarm
     )
     let firstAlertObserved = try await waitForAlarmSignal(
       "alert", after: 0, environment: environment
@@ -146,7 +142,7 @@ final class RespondToDoseUITests: XCTestCase {
           firstAlertObserved
         },
       ],
-      trimAnimatedSystemEdge: true
+      screenshotCrop: .systemAlarmWithoutAnimatedGlyph
     )
 
     tapSystemAlarm(in: springboard)
@@ -175,9 +171,19 @@ final class RespondToDoseUITests: XCTestCase {
           "10 minutes",
           "The configured repeat interval is confirmed"
         ),
-        .labelContains(eventStatus, "Snoozed", "The Firestore listener receives the snoozed state"),
+        .labelContains(
+          eventStatusElement(in: app),
+          "Snoozed",
+          "The Firestore listener receives the snoozed state"
+        ),
         .notExists(app.otherElements["dose-reminder-alert"], "The response screen is dismissed"),
-      ]
+        .labelContains(
+          app.staticTexts["notification-readiness"],
+          "Reminders are ready",
+          "iOS confirms the repeat alarm registration"
+        ),
+      ],
+      screenshotElement: app.otherElements["next-dose-card"]
     )
 
     app.terminate()
@@ -193,7 +199,7 @@ final class RespondToDoseUITests: XCTestCase {
           repeatAlertObserved
         },
       ],
-      trimAnimatedSystemEdge: true
+      screenshotCrop: .systemAlarmWithoutAnimatedGlyph
     )
 
     tapSystemAlarm(in: springboard)
@@ -216,7 +222,11 @@ final class RespondToDoseUITests: XCTestCase {
       "dose-completed-in-firestore",
       description: "Yes, I did completes the real event and cancels further reminders",
       verifications: [
-        .labelContains(eventStatus, "Completed", "The Firestore listener receives completion"),
+        .labelContains(
+          eventStatusElement(in: app),
+          "Completed",
+          "The Firestore listener receives completion"
+        ),
         .labelContains(
           app.staticTexts["action-notice"],
           "cancelled",
@@ -249,6 +259,16 @@ final class RespondToDoseUITests: XCTestCase {
     ]
     app.launchEnvironment["TZ"] = "America/Toronto"
     return app
+  }
+
+  private func eventStatusElement(in app: XCUIApplication) -> XCUIElement {
+    app.staticTexts.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+        "event-",
+        "-status"
+      )
+    ).firstMatch
   }
 
   private func makeTester(application: XCUIApplication) -> TestStepHelper {
@@ -288,7 +308,7 @@ final class RespondToDoseUITests: XCTestCase {
       verifications.insert(
         .exists(
           app.staticTexts["reminder-time"],
-          "The repeat displays the response-relative snooze expiry"
+          "The repeat retains the medication occurrence time"
         ),
         at: 2
       )

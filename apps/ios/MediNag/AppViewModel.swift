@@ -289,6 +289,23 @@ final class AppViewModel: ObservableObject {
         events[index] = updated
       }
       if response == .yesIWill {
+        do {
+          // The coordinator has registered the replacement AlarmKit alarm.
+          // Reconcile immediately so the patient sees confirmation even when
+          // the Firestore listener delivered the snooze while `isWorking` was
+          // suppressing its normal reconciliation pass.
+          try await reconcileNotifications()
+        } catch {
+          notificationReadiness = .failed
+          actionNotice = "Response recorded, but iOS could not confirm the repeat reminder. Your administrator has been alerted."
+          await reportIncident(
+            code: "repeat_notification_reconciliation_failed",
+            message: "The patient response was recorded, but the iPhone could not confirm its repeat medication alarm: \(error.localizedDescription)",
+            severity: "critical",
+            context: ["error": error.localizedDescription]
+          )
+          return
+        }
         actionNotice = updated.snoozeCount < maximumReminderCount
           ? "Okay. We will remind you again in \(snoozeMinutes) minutes."
           : "Response recorded. The configured reminder limit has been reached."

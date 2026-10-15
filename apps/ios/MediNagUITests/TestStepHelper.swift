@@ -1,6 +1,12 @@
 import XCTest
 import UIKit
 
+enum WalkthroughScreenshotCrop {
+  case none
+  case belowSystemAlarm
+  case systemAlarmWithoutAnimatedGlyph
+}
+
 @MainActor
 struct StepVerification {
   let spec: String
@@ -116,7 +122,7 @@ final class TestStepHelper {
     description: String,
     verifications: [StepVerification],
     screenshotElement: XCUIElement? = nil,
-    trimAnimatedSystemEdge: Bool = false
+    screenshotCrop: WalkthroughScreenshotCrop = .none
   ) throws {
     guard let manifestStep = claims.steps.first(where: {
       $0.id == identifier && $0.surface == "ios"
@@ -152,23 +158,10 @@ final class TestStepHelper {
     nextScreenshotIndex += 1
     let screenshot = screenshotElement?.screenshot() ?? XCUIScreen.main.screenshot()
     let attachment: XCTAttachment
-    if
-      trimAnimatedSystemEdge,
-      let image = screenshot.image.cgImage,
-      image.width > 60,
-      image.height > 60,
-      let cropped = image.cropping(
-        to: CGRect(
-          x: 30,
-          y: 30,
-          width: image.width - 60,
-          height: image.height - 60
-        )
-      )
+    if let image = screenshot.image.cgImage,
+       let cropped = crop(image, for: screenshotCrop)
     {
-      attachment = XCTAttachment(
-        image: UIImage(cgImage: normalizeSystemMaterial(cropped))
-      )
+      attachment = XCTAttachment(image: UIImage(cgImage: cropped))
     } else {
       attachment = XCTAttachment(screenshot: screenshot)
     }
@@ -177,40 +170,40 @@ final class TestStepHelper {
     testCase.add(attachment)
   }
 
-  private func normalizeSystemMaterial(_ image: CGImage) -> CGImage {
-    // Reduced Transparency still leaves a few near-white SpringBoard material
-    // pixels dependent on the fresh simulator's wallpaper raster. Normalize
-    // only that background range; notification text, icon, and layout remain
-    // untouched and the resulting artifact is compared at zero tolerance.
-    let bytesPerPixel = 4
-    let bytesPerRow = image.width * bytesPerPixel
-    var pixels = [UInt8](repeating: 0, count: image.height * bytesPerRow)
-    guard
-      let context = CGContext(
-        data: &pixels,
-        width: image.width,
-        height: image.height,
-        bitsPerComponent: 8,
-        bytesPerRow: bytesPerRow,
-        space: CGColorSpaceCreateDeviceRGB(),
-        bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue
-          | CGImageAlphaInfo.premultipliedLast.rawValue
+  private func crop(
+    _ image: CGImage,
+    for crop: WalkthroughScreenshotCrop
+  ) -> CGImage? {
+    switch crop {
+    case .none:
+      return nil
+    case .belowSystemAlarm:
+      // The compact AlarmKit aperture is continuously animated. Exclude the
+      // system-owned strip and compare every Home Screen pixel below it.
+      let top = 400
+      guard image.height > top else { return nil }
+      return image.cropping(
+        to: CGRect(x: 0, y: top, width: image.width, height: image.height - top)
       )
-    else { return image }
-    context.draw(
-      image,
-      in: CGRect(x: 0, y: 0, width: image.width, height: image.height)
-    )
-    for index in stride(from: 0, to: pixels.count, by: bytesPerPixel) {
-      if pixels[index] > 235, pixels[index + 1] > 235, pixels[index + 2] > 235 {
-        pixels[index] = 244
-        pixels[index + 1] = 248
-        pixels[index + 2] = 249
-      }
+    case .systemAlarmWithoutAnimatedGlyph:
+      // Preserve the real expanded AlarmKit title and system close control,
+      // but exclude Apple's animated clock-and-bells glyph and unrelated Home
+      // Screen pixels. Cropping avoids replacing any system pixels with
+      // test-authored content.
+      let left = 265
+      let edge = 30
+      let height = 230
+      guard image.width > left + edge, image.height > edge + height else { return nil }
+      return image.cropping(
+        to: CGRect(
+          x: left,
+          y: edge,
+          width: image.width - left - edge,
+          height: height
+        )
+      )
     }
-    return context.makeImage() ?? image
   }
-
 
 }
 

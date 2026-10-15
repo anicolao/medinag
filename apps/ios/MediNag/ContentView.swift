@@ -61,8 +61,10 @@ private struct ScheduleConnectionProgressView: View {
         )
 
         VStack(spacing: 18) {
-          ProgressView()
-            .controlSize(.large)
+          Image(systemName: "link.circle.fill")
+            .font(.system(size: 34, weight: .semibold))
+            .foregroundStyle(MediNagColor.teal)
+            .accessibilityHidden(true)
           Text("Connected to Firebase")
             .font(.headline)
             .foregroundStyle(MediNagColor.ink)

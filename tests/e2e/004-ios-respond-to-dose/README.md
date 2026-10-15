@@ -152,6 +152,7 @@
 - [x] The configured repeat interval is confirmed
 - [x] The Firestore listener receives the snoozed state
 - [x] The response screen is dismissed
+- [x] iOS confirms the repeat alarm registration
 
 ## With MediNag terminated, iOS retains and sounds the repeat alarm
 
@@ -169,7 +170,7 @@
 
 - [x] The response screen is visible
 - [x] The reminder sequence is correct
-- [x] The repeat displays the response-relative snooze expiry
+- [x] The repeat retains the medication occurrence time
 - [x] Yes, I will is available
 - [x] Yes, I did is available
 - [x] Neither response has greater visual weight

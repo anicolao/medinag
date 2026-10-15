@@ -155,4 +155,8 @@ delays are used.
 
 The checked-in walkthrough is
 `tests/e2e/004-ios-respond-to-dose/README.md`; CI exports XCTest attachments and
-requires every RGBA pixel to match its baseline.
+requires every retained RGBA pixel to match its baseline. The walkthrough crops
+the compact system aperture from the backgrounding step and Apple's animated
+ringing glyph plus unrelated wallpaper from expanded AlarmKit screenshots. It
+retains the real expanded alarm title and close control and never masks,
+replaces, or synthesizes system UI.

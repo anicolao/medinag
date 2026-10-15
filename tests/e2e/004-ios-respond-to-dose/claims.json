@@ -164,7 +164,8 @@
         { "id": "ios.snooze-count", "text": "The snooze count increments", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the snapshot-driven snooze count" },
         { "id": "ios.repeat-interval", "text": "The configured repeat interval is confirmed", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the administrator-configured interval" },
         { "id": "ios.snoozed-snapshot", "text": "The Firestore listener receives the snoozed state", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the event status" },
-        { "id": "ios.response-dismissed", "text": "The response screen is dismissed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert to disappear" }
+        { "id": "ios.response-dismissed", "text": "The response screen is dismissed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert to disappear" },
+        { "id": "ios.repeat-registered", "text": "iOS confirms the repeat alarm registration", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks notification-readiness after the Firestore snooze write" }
       ]
     },
     {
@@ -184,7 +185,7 @@
       "claims": [
         { "id": "ios.repeat-response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert" },
         { "id": "ios.repeat-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the REMINDER 2 sequence" },
-        { "id": "ios.snooze-expiry", "text": "The repeat displays the response-relative snooze expiry", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the reminder-time element after the snooze write" },
+        { "id": "ios.repeat-occurrence-time", "text": "The repeat retains the medication occurrence time", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the reminder-time element after the snooze write" },
         { "id": "ios.repeat-snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },
         { "id": "ios.repeat-complete-available", "text": "Yes, I did is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the completion button" },
         { "id": "ios.repeat-equal-actions", "text": "Neither response has greater visual weight", "environment": "ios-simulator", "assertion": "RespondToDoseUITests compares both button frames" }

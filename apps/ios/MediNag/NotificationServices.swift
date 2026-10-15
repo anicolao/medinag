@@ -597,9 +597,10 @@ actor LocalNotificationScheduler: NotificationScheduling {
       kind: .opened,
       eventID: event.id,
       medicationName: event.medicationName,
-      reminderTime: event.status == .snoozed
-        ? event.lastSnoozedAt ?? event.scheduledTime
-        : event.scheduledTime,
+      // Every reminder belongs to the original medication occurrence. The
+      // snooze expiry controls when iOS alerts again, not the dose time shown
+      // to the patient on the response screen.
+      reminderTime: event.scheduledTime,
       reminderNumber: event.snoozeCount + 1,
       timeZoneIdentifier: event.timeZone
     )
@@ -696,12 +697,15 @@ actor LocalNotificationScheduler: NotificationScheduling {
     {
       transitioningIDs.insert(MediNagAlarm.identifier(for: item.event.id))
     }
-    let expectedPendingIDs = desiredIDs.subtracting(transitioningIDs)
+    // Alerting and just-delivered alarms remain owned by iOS while the patient
+    // is deciding what to do. Include them in the diagnostics total so the
+    // count describes every system-owned occurrence, not only future dates.
+    let expectedPendingIDs = desiredIDs
     for alarm in current where !desiredIDs.contains(alarm.id) {
       try? AlarmManager.shared.cancel(id: alarm.id)
     }
 
-    var confirmedIDs: Set<UUID> = []
+    var confirmedIDs = transitioningIDs
     for item in desired {
       let identifier = MediNagAlarm.identifier(for: item.event.id)
       if transitioningIDs.contains(identifier) {
