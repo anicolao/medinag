@@ -922,6 +922,10 @@ h1 {
   border-left-color: #d98655;
 }
 
+.today-event-card.escalated {
+  border-left-color: #b42318;
+}
+
 .today-event-card time {
   color: #1d4348;
   font-size: 21px;
@@ -962,6 +966,11 @@ h1 {
 .event-status.completed {
   color: #37765e;
   background: #e8f5ef;
+}
+
+.event-status.escalated {
+  color: #b42318;
+  background: #fef3f2;
 }
 
 .empty-today {

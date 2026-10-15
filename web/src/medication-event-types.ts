@@ -10,4 +10,6 @@ export interface MedicationEvent {
   status: MedicationEventStatus;
   snoozeCount: number;
   completedAt: Date | null;
+  escalatedAt: Date | null;
+  escalationIncidentId: string | null;
 }

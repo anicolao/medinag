@@ -130,9 +130,15 @@ To ensure Steve cannot ignore the notification:
   1. Fetches `medication_events` where `status` is `pending` or `snoozed`.
   2. Checks if `Now > scheduledTime + escalationDeadlineMinutes`.
   3. For any matching overdue event where `escalatedAt` is `null`:
-     - Calls Twilio REST API to send SMS to Lori (`config.adminPhone`):
+     - Creates or confirms a durable administrator incident with a stable ID.
+     - Only after that incident exists, updates the event with `escalatedAt` and
+       the incident ID. If incident creation fails, the event must remain
+       un-escalated so the watchdog can retry without claiming success.
+     - The incident write invokes the production Twilio integration to send SMS
+       to Lori (`config.adminPhone`):
        > `"ALERT: Steve has not confirmed taking 'Morning Prescription Doses' scheduled for 8:00 AM. Please check on him immediately!"`
-     - Updates event record: `escalatedAt = Now()`.
+     - The stable incident ID prevents watchdog retries from producing duplicate
+       incidents or SMS alerts.
 
 ---
 

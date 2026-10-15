@@ -10,6 +10,11 @@ import { logger } from 'firebase-functions';
 import { defineSecret } from 'firebase-functions/params';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import {
+  escalateMedicationEvent,
+  escalationIncidentId,
+  isMedicationEventOverdue
+} from './escalation.js';
 import { buildOccurrences, type DoseDefinition } from './materialization.js';
 
 initializeApp();
@@ -73,6 +78,38 @@ async function recordIncident(
     smsAttempts: Number(existingData?.smsAttempts ?? 0),
     updatedAt: FieldValue.serverTimestamp()
   }, { merge: true });
+}
+
+function isAlreadyExistsError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const code = 'code' in error ? String(error.code) : '';
+  return code === '6' || code === 'already-exists';
+}
+
+async function ensureUnansweredDoseIncident(
+  administratorId: string,
+  incidentId: string,
+  input: IncidentInput
+): Promise<void> {
+  const reference = incidentReference(administratorId, incidentId);
+  try {
+    await reference.create({
+      ...input,
+      administratorUid: administratorId,
+      status: 'open',
+      firstOccurredAt: FieldValue.serverTimestamp(),
+      lastOccurredAt: FieldValue.serverTimestamp(),
+      occurrenceCount: 1,
+      alertSequence: 1,
+      smsState: 'queued',
+      smsAttempts: 0,
+      updatedAt: FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    if (!isAlreadyExistsError(error)) throw error;
+    const existing = await reference.get();
+    if (!existing.exists) throw error;
+  }
 }
 
 function doseFromDocument(id: string, data: DocumentData): DoseDefinition | null {
@@ -165,6 +202,8 @@ async function reconcileAdministrator(
       snoozeCount: Number(existing?.data().snoozeCount ?? 0),
       lastSnoozedAt: existing?.data().lastSnoozedAt ?? null,
       completedAt: null,
+      escalatedAt: existing?.data().escalatedAt ?? null,
+      escalationIncidentId: existing?.data().escalationIncidentId ?? null,
       createdAt: existing?.data().createdAt ?? FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     });
@@ -230,6 +269,102 @@ export const extendOccurrenceHorizons = onSchedule(
     await Promise.all(
       administrators.docs.map(({ id }) => reconcileWithIncident(id))
     );
+  }
+);
+
+export const checkUnconfirmedEvents = onSchedule(
+  { schedule: 'every 5 minutes', timeZone: 'UTC' },
+  async () => {
+    const now = new Date();
+    const administrators = await database.collection('administrators')
+      .where('published', '==', true)
+      .get();
+
+    await Promise.all(administrators.docs.map(async (administratorDocument) => {
+      const administrator = administratorDocument.data();
+      const patientUid = typeof administrator.patientUid === 'string'
+        ? administrator.patientUid
+        : null;
+      if (!patientUid) return;
+      const deadlineMinutes = Number(administrator.escalationDeadlineMinutes);
+      if (!Number.isInteger(deadlineMinutes) || deadlineMinutes < 1) {
+        await recordIncident(administratorDocument.id, 'invalid-escalation-deadline', {
+          code: 'invalid_escalation_deadline',
+          message: 'The unanswered-dose escalation deadline is invalid.',
+          severity: 'critical',
+          source: 'backend',
+          patientUid
+        });
+        return;
+      }
+      const cutoff = Timestamp.fromMillis(
+        now.getTime() - deadlineMinutes * 60_000
+      );
+      const candidates = await administratorDocument.ref
+        .collection('medicationEvents')
+        .where('scheduledTime', '<=', cutoff)
+        .get();
+
+      await Promise.all(candidates.docs.map(async (eventDocument) => {
+        const event = eventDocument.data();
+        if (!['pending', 'snoozed'].includes(String(event.status))) return;
+        if (event.escalatedAt instanceof Timestamp) return;
+        if (!(event.scheduledTime instanceof Timestamp)) return;
+        if (!isMedicationEventOverdue(
+          event.scheduledTime.toDate(),
+          deadlineMinutes,
+          now
+        )) return;
+
+        const incidentId = escalationIncidentId(eventDocument.id);
+        const patientName = typeof administrator.patientDisplayName === 'string'
+          && administrator.patientDisplayName.length > 0
+          ? administrator.patientDisplayName
+          : 'The patient';
+        const medicationName = typeof event.medicationName === 'string'
+          ? event.medicationName
+          : 'a scheduled medication';
+        const localTime = typeof event.scheduledLocalTime === 'string'
+          ? event.scheduledLocalTime
+          : event.scheduledTime.toDate().toISOString();
+
+        await escalateMedicationEvent({
+          ensureAdministratorIncident: () => ensureUnansweredDoseIncident(
+            administratorDocument.id,
+            incidentId,
+            {
+              code: 'medication_response_overdue',
+              message: `${patientName} has not confirmed ${medicationName} scheduled for ${localTime}.`,
+              severity: 'critical',
+              source: 'backend',
+              patientUid,
+              context: {
+                eventId: eventDocument.id,
+                medicationName,
+                scheduledTime: event.scheduledTime.toDate().toISOString(),
+                scheduledLocalTime: localTime,
+                timeZone: typeof event.timeZone === 'string' ? event.timeZone : null,
+                escalationDeadlineMinutes: deadlineMinutes
+              }
+            }
+          ),
+          markMedicationEventEscalated: async () => {
+            await database.runTransaction(async (transaction) => {
+              const latest = await transaction.get(eventDocument.ref);
+              const latestData = latest.data();
+              if (!latest.exists || !latestData) return;
+              if (!['pending', 'snoozed'].includes(String(latestData.status))) return;
+              if (latestData.escalatedAt instanceof Timestamp) return;
+              transaction.update(eventDocument.ref, {
+                escalatedAt: FieldValue.serverTimestamp(),
+                escalationIncidentId: incidentId,
+                updatedAt: FieldValue.serverTimestamp()
+              });
+            });
+          }
+        });
+      }));
+    }));
   }
 );
 

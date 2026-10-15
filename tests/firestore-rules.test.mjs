@@ -270,6 +270,41 @@ test('only the linked patient can snooze or complete without changing the dose',
   )));
 });
 
+test('the patient preserves backend escalation evidence and cannot forge it', async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(
+      context.firestore(),
+      'administrators',
+      'lori',
+      'medicationEvents',
+      'dose'
+    ), {
+      escalatedAt: now,
+      escalationIncidentId: 'unanswered-dose-dose',
+      updatedAt: now
+    });
+  });
+  const steve = environment.authenticatedContext('steve').firestore();
+  const eventReference = doc(
+    steve,
+    'administrators',
+    'lori',
+    'medicationEvents',
+    'dose'
+  );
+  await assertFails(updateDoc(eventReference, {
+    escalationIncidentId: 'forged-incident',
+    updatedAt: now
+  }));
+  await assertSucceeds(updateDoc(eventReference, {
+    status: 'completed',
+    completedAt: now,
+    updatedAt: now
+  }));
+  const completed = await getDoc(eventReference);
+  assert.equal(completed.data().escalationIncidentId, 'unanswered-dose-dose');
+});
+
 test('the linked patient reports real device coverage for administrator review', async () => {
   const steve = environment.authenticatedContext('steve').firestore();
   const coverage = {

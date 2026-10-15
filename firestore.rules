@@ -249,6 +249,8 @@ service cloud.firestore {
           'snoozeCount',
           'lastSnoozedAt',
           'completedAt',
+          'escalatedAt',
+          'escalationIncidentId',
           'createdAt',
           'updatedAt'
         ])
@@ -272,6 +274,10 @@ service cloud.firestore {
           || request.resource.data.lastSnoozedAt is timestamp)
         && (request.resource.data.completedAt == null
           || request.resource.data.completedAt is timestamp)
+        && (request.resource.data.get('escalatedAt', null) == null
+          || request.resource.data.get('escalatedAt', null) is timestamp)
+        && (request.resource.data.get('escalationIncidentId', null) == null
+          || request.resource.data.get('escalationIncidentId', null) is string)
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }

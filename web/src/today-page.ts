@@ -32,22 +32,33 @@ function formatInstant(value: Date, timeZone: string): string {
 }
 
 function eventCard(event: MedicationEvent, patientName: string): string {
-  const statusLabel = event.status === 'snoozed'
+  const displayStatus = event.status === 'completed'
+    ? 'completed'
+    : event.escalatedAt ? 'escalated' : event.status;
+  const statusLabel = event.status === 'completed' && event.escalatedAt
+    ? 'Completed after alert'
+    : event.escalatedAt
+    ? 'Escalated'
+    : event.status === 'snoozed'
     ? `Snoozed${event.snoozeCount > 0 ? ` ×${event.snoozeCount}` : ''}`
     : event.status[0].toUpperCase() + event.status.slice(1);
-  const detail = event.status === 'completed' && event.completedAt
+  const detail = event.status === 'completed' && event.completedAt && event.escalatedAt
+      ? `${patientName} confirmed this dose after the administrator was alerted.`
+    : event.escalatedAt
+      ? `The administrator was alerted because ${patientName} did not respond.`
+    : event.status === 'completed' && event.completedAt
       ? `${patientName} confirmed this dose.`
     : event.status === 'snoozed'
       ? `${patientName} asked to be reminded again.`
       : `Waiting for ${patientName} to respond.`;
   return `
-    <article class="today-event-card ${event.status}">
+    <article class="today-event-card ${displayStatus}">
       <time>${formatWallTime(event.scheduledLocalTime)}</time>
       <div>
         <h3>${escapeHtml(event.medicationName)}</h3>
         <p>${detail} <small>${escapeHtml(event.occurrenceDate)} · ${escapeHtml(event.timeZone)}</small></p>
       </div>
-      <span class="event-status ${event.status}">${statusLabel}</span>
+      <span class="event-status ${displayStatus}">${statusLabel}</span>
     </article>
   `;
 }

@@ -36,16 +36,20 @@ export class BrowserTodayRepository implements TodayRepository {
     }
     try {
       const values = JSON.parse(stored) as Array<
-        Omit<MedicationEvent, 'scheduledTime' | 'completedAt'> & {
+        Omit<MedicationEvent, 'scheduledTime' | 'completedAt' | 'escalatedAt'> & {
           scheduledTime: string;
           completedAt: string | null;
+          escalatedAt?: string | null;
+          escalationIncidentId?: string | null;
         }
       >;
       listener(
         values.map((event) => ({
           ...event,
           scheduledTime: new Date(event.scheduledTime),
-          completedAt: event.completedAt ? new Date(event.completedAt) : null
+          completedAt: event.completedAt ? new Date(event.completedAt) : null,
+          escalatedAt: event.escalatedAt ? new Date(event.escalatedAt) : null,
+          escalationIncidentId: event.escalationIncidentId ?? null
         }))
       );
     } catch {
@@ -92,6 +96,12 @@ export class FirestoreTodayRepository implements TodayRepository {
             snoozeCount: Number(event.data().snoozeCount),
             completedAt: event.data().completedAt
               ? parseDate(event.data().completedAt)
+              : null,
+            escalatedAt: event.data().escalatedAt
+              ? parseDate(event.data().escalatedAt)
+              : null,
+            escalationIncidentId: typeof event.data().escalationIncidentId === 'string'
+              ? event.data().escalationIncidentId
               : null
           }))
         );
