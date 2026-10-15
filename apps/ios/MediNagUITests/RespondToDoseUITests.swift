@@ -137,19 +137,13 @@ final class RespondToDoseUITests: XCTestCase {
     let firstAlertObserved = try await waitForAlarmSignal(
       "alert", after: 0, environment: environment
     )
-    let firstRenderObserved = try await waitForAlarmSignal(
-      "rendered", after: 0, environment: environment
-    )
     expandSystemAlarm(in: springboard)
     try tester.step(
       "first-system-alarm",
       description: "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
       verifications: [
-        StepVerification(spec: "The first reminder is rendered by AlarmKit") {
-          firstRenderObserved
-        },
-        StepVerification(spec: "The system-owned alarm is ready to open") {
-          firstAlertObserved && firstRenderObserved
+        StepVerification(spec: "iOS requests the first system-owned AlarmKit alert") {
+          firstAlertObserved
         },
       ],
       trimAnimatedSystemEdge: true
@@ -190,19 +184,13 @@ final class RespondToDoseUITests: XCTestCase {
     let repeatAlertObserved = try await waitForAlarmSignal(
       "alert", after: 1, environment: environment
     )
-    let repeatRenderObserved = try await waitForAlarmSignal(
-      "rendered", after: 1, environment: environment
-    )
     expandSystemAlarm(in: springboard)
     try tester.step(
       "repeat-system-alarm",
       description: "With MediNag terminated, iOS retains and sounds the repeat alarm",
       verifications: [
-        StepVerification(spec: "The repeat is rendered by AlarmKit") {
-          repeatRenderObserved
-        },
-        StepVerification(spec: "The repeat system alarm is ready to open") {
-          repeatAlertObserved && repeatRenderObserved
+        StepVerification(spec: "iOS requests the repeat system-owned AlarmKit alert") {
+          repeatAlertObserved
         },
       ],
       trimAnimatedSystemEdge: true

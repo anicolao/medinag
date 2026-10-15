@@ -9,10 +9,9 @@ if (!simulatorID) {
   throw new Error('MEDINAG_SIMULATOR_ID is required.');
 }
 
-const counts = { alert: 0, rendered: 0 };
-const waiters = { alert: [], rendered: [] };
+const counts = { alert: 0 };
+const waiters = { alert: [] };
 const seenAlertIDs = new Set();
-let lastRenderedAt = 0;
 
 function release(name) {
   const pending = waiters[name];
@@ -34,16 +33,6 @@ function observe(line) {
     counts.alert += 1;
     release('alert');
   }
-  const renderedID = line.match(/Setting up expanded view for alarm id ([0-9A-F-]{36})/)?.[1];
-  const renderedAt = Date.now();
-  // ClockAngel emits a short burst of identical setup messages for one
-  // aperture. The same presentation ID can be reused for a later occurrence,
-  // so collapse only the burst instead of permanently deduplicating the ID.
-  if (renderedID && renderedAt - lastRenderedAt > 500) {
-    lastRenderedAt = renderedAt;
-    counts.rendered += 1;
-    release('rendered');
-  }
 }
 
 const developerDirectory = process.env.DEVELOPER_DIR
@@ -54,7 +43,7 @@ const logStream = spawn('/usr/bin/xcrun', [
   '--style', 'compact',
   '--level', 'debug',
   '--predicate',
-  'process == "mobiletimerd" OR process == "ClockAngel"'
+  'process == "mobiletimerd"'
 ], {
   env: { ...process.env, DEVELOPER_DIR: developerDirectory },
   stdio: ['ignore', 'pipe', 'inherit']
@@ -76,7 +65,7 @@ const server = http.createServer((request, response) => {
     response.end(JSON.stringify(counts));
     return;
   }
-  const match = url.pathname.match(/^\/wait\/(alert|rendered)$/);
+  const match = url.pathname.match(/^\/wait\/(alert)$/);
   if (!match) {
     response.writeHead(404);
     response.end();

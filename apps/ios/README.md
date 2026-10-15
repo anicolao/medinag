@@ -146,10 +146,12 @@ The test drives the same browser and phone journey, then:
 7. verifies Firestore completion and alarm cancellation.
 
 The affine E2E clock only compresses the dates supplied to the production
-AlarmKit scheduler. The test then waits on actual `mobiletimerd` and ClockAngel
-delivery events; it never manufactures an alert. Production alarms are owned by
-iOS, so they survive suspension or termination and keep sounding until the
-system action is used. No test sleeps or fixed polling delays are used.
+AlarmKit scheduler. The test then waits on an actual `mobiletimerd` alarm-alert
+request; it never manufactures an alert. It interacts with the real system
+aperture and proves that it foregrounds or cold-launches MediNag. Production
+alarms are owned by iOS, so they survive suspension or termination and keep
+sounding until the system action is used. No test sleeps or fixed polling
+delays are used.
 
 The checked-in walkthrough is
 `tests/e2e/004-ios-respond-to-dose/README.md`; CI exports XCTest attachments and

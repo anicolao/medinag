@@ -127,8 +127,7 @@
 
 **Verifications:**
 
-- [x] The first reminder is rendered by AlarmKit
-- [x] The system-owned alarm is ready to open
+- [x] iOS requests the first system-owned AlarmKit alert
 
 ## Tapping the system alarm immediately opens the medication response
 
@@ -160,8 +159,7 @@
 
 **Verifications:**
 
-- [x] The repeat is rendered by AlarmKit
-- [x] The repeat system alarm is ready to open
+- [x] iOS requests the repeat system-owned AlarmKit alert
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 

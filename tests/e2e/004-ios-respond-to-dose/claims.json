@@ -138,8 +138,7 @@
       "image": "008-first-system-alarm.png",
       "description": "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
       "claims": [
-        { "id": "ios.first-alarmkit", "text": "The first reminder is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes mobiletimerd requesting the alert and ClockAngel rendering its expanded view" },
-        { "id": "ios.first-respond", "text": "The system-owned alarm is ready to open", "environment": "springboard", "assertion": "RespondToDoseUITests expands and taps the real AlarmKit system aperture" }
+        { "id": "ios.first-alarmkit", "text": "iOS requests the first system-owned AlarmKit alert", "environment": "springboard", "assertion": "RespondToDoseUITests observes mobiletimerd requesting the alert, expands the real system aperture, and the next step proves that tapping it opens MediNag" }
       ]
     },
     {
@@ -174,8 +173,7 @@
       "image": "011-repeat-system-alarm.png",
       "description": "With MediNag terminated, iOS retains and sounds the repeat alarm",
       "claims": [
-        { "id": "ios.repeat-alarmkit", "text": "The repeat is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes a second mobiletimerd alert request and ClockAngel render after termination" },
-        { "id": "ios.repeat-respond", "text": "The repeat system alarm is ready to open", "environment": "springboard", "assertion": "RespondToDoseUITests expands and taps the second real AlarmKit system aperture" }
+        { "id": "ios.repeat-alarmkit", "text": "iOS requests the repeat system-owned AlarmKit alert", "environment": "springboard", "assertion": "RespondToDoseUITests observes a second mobiletimerd alert request after termination, expands the real system aperture, and the next step proves that tapping it cold-launches MediNag" }
       ]
     },
     {
