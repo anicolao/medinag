@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 import MediNagCore
+import UIKit
 import UserNotifications
 
 @MainActor
@@ -254,7 +255,10 @@ final class AppViewModel: ObservableObject {
   func refreshOnForeground() async {
     guard state == .ready, let userID = Auth.auth().currentUser?.uid else { return }
     do {
-      if let interaction = await liveNotifications?.claimAlarmInteraction(events: events) {
+      if let interaction = await liveNotifications?.claimAlarmInteraction(
+        events: events,
+        includeAlertingAlarm: true
+      ) {
         handleNotificationInteraction(interaction)
       }
       try await directory.updateTimeZone(
@@ -451,7 +455,10 @@ final class AppViewModel: ObservableObject {
           self?.events = events
           if
             let scheduler = self?.liveNotifications,
-            let interaction = await scheduler.claimAlarmInteraction(events: events)
+            let interaction = await scheduler.claimAlarmInteraction(
+              events: events,
+              includeAlertingAlarm: UIApplication.shared.applicationState == .active
+            )
           {
             self?.handleNotificationInteraction(interaction)
           }

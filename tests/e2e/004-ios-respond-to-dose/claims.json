@@ -12,7 +12,7 @@
   },
   "environments": {
     "connected-emulators": "Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.",
-    "ios-simulator": "Pinned iPhone 17 / iOS 26.3 Simulator using the production AlarmKit scheduler and a scaled timeline.",
+    "ios-simulator": "Pinned iPhone 17 / iOS 26.5 Simulator using the production AlarmKit scheduler and a scaled timeline.",
     "springboard": "The iOS Simulator system alarm UI with MediNag backgrounded or terminated before alarm delivery."
   },
   "preconditions": [
@@ -21,7 +21,7 @@
     "Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI",
     "Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded",
     "Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification",
-    "Device: iPhone 17 on iOS 26.3, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type",
+    "Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type",
     "Status bar: fixed at 8:00 AM with a Simulator override",
     "System UI: AlarmKit authorization and both reminders are rendered and sounded by iOS",
     "Lifecycle: the UI test backgrounds MediNag before the first alarm and terminates it before the repeat alarm",
@@ -139,16 +139,16 @@
       "description": "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
       "claims": [
         { "id": "ios.first-alarmkit", "text": "The first reminder is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes mobiletimerd requesting the alert and ClockAngel rendering its expanded view" },
-        { "id": "ios.first-respond", "text": "The system-owned Respond action is ready", "environment": "springboard", "assertion": "RespondToDoseUITests captures and taps the AlarmKit system aperture's custom action" }
+        { "id": "ios.first-respond", "text": "The system-owned alarm is ready to open", "environment": "springboard", "assertion": "RespondToDoseUITests expands and taps the real AlarmKit system aperture" }
       ]
     },
     {
       "id": "first-reminder-response",
       "surface": "ios",
       "image": "009-first-reminder-response.png",
-      "description": "The system Respond action immediately opens the medication response",
+      "description": "Tapping the system alarm immediately opens the medication response",
       "claims": [
-        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests taps the AlarmKit Respond action and waits for the reminder alert" },
+        { "id": "ios.response-visible", "text": "The response screen is visible", "environment": "ios-simulator", "assertion": "RespondToDoseUITests taps the AlarmKit system alarm and waits for the reminder alert" },
         { "id": "ios.first-sequence", "text": "The reminder sequence is correct", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the FIRST sequence" },
         { "id": "ios.occurrence-time", "text": "The first reminder uses the medication occurrence time", "environment": "connected-emulators", "assertion": "RespondToDoseUITests derives and checks the dashboard-written schedule time" },
         { "id": "ios.snooze-available", "text": "Yes, I will is available", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the snooze button" },
@@ -175,7 +175,7 @@
       "description": "With MediNag terminated, iOS retains and sounds the repeat alarm",
       "claims": [
         { "id": "ios.repeat-alarmkit", "text": "The repeat is rendered by AlarmKit", "environment": "springboard", "assertion": "RespondToDoseUITests observes a second mobiletimerd alert request and ClockAngel render after termination" },
-        { "id": "ios.repeat-respond", "text": "The repeat Respond action is ready", "environment": "springboard", "assertion": "RespondToDoseUITests captures and taps the second AlarmKit system aperture action" }
+        { "id": "ios.repeat-respond", "text": "The repeat system alarm is ready to open", "environment": "springboard", "assertion": "RespondToDoseUITests expands and taps the second real AlarmKit system aperture" }
       ]
     },
     {

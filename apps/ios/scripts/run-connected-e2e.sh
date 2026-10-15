@@ -16,14 +16,21 @@ if ! java -version >/dev/null 2>&1; then
   exit 1
 fi
 
-runtime_id="${MEDINAG_E2E_RUNTIME_ID:-$($xcrun_command simctl list runtimes \
-  | sed -nE '/^iOS / s/.* - (com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9-]+)$/\1/p' \
-  | tail -n 1)}"
-export MEDINAG_SIMULATOR_ID="$($xcrun_command simctl create \
-  'MediNag Connected E2E' \
-  com.apple.CoreSimulator.SimDeviceType.iPhone-17 \
-  "$runtime_id")"
+owns_simulator=false
+if [[ -z "${MEDINAG_SIMULATOR_ID:-}" ]]; then
+  runtime_id="${MEDINAG_E2E_RUNTIME_ID:-$($xcrun_command simctl list runtimes \
+    | sed -nE '/^iOS / s/.* - (com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9-]+)$/\1/p' \
+    | tail -n 1)}"
+  export MEDINAG_SIMULATOR_ID="$($xcrun_command simctl create \
+    'MediNag Connected E2E' \
+    com.apple.CoreSimulator.SimDeviceType.iPhone-17 \
+    "$runtime_id")"
+  owns_simulator=true
+fi
 cleanup() {
+  if [[ "$owns_simulator" != "true" ]]; then
+    return
+  fi
   if [[ "${MEDINAG_E2E_KEEP_SIMULATOR:-false}" == "true" ]]; then
     echo "Keeping MediNag E2E Simulator $MEDINAG_SIMULATOR_ID for inspection."
     return

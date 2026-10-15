@@ -140,6 +140,7 @@ final class RespondToDoseUITests: XCTestCase {
     let firstRenderObserved = try await waitForAlarmSignal(
       "rendered", after: 0, environment: environment
     )
+    expandSystemAlarm(in: springboard)
     try tester.step(
       "first-system-alarm",
       description: "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
@@ -147,21 +148,21 @@ final class RespondToDoseUITests: XCTestCase {
         StepVerification(spec: "The first reminder is rendered by AlarmKit") {
           firstRenderObserved
         },
-        StepVerification(spec: "The system-owned Respond action is ready") {
+        StepVerification(spec: "The system-owned alarm is ready to open") {
           firstAlertObserved && firstRenderObserved
         },
       ],
       trimAnimatedSystemEdge: true
     )
 
-    tapAlarmRespondAction(in: springboard)
+    tapSystemAlarm(in: springboard)
     XCTAssertTrue(
       app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
       "Responding to the AlarmKit alert did not foreground MediNag"
     )
     try tester.step(
       "first-reminder-response",
-      description: "The system Respond action immediately opens the medication response",
+      description: "Tapping the system alarm immediately opens the medication response",
       verifications: reminderVerifications(
         app,
         sequence: "FIRST",
@@ -192,6 +193,7 @@ final class RespondToDoseUITests: XCTestCase {
     let repeatRenderObserved = try await waitForAlarmSignal(
       "rendered", after: 1, environment: environment
     )
+    expandSystemAlarm(in: springboard)
     try tester.step(
       "repeat-system-alarm",
       description: "With MediNag terminated, iOS retains and sounds the repeat alarm",
@@ -199,14 +201,14 @@ final class RespondToDoseUITests: XCTestCase {
         StepVerification(spec: "The repeat is rendered by AlarmKit") {
           repeatRenderObserved
         },
-        StepVerification(spec: "The repeat Respond action is ready") {
+        StepVerification(spec: "The repeat system alarm is ready to open") {
           repeatAlertObserved && repeatRenderObserved
         },
       ],
       trimAnimatedSystemEdge: true
     )
 
-    tapAlarmRespondAction(in: springboard)
+    tapSystemAlarm(in: springboard)
     XCTAssertTrue(
       app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
       "Tapping reminder 2 did not cold-launch MediNag"
@@ -321,12 +323,20 @@ final class RespondToDoseUITests: XCTestCase {
     return (response as? HTTPURLResponse)?.statusCode == 200
   }
 
-  private func tapAlarmRespondAction(in springboard: XCUIApplication) {
-    // AlarmKit's compact system aperture is intentionally outside the normal
-    // XCTest accessibility tree. This coordinate is the centre of the custom
-    // secondary action (the pills button), not the trailing system Stop button.
+  private func expandSystemAlarm(in springboard: XCUIApplication) {
+    // AlarmKit's compact Dynamic Island is outside the XCTest accessibility
+    // tree. A long press exposes the real system alarm before the walkthrough
+    // records it, just as a person does on the device.
     springboard.coordinate(
-      withNormalizedOffset: CGVector(dx: 0.72, dy: 0.055)
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.04)
+    ).press(forDuration: 0.8)
+  }
+
+  private func tapSystemAlarm(in springboard: XCUIApplication) {
+    // Tapping the expanded system alarm opens its owning app. MediNag then
+    // resolves the alerting AlarmKit ID to the Firestore medication event.
+    springboard.coordinate(
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.07)
     ).tap()
   }
 

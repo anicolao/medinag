@@ -11,7 +11,7 @@
 ## Evidence environments
 
 - **connected-emulators:** Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.
-- **ios-simulator:** Pinned iPhone 17 / iOS 26.5 Simulator using the production notification authorization path.
+- **ios-simulator:** Pinned iPhone 17 / iOS 26.5 Simulator using the production alarm authorization path.
 - **captured-sms:** A local Twilio-compatible HTTP endpoint validates and records the production Function request; it does not claim carrier delivery.
 
 ## Deterministic preconditions
@@ -19,7 +19,7 @@
 - Backend: fresh Firebase Authentication, Firestore, and Functions emulators with production rules and function code
 - Data: Lori creates and publishes the schedule and SMS destination through visible dashboard controls
 - Identity: run-specific Google-provider identities use the Firebase Auth Emulator
-- Device: fresh iPhone 17 on iOS 26.5 with notification authorization not yet determined
+- Device: fresh iPhone 17 on iOS 26.5 with alarm authorization not yet determined
 - SMS: the production alert Function calls a captured Twilio-compatible HTTP endpoint
 
 ## Lori publishes a schedule with an SMS alert destination

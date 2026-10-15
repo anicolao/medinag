@@ -1,6 +1,5 @@
 import ActivityKit
 import AlarmKit
-import AppIntents
 import CryptoKit
 import Foundation
 import MediNagCore
@@ -92,7 +91,6 @@ enum MediNagNotification {
 
 enum MediNagAlarm {
   static let soundName = "MediNagAlarm.caf"
-  static let pendingEventKey = "medinag.alarm.pending-event-id"
 
   static func identifier(for eventID: String) -> UUID {
     let digest = SHA256.hash(data: Data(eventID.utf8))
@@ -104,21 +102,6 @@ enum MediNagAlarm {
     let part5 = String(hex.dropFirst(20).prefix(12))
     let value = "\(part1)-\(part2)-\(part3)-\(part4)-\(part5)"
     return UUID(uuidString: value)!
-  }
-
-  static func recordInteraction(eventID: String) {
-    UserDefaults.standard.set(eventID, forKey: pendingEventKey)
-  }
-
-  static func claimInteraction() -> String? {
-    let defaults = UserDefaults.standard
-    guard let eventID = defaults.string(forKey: pendingEventKey) else { return nil }
-    defaults.removeObject(forKey: pendingEventKey)
-    return eventID
-  }
-
-  static func pendingInteractionEventID() -> String? {
-    UserDefaults.standard.string(forKey: pendingEventKey)
   }
 
   static var sound: AlertConfiguration.AlertSound {
@@ -141,25 +124,6 @@ private struct MedicationAlarmMetadata: AlarmMetadata {
   let reminderTime: Date
   let reminderNumber: Int
   let timeZoneIdentifier: String
-}
-
-@available(iOS 26.0, *)
-struct OpenMedicationAlarmIntent: LiveActivityIntent {
-  static let title: LocalizedStringResource = "Respond to medication alarm"
-  static let openAppWhenRun = true
-
-  @Parameter(title: "Medication event") var eventID: String
-
-  init() {}
-
-  init(eventID: String) {
-    self.eventID = eventID
-  }
-
-  func perform() async throws -> some IntentResult {
-    MediNagAlarm.recordInteraction(eventID: eventID)
-    return .result()
-  }
 }
 
 enum NotificationDeliveryLedger {
@@ -614,17 +578,21 @@ actor LocalNotificationScheduler: NotificationScheduling {
     )
   }
 
-  func claimAlarmInteraction(events: [MedicationEvent]) -> NotificationInteraction? {
+  func claimAlarmInteraction(
+    events: [MedicationEvent],
+    includeAlertingAlarm: Bool = false
+  ) -> NotificationInteraction? {
     guard #available(iOS 26.0, *) else { return nil }
-    // The App Intent is the durable proof that the patient tapped Respond.
-    // Merely observing an alerting alarm must not reopen the response after a
-    // snooze write races with AlarmKit's transition out of the alerting state.
-    let eventID = MediNagAlarm.claimInteraction()
+    guard includeAlertingAlarm else { return nil }
+    let current = (try? AlarmManager.shared.alarms) ?? []
+    let alertingIDs = Set(current.filter { $0.state == .alerting }.map(\.id))
     guard
-      let eventID,
-      let event = events.first(where: { $0.id == eventID })
+      let event = events.first(where: {
+        alertingIDs.contains(MediNagAlarm.identifier(for: $0.id))
+      })
     else { return nil }
-    acknowledgedAlarmEventIDs.insert(eventID)
+    try? AlarmManager.shared.stop(id: MediNagAlarm.identifier(for: event.id))
+    acknowledgedAlarmEventIDs.insert(event.id)
     return NotificationInteraction(
       kind: .opened,
       eventID: event.id,
@@ -670,9 +638,9 @@ actor LocalNotificationScheduler: NotificationScheduling {
       unfinished.contains { $0.id == eventID && $0.status == .pending }
     }
     let desired = unfinished.compactMap { event -> Desired? in
-      // AlarmKit removes an alarm from its inventory as soon as its Respond
-      // intent runs, before the patient has selected a dose response in the
-      // app. That acknowledged alarm is no longer a missing registration.
+      // Opening the system alarm stops its alert before the patient has
+      // selected a dose response in the app. That acknowledged alarm is no
+      // longer a missing registration.
       guard !acknowledgedAlarmEventIDs.contains(event.id) else { return nil }
       let identifier = MediNagAlarm.identifier(for: event.id)
       let existing = currentByID[identifier]
@@ -719,8 +687,8 @@ actor LocalNotificationScheduler: NotificationScheduling {
       if case .fixed(let date) = alarm.schedule, date <= Date() { return alarm.id }
       return nil
     })
-    // A firing AlarmKit alarm can disappear from `alarms` before its App
-    // Intent runs. A successful schedule call plus a reached delivery date is
+    // A firing AlarmKit alarm can disappear from `alarms` while iOS opens its
+    // owning app. A successful schedule call plus a reached delivery date is
     // proof that iOS owned that occurrence, not evidence of a missing alarm.
     for item in desired
       where registeredAlarmEventIDs.contains(item.event.id)
@@ -770,7 +738,6 @@ actor LocalNotificationScheduler: NotificationScheduling {
         : event.scheduledTime
       let systemOwnedOccurrence = registeredAlarmEventIDs.contains(event.id)
         || acknowledgedAlarmEventIDs.contains(event.id)
-        || MediNagAlarm.pendingInteractionEventID() == event.id
       return date <= timeline.now
         && !systemOwnedOccurrence
         && currentByID[MediNagAlarm.identifier(for: event.id)]?.state != .alerting
@@ -807,18 +774,9 @@ actor LocalNotificationScheduler: NotificationScheduling {
     let title = LocalizedStringResource(
       stringLiteral: "\(reminderLabel): \(event.medicationName)"
     )
-    let respondButton = AlarmButton(
-      text: "Respond",
-      textColor: .white,
-      systemImageName: "pills.fill"
-    )
     let alert: AlarmPresentation.Alert
     if #available(iOS 26.1, *) {
-      alert = AlarmPresentation.Alert(
-        title: title,
-        secondaryButton: respondButton,
-        secondaryButtonBehavior: .custom
-      )
+      alert = AlarmPresentation.Alert(title: title)
     } else {
       alert = AlarmPresentation.Alert(
         title: title,
@@ -826,9 +784,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
           text: "Stop",
           textColor: .red,
           systemImageName: "stop.fill"
-        ),
-        secondaryButton: respondButton,
-        secondaryButtonBehavior: .custom
+        )
       )
     }
     let attributes = AlarmAttributes(
@@ -842,12 +798,9 @@ actor LocalNotificationScheduler: NotificationScheduling {
       ),
       tintColor: .red
     )
-    let intent = OpenMedicationAlarmIntent(eventID: event.id)
     let configuration = AlarmManager.AlarmConfiguration.alarm(
       schedule: .fixed(deliveryDate),
       attributes: attributes,
-      stopIntent: intent,
-      secondaryIntent: intent,
       sound: MediNagAlarm.sound
     )
     do {

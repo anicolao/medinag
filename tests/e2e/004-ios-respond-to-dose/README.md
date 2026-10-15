@@ -11,7 +11,7 @@
 ## Evidence environments
 
 - **connected-emulators:** Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.
-- **ios-simulator:** Pinned iPhone 17 / iOS 26.3 Simulator using the production AlarmKit scheduler and a scaled timeline.
+- **ios-simulator:** Pinned iPhone 17 / iOS 26.5 Simulator using the production AlarmKit scheduler and a scaled timeline.
 - **springboard:** The iOS Simulator system alarm UI with MediNag backgrounded or terminated before alarm delivery.
 
 ## Deterministic preconditions
@@ -21,7 +21,7 @@
 - Identity: run-specific Google-provider identities use the Firebase Auth Emulator; this walkthrough does not claim to exercise Google's OAuth consent UI
 - Relationship: the patient discovers and follows the administrator's published plan through the iPhone UI; no relationship document is preloaded
 - Clock: an affine E2E timeline compresses elapsed time before the production scheduler creates its calendar triggers; it never creates or delivers a notification
-- Device: iPhone 17 on iOS 26.3, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
+- Device: iPhone 17 on iOS 26.5, portrait, light appearance, increased contrast, reduced motion and transparency, medium Dynamic Type
 - Status bar: fixed at 8:00 AM with a Simulator override
 - System UI: AlarmKit authorization and both reminders are rendered and sounded by iOS
 - Lifecycle: the UI test backgrounds MediNag before the first alarm and terminates it before the repeat alarm
@@ -128,11 +128,11 @@
 **Verifications:**
 
 - [x] The first reminder is rendered by AlarmKit
-- [x] The system-owned Respond action is ready
+- [x] The system-owned alarm is ready to open
 
-## The system Respond action immediately opens the medication response
+## Tapping the system alarm immediately opens the medication response
 
-![The system Respond action immediately opens the medication response](./screenshots/ios/009-first-reminder-response.png)
+![Tapping the system alarm immediately opens the medication response](./screenshots/ios/009-first-reminder-response.png)
 
 **Verifications:**
 
@@ -161,7 +161,7 @@
 **Verifications:**
 
 - [x] The repeat is rendered by AlarmKit
-- [x] The repeat Respond action is ready
+- [x] The repeat system alarm is ready to open
 
 ## Tapping reminder 2 cold-launches the app after logical time advances
 

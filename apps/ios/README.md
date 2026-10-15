@@ -7,7 +7,7 @@ review and direct use.
 ## Pinned environment
 
 - Xcode 26.6
-- iOS 26.3 / iPhone 17 Simulator
+- iOS 26.5 / iPhone 17 Simulator
 - XcodeGen 2.46.0
 - Firebase Apple SDK 12.17.0
 - Google Sign-In iOS SDK 9.2.0
@@ -23,9 +23,10 @@ review and direct use.
 - Today, next-dose, notification-readiness, pending, snoozed, and completed states.
 - iOS 26 AlarmKit reminders that keep sounding through silent mode and Focus,
   remain owned by iOS when MediNag is suspended or terminated, and open the
-  response screen from the system Respond action.
-- A bundled 14.9-second spoken-and-bell alarm sound that AlarmKit loops until
-  the patient acts. The Simulator uses Apple's default alarm tone because the
+  response screen by tapping the system-owned alarm.
+- A bundled 14.9-second spoken-and-bell sound for the AlarmKit alert. The
+  system alarm remains alerting until the patient opens or dismisses it. The
+  Simulator uses Apple's default alarm tone because the
   iOS 26 Simulator crashes SpringBoard when loading any external AlarmKit sound;
   every physical-device and TestFlight build uses `MediNagAlarm.caf`.
 - Equal-weight `Yes, I did` and `Yes, I will` actions, available only after a
@@ -62,7 +63,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
   -project apps/ios/MediNag.xcodeproj \
   -scheme MediNag \
   -configuration E2E \
-  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.3' \
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
   -derivedDataPath apps/ios/DerivedData
 ```
 
