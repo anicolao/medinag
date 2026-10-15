@@ -51,8 +51,16 @@ trap cleanup EXIT INT TERM
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" appearance light
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" increase_contrast enabled
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" content_size medium
+status_bar_time=$(node -e '
+  const date = new Date(2026, 7, 3, 8, 0, 0);
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+  const minutes = String(Math.abs(offset) % 60).padStart(2, "0");
+  process.stdout.write(`2026-08-03T08:00:00.000${sign}${hours}:${minutes}`);
+')
 "$xcrun_command" simctl status_bar "$MEDINAG_SIMULATOR_ID" override \
-  --time '8:00' \
+  --time "$status_bar_time" \
   --batteryState charged --batteryLevel 100 \
   --wifiMode active --wifiBars 3 \
   --cellularMode active --cellularBars 4

@@ -73,8 +73,16 @@ npm run ios:generate
 "$xcrun_command" simctl ui "$device_id" appearance light
 "$xcrun_command" simctl ui "$device_id" increase_contrast enabled
 "$xcrun_command" simctl ui "$device_id" content_size medium
+status_bar_time=$(node -e '
+  const date = new Date(2026, 7, 3, 8, 0, 0);
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+  const minutes = String(Math.abs(offset) % 60).padStart(2, "0");
+  process.stdout.write(`2026-08-03T08:00:00.000${sign}${hours}:${minutes}`);
+')
 "$xcrun_command" simctl status_bar "$device_id" override \
-  --time '8:00' \
+  --time "$status_bar_time" \
   --batteryState charged \
   --batteryLevel 100 \
   --wifiMode active \
