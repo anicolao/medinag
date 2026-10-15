@@ -104,6 +104,16 @@ enum NotificationDeliveryLedger {
     }
   }
 
+  static func claim(identifier: String) -> Bool {
+    guard identifier.hasPrefix("medinag.dose.") else { return false }
+    return lock.withLock {
+      var values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+      guard values.insert(identifier).inserted else { return false }
+      UserDefaults.standard.set(Array(values), forKey: key)
+      return true
+    }
+  }
+
   static func remove(eventID: String) {
     let prefix = "medinag.dose.\(eventID)."
     lock.withLock {

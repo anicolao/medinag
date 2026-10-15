@@ -49,4 +49,13 @@ final class MedicationModelsTests: XCTestCase {
     XCTAssertEqual(interaction.reminderNumber, 2)
     XCTAssertEqual(interaction.timeZoneIdentifier, "America/Toronto")
   }
+
+  func testMedicationNotificationCanOnlyBeClaimedOnce() {
+    let eventID = "claim-\(UUID().uuidString)"
+    let identifier = "medinag.dose.\(eventID).1"
+    defer { NotificationDeliveryLedger.remove(eventID: eventID) }
+
+    XCTAssertTrue(NotificationDeliveryLedger.claim(identifier: identifier))
+    XCTAssertFalse(NotificationDeliveryLedger.claim(identifier: identifier))
+  }
 }

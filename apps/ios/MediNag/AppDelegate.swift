@@ -83,73 +83,77 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
   func applicationDidBecomeActive(_ application: UIApplication) {
     Task {
       let center = UNUserNotificationCenter.current()
-      let handledIdentifiers = NotificationDeliveryLedger.identifiers
       let delivered = await center.deliveredNotifications()
         .filter {
           $0.request.identifier.hasPrefix("medinag.dose.")
-            && !handledIdentifiers.contains($0.request.identifier)
         }
         .sorted { $0.date > $1.date }
-      guard let notification = delivered.first else { return }
-      await Self.route(
-        notification,
-        actionIdentifier: UNNotificationDefaultActionIdentifier,
-        center: center,
-        removeFromNotificationCenter: true
-      )
+      for notification in delivered {
+        let identifier = notification.request.identifier
+        guard NotificationDeliveryLedger.claim(identifier: identifier) else {
+          continue
+        }
+        guard let interaction = NotificationInteraction(
+          actionIdentifier: UNNotificationDefaultActionIdentifier,
+          userInfo: notification.request.content.userInfo
+        ) else {
+          continue
+        }
+        center.removeDeliveredNotifications(withIdentifiers: [identifier])
+        NotificationResponseRouter.shared.route(interaction)
+        break
+      }
     }
   }
 
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification
-  ) async -> UNNotificationPresentationOptions {
-    await Self.route(
-      notification,
-      actionIdentifier: UNNotificationDefaultActionIdentifier,
-      center: center,
-      removeFromNotificationCenter: false
-    )
-    return [.banner, .list, .sound]
-  }
-
-  nonisolated func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    didReceive response: UNNotificationResponse
-  ) async {
-    let identifier = response.notification.request.identifier
-    let alreadyHandled = NotificationDeliveryLedger.identifiers.contains(identifier)
-    if
-      alreadyHandled,
-      response.actionIdentifier == UNNotificationDefaultActionIdentifier
-    {
-      center.removeDeliveredNotifications(withIdentifiers: [identifier])
-      return
-    }
-    await Self.route(
-      response.notification,
-      actionIdentifier: response.actionIdentifier,
-      center: center,
-      removeFromNotificationCenter: true
-    )
-  }
-
-  private nonisolated static func route(
-    _ notification: UNNotification,
-    actionIdentifier: String,
-    center: UNUserNotificationCenter,
-    removeFromNotificationCenter: Bool
-  ) async {
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (
+      UNNotificationPresentationOptions
+    ) -> Void
+  ) {
     let identifier = notification.request.identifier
-    guard identifier.hasPrefix("medinag.dose.") else { return }
-    guard let interaction = NotificationInteraction(
-      actionIdentifier: actionIdentifier,
+    let interaction = NotificationInteraction(
+      actionIdentifier: UNNotificationDefaultActionIdentifier,
       userInfo: notification.request.content.userInfo
-    ) else { return }
-    NotificationDeliveryLedger.record(identifier: identifier)
-    if removeFromNotificationCenter {
+    )
+    // Keep the explicit callback delegate overloads. The async protocol bridge
+    // aborted inside UIKit after notification taps on iOS 18.1.
+    completionHandler([.banner, .list, .sound])
+    Task { @MainActor in
+      if
+        let interaction,
+        NotificationDeliveryLedger.claim(identifier: identifier)
+      {
+        NotificationResponseRouter.shared.route(interaction)
+      }
+    }
+  }
+
+  nonisolated func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let identifier = response.notification.request.identifier
+    let actionIdentifier = response.actionIdentifier
+    let interaction = NotificationInteraction(
+      actionIdentifier: response.actionIdentifier,
+      userInfo: response.notification.request.content.userInfo
+    )
+    // Release the system response immediately, then perform app routing on the
+    // main actor. This avoids holding UIKit's completion callback across a hop.
+    completionHandler()
+    Task { @MainActor in
+      let newlyClaimed = NotificationDeliveryLedger.claim(identifier: identifier)
+      if
+        let interaction,
+        newlyClaimed || actionIdentifier != UNNotificationDefaultActionIdentifier
+      {
+        NotificationResponseRouter.shared.route(interaction)
+      }
       center.removeDeliveredNotifications(withIdentifiers: [identifier])
     }
-    await NotificationResponseRouter.shared.route(interaction)
   }
 }
