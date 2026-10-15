@@ -125,6 +125,10 @@ schemes:
       config: Debug
     test:
       config: E2E
+      # Hosted Xcode 26 runners do not include a usable LLDB version store.
+      # UI tests do not need a debugger, and disabling it prevents Xcode from
+      # timing out before XCUIApplication can launch the app under test.
+      debugEnabled: false
       gatherCoverageData: true
       targets:
         - MediNagTests
