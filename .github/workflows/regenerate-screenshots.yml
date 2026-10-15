@@ -26,8 +26,14 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install dependencies
-        run: npm ci
+        run: npm ci && npm ci --prefix functions
 
       - name: Install Chromium
         run: npx playwright install chromium

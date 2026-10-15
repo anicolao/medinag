@@ -1,11 +1,11 @@
 import {
-  addDoc,
   collection,
   doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   type CollectionReference,
   type Firestore
@@ -34,7 +34,6 @@ function sortSchedules(schedules: MedicationSchedule[]): MedicationSchedule[] {
 export class BrowserScheduleRepository implements ScheduleRepository {
   readonly mode = 'preview' as const;
   private readonly listeners = new Set<(schedules: MedicationSchedule[]) => void>();
-  private sequence = 0;
 
   subscribe(listener: (schedules: MedicationSchedule[]) => void): () => void {
     this.listeners.add(listener);
@@ -43,9 +42,7 @@ export class BrowserScheduleRepository implements ScheduleRepository {
   }
 
   async create(input: ScheduleInput): Promise<void> {
-    const id = window.__MEDINAG_E2E__
-      ? `e2e-schedule-${this.sequence++}`
-      : `schedule-${crypto.randomUUID()}`;
+    const id = `schedule-${crypto.randomUUID()}`;
     this.write([...this.read(), { id, ...input }]);
   }
 
@@ -91,7 +88,10 @@ export class FirestoreScheduleRepository implements ScheduleRepository {
   readonly mode = 'firestore' as const;
   private readonly schedules: CollectionReference;
 
-  constructor(database: Firestore, path: string[]) {
+  constructor(
+    private readonly database: Firestore,
+    path: string[]
+  ) {
     this.schedules = collection(database, path.join('/'));
   }
 
@@ -117,7 +117,8 @@ export class FirestoreScheduleRepository implements ScheduleRepository {
   }
 
   async create(input: ScheduleInput): Promise<void> {
-    await addDoc(this.schedules, {
+    const schedule = doc(this.schedules);
+    await setDoc(schedule, {
       ...input,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
