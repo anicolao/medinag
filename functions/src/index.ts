@@ -273,7 +273,7 @@ export const extendOccurrenceHorizons = onSchedule(
 );
 
 export const checkUnconfirmedEvents = onSchedule(
-  { schedule: 'every 5 minutes', timeZone: 'UTC' },
+  { schedule: 'every 1 minutes', timeZone: 'UTC' },
   async () => {
     const now = new Date();
     const administrators = await database.collection('administrators')

@@ -125,7 +125,8 @@ To ensure Steve cannot ignore the notification:
 - **Function**: Queries active records in `schedules` and creates corresponding `medication_events` documents for the current day with `status = "pending"`.
 
 ### 4.2 Escalation Watchdog (`checkUnconfirmedEvents`)
-- **Trigger**: Cloud Scheduler (Runs every 5 minutes).
+- **Trigger**: Cloud Scheduler (Runs every minute, so a configured deadline is
+  not silently extended by a five-minute polling window).
 - **Function**:
   1. Fetches `medication_events` where `status` is `pending` or `snoozed`.
   2. Checks if `Now > scheduledTime + escalationDeadlineMinutes`.
