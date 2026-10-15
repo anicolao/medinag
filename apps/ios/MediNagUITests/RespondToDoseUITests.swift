@@ -106,8 +106,8 @@ final class RespondToDoseUITests: XCTestCase {
       description: "MediNag is ready while iOS owns the scheduled alarm",
       verifications: [
         .labelContains(
-          app.staticTexts["notification-readiness"],
-          "Reminders are ready",
+          pendingReminderCountElement(in: app),
+          "6 of 6",
           "Alarm permission and real scheduled AlarmKit alarms are confirmed"
         ),
         .labelContains(
@@ -178,8 +178,8 @@ final class RespondToDoseUITests: XCTestCase {
         ),
         .notExists(app.otherElements["dose-reminder-alert"], "The response screen is dismissed"),
         .labelContains(
-          app.staticTexts["notification-readiness"],
-          "Reminders are ready",
+          pendingReminderCountElement(in: app),
+          "6 of 6",
           "iOS confirms the repeat alarm registration"
         ),
       ],
@@ -268,6 +268,12 @@ final class RespondToDoseUITests: XCTestCase {
         "event-",
         "-status"
       )
+    ).firstMatch
+  }
+
+  private func pendingReminderCountElement(in app: XCUIApplication) -> XCUIElement {
+    app.descendants(matching: .any).matching(
+      identifier: "pending-reminder-count"
     ).firstMatch
   }
 

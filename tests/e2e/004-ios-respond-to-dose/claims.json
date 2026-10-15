@@ -117,7 +117,7 @@
       "image": "006-waiting-for-first-reminder.png",
       "description": "MediNag is ready while iOS owns the scheduled alarm",
       "claims": [
-        { "id": "ios.pending-alarms", "text": "Alarm permission and real scheduled AlarmKit alarms are confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production readiness state" },
+        { "id": "ios.pending-alarms", "text": "Alarm permission and real scheduled AlarmKit alarms are confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production scheduler's confirmed pending count" },
         { "id": "ios.event-visible", "text": "The Firestore event remains visible while the app waits", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the medication label" },
         { "id": "ios.no-early-snooze", "text": "No response is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
         { "id": "ios.no-early-completion", "text": "No completion is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
@@ -165,7 +165,7 @@
         { "id": "ios.repeat-interval", "text": "The configured repeat interval is confirmed", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the administrator-configured interval" },
         { "id": "ios.snoozed-snapshot", "text": "The Firestore listener receives the snoozed state", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the event status" },
         { "id": "ios.response-dismissed", "text": "The response screen is dismissed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert to disappear" },
-        { "id": "ios.repeat-registered", "text": "iOS confirms the repeat alarm registration", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks notification-readiness after the Firestore snooze write" }
+        { "id": "ios.repeat-registered", "text": "iOS confirms the repeat alarm registration", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the production scheduler's confirmed pending count after the Firestore snooze write" }
       ]
     },
     {
