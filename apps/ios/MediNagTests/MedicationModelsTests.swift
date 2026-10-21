@@ -86,4 +86,34 @@ final class MedicationModelsTests: XCTestCase {
     AlarmRegistrationLedger.remove(eventID: eventID)
     XCTAssertFalse(AlarmRegistrationLedger.eventIDs.contains(eventID))
   }
+
+  func testAlarmResponseDetailsCanBeRestoredWithoutFirestore() throws {
+    let eventID = "alarm-response-\(UUID().uuidString)"
+    defer { AlarmRegistrationLedger.remove(eventID: eventID) }
+    let original = NotificationInteraction(
+      kind: .opened,
+      eventID: eventID,
+      medicationName: "Persisted medicine",
+      reminderTime: Date(timeIntervalSince1970: 1_800_000_000),
+      reminderNumber: 2,
+      timeZoneIdentifier: "America/Toronto"
+    )
+    try AlarmRegistrationLedger.record(interaction: original)
+    XCTAssertNil(AlarmRegistrationLedger.interaction(for: [UUID()]))
+    let restored = try XCTUnwrap(AlarmRegistrationLedger.interaction(
+      for: [MediNagAlarm.identifier(for: eventID)]
+    ))
+    XCTAssertEqual(restored.eventID, original.eventID)
+    XCTAssertEqual(restored.medicationName, original.medicationName)
+    XCTAssertEqual(restored.reminderTime, original.reminderTime)
+    XCTAssertEqual(restored.reminderNumber, 2)
+    XCTAssertEqual(restored.timeZoneIdentifier, original.timeZoneIdentifier)
+    guard case .opened = restored.kind else {
+      return XCTFail("Restoring an alarm must open the response, not record an answer.")
+    }
+    AlarmRegistrationLedger.remove(eventID: eventID)
+    XCTAssertNil(AlarmRegistrationLedger.interaction(
+      for: [MediNagAlarm.identifier(for: eventID)]
+    ))
+  }
 }

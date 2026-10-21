@@ -179,12 +179,13 @@ export function mountSchedulesPage(
   onReady: () => void
 ): () => void {
   let schedules: MedicationSchedule[] = [];
+  let schedulesReceived = false;
   let profile: AdministratorProfile | undefined;
   let notice = account.notice;
   let ready = false;
 
   const render = (): void => {
-    if (!profile) return;
+    if (!profile || !schedulesReceived) return;
     root.innerHTML = pageTemplate(schedules, profile, notice, account);
     bindSignOut(root, account);
     const dialog = root.querySelector<HTMLDialogElement>('.schedule-dialog');
@@ -339,9 +340,11 @@ export function mountSchedulesPage(
   const unsubscribeSchedules = repository.subscribe(
     (nextSchedules) => {
       schedules = nextSchedules;
+      schedulesReceived = true;
       render();
     },
     (error) => {
+      schedulesReceived = true;
       notice = `Unable to load schedules: ${error.message}`;
       render();
     }

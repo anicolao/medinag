@@ -104,6 +104,7 @@ final class AppViewModel: ObservableObject {
     installNotificationRouter()
     Task {
       await captureAlertingAlarmsAtActivation()
+      await claimAlarmInteractionFromActivation(events: [])
       await boot()
     }
   }
@@ -673,13 +674,13 @@ final class AppViewModel: ObservableObject {
   private func claimAlarmInteractionFromActivation(
     events: [MedicationEvent]
   ) async {
-    guard !alarmIDsPresentAtActivation.isEmpty, !events.isEmpty else { return }
+    guard !alarmIDsPresentAtActivation.isEmpty else { return }
     let candidateIDs = alarmIDsPresentAtActivation
-    alarmIDsPresentAtActivation.removeAll()
     if let interaction = await liveNotifications?.claimAlarmInteraction(
       events: events,
       candidateAlarmIDs: candidateIDs
     ) {
+      alarmIDsPresentAtActivation.removeAll()
       handleNotificationInteraction(interaction)
     }
   }

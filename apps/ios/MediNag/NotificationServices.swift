@@ -167,6 +167,7 @@ enum NotificationDeliveryLedger {
 
 enum AlarmRegistrationLedger {
   private static let key = "medinag.registered-alarm-event-identifiers"
+  private static let interactionsKey = "medinag.registered-alarm-interactions"
   private static let lock = NSLock()
 
   static var eventIDs: Set<String> {
@@ -183,11 +184,40 @@ enum AlarmRegistrationLedger {
     }
   }
 
+  static func record(interaction: NotificationInteraction) throws {
+    let data = try JSONEncoder().encode(interaction)
+    lock.withLock {
+      var values = UserDefaults.standard.dictionary(forKey: interactionsKey) ?? [:]
+      values[interaction.eventID] = data
+      UserDefaults.standard.set(values, forKey: interactionsKey)
+    }
+    record(eventID: interaction.eventID)
+  }
+
+  static func interaction(for alarmIDs: Set<UUID>) -> NotificationInteraction? {
+    lock.withLock {
+      let values = UserDefaults.standard.dictionary(forKey: interactionsKey) ?? [:]
+      for eventID in values.keys.sorted()
+        where alarmIDs.contains(MediNagAlarm.identifier(for: eventID))
+      {
+        if let data = values[eventID] as? Data,
+           let interaction = try? JSONDecoder().decode(NotificationInteraction.self, from: data)
+        {
+          return interaction
+        }
+      }
+      return nil
+    }
+  }
+
   static func remove(eventID: String) {
     lock.withLock {
       var values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
       values.remove(eventID)
       UserDefaults.standard.set(Array(values), forKey: key)
+      var interactions = UserDefaults.standard.dictionary(forKey: interactionsKey) ?? [:]
+      interactions.removeValue(forKey: eventID)
+      UserDefaults.standard.set(interactions, forKey: interactionsKey)
     }
   }
 }
@@ -279,12 +309,12 @@ struct NotificationReconciliation: Equatable, Sendable {
   let missedEventIDs: [String]
 }
 
-enum NotificationInteractionKind: Sendable {
+enum NotificationInteractionKind: Codable, Sendable {
   case opened
   case response(DoseResponse)
 }
 
-struct NotificationInteraction: Sendable {
+struct NotificationInteraction: Codable, Sendable {
   let kind: NotificationInteractionKind
   let eventID: String
   let medicationName: String
@@ -618,27 +648,26 @@ actor LocalNotificationScheduler: NotificationScheduling {
     candidateAlarmIDs: Set<UUID>
   ) -> NotificationInteraction? {
     guard #available(iOS 26.0, *) else { return nil }
-    let current = (try? AlarmManager.shared.alarms) ?? []
-    let alertingIDs = Set(current.filter { $0.state == .alerting }.map(\.id))
-      .intersection(candidateAlarmIDs)
-    guard
-      let event = events.first(where: {
-        alertingIDs.contains(MediNagAlarm.identifier(for: $0.id))
-      })
+    // These IDs were read from AlarmKit at activation. Its inventory can change
+    // while iOS opens the app; keep the captured evidence for this interaction.
+    let liveInteraction = events.first(where: {
+      candidateAlarmIDs.contains(MediNagAlarm.identifier(for: $0.id))
+    }).map { event in
+      NotificationInteraction(
+        kind: .opened,
+        eventID: event.id,
+        medicationName: event.medicationName,
+        reminderTime: event.scheduledTime,
+        reminderNumber: event.snoozeCount + 1,
+        timeZoneIdentifier: event.timeZone
+      )
+    }
+    guard let interaction = liveInteraction
+      ?? AlarmRegistrationLedger.interaction(for: candidateAlarmIDs)
     else { return nil }
-    try? AlarmManager.shared.stop(id: MediNagAlarm.identifier(for: event.id))
-    acknowledgedAlarmEventIDs.insert(event.id)
-    return NotificationInteraction(
-      kind: .opened,
-      eventID: event.id,
-      medicationName: event.medicationName,
-      // Every reminder belongs to the original medication occurrence. The
-      // snooze expiry controls when iOS alerts again, not the dose time shown
-      // to the patient on the response screen.
-      reminderTime: event.scheduledTime,
-      reminderNumber: event.snoozeCount + 1,
-      timeZoneIdentifier: event.timeZone
-    )
+    try? AlarmManager.shared.stop(id: MediNagAlarm.identifier(for: interaction.eventID))
+    acknowledgedAlarmEventIDs.insert(interaction.eventID)
+    return interaction
   }
 
   @available(iOS 26.0, *)
@@ -675,7 +704,14 @@ actor LocalNotificationScheduler: NotificationScheduling {
       where currentByID[MediNagAlarm.identifier(for: event.id)] != nil
     {
       registeredAlarmEventIDs.insert(event.id)
-      AlarmRegistrationLedger.record(eventID: event.id)
+      try AlarmRegistrationLedger.record(interaction: NotificationInteraction(
+        kind: .opened,
+        eventID: event.id,
+        medicationName: event.medicationName,
+        reminderTime: event.scheduledTime,
+        reminderNumber: event.snoozeCount + 1,
+        timeZoneIdentifier: event.timeZone
+      ))
     }
     acknowledgedAlarmEventIDs = acknowledgedAlarmEventIDs.filter { eventID in
       unfinished.contains { $0.id == eventID && $0.status == .pending }
@@ -864,7 +900,14 @@ actor LocalNotificationScheduler: NotificationScheduling {
       )
     }
     registeredAlarmEventIDs.insert(event.id)
-    AlarmRegistrationLedger.record(eventID: event.id)
+    try AlarmRegistrationLedger.record(interaction: NotificationInteraction(
+      kind: .opened,
+      eventID: event.id,
+      medicationName: event.medicationName,
+      reminderTime: event.scheduledTime,
+      reminderNumber: reminderNumber,
+      timeZoneIdentifier: event.timeZone
+    ))
   }
 
   private func addNotification(
