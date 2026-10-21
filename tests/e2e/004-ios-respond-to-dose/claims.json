@@ -119,8 +119,8 @@
       "claims": [
         { "id": "ios.pending-alarms", "text": "Alarm permission and real scheduled AlarmKit alarms are confirmed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the production scheduler's confirmed pending count" },
         { "id": "ios.event-visible", "text": "The Firestore event remains visible while the app waits", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the medication label" },
-        { "id": "ios.no-early-snooze", "text": "No response is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
-        { "id": "ios.no-early-completion", "text": "No completion is available before an alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
+        { "id": "ios.no-early-snooze", "text": "No response is available before opening the system alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the snooze response is absent" },
+        { "id": "ios.no-early-completion", "text": "No completion is available before opening the system alarm", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks that the completion response is absent" }
       ]
     },
     {
@@ -198,7 +198,8 @@
       "description": "Yes, I did completes the real event and cancels further reminders",
       "claims": [
         { "id": "ios.completed-snapshot", "text": "The Firestore listener receives completion", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the completed event status" },
-        { "id": "ios.requests-cancelled", "text": "The app confirms notification cancellation", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks zero pending requests for the occurrence" }
+        { "id": "ios.requests-cancelled", "text": "The app confirms notification cancellation", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks the completion confirmation after the production coordinator cancels the occurrence alarm" },
+        { "id": "ios.remaining-registered", "text": "iOS retains the other occurrences after this dose completes", "environment": "ios-simulator", "assertion": "RespondToDoseUITests checks five confirmed remaining AlarmKit registrations after completing one of the six occurrences" }
       ]
     },
     {

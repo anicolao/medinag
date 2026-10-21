@@ -155,8 +155,28 @@ delays are used.
 
 The checked-in walkthrough is
 `tests/e2e/004-ios-respond-to-dose/README.md`; CI exports XCTest attachments and
-requires every retained RGBA pixel to match its baseline. The walkthrough crops
-the compact system aperture from the backgrounding step and Apple's animated
+requires every retained RGBA pixel to match its baseline. The backgrounding step
+captures the interior of MediNag's real SpringBoard icon because the Simulator
+wallpaper varies between devices. The walkthrough crops Apple's animated
 ringing glyph plus unrelated wallpaper from expanded AlarmKit screenshots. It
 retains the real expanded alarm title and close control and never masks,
 replaces, or synthesizes system UI.
+
+Current verification gap (2026-10-21): the full connected functional story and
+seven native unit tests pass locally, but the first expanded AlarmKit screenshot
+still varies between fresh Simulators and fails exact pixel comparison. The
+zero-pixel gate remains enabled. Do not treat this branch as fully green until
+that system-rendering nondeterminism is resolved and hosted CI passes.
+
+Registration evidence is persisted after AlarmKit accepts each alarm, so an app
+restart cannot misreport an already delivered occurrence as never registered.
+The response screen opens when the patient returns to an alerting alarm; a
+Firestore update alone does not dismiss a foreground system alarm.
+
+Device verification remains required for the custom sound: schedule a dose a
+few minutes ahead, allow alarms, terminate MediNag, enable silent mode and Focus,
+and let the alarm fire. Confirm the spoken-and-bell sound, tap the system alarm,
+choose `Yes, I will`, terminate again, and confirm the configured repeat. Complete
+the dose and verify completion on the dashboard. iOS always permits system
+dismissal; dismissing an alarm is not a medication completion, and backend
+overdue/SMS escalation still applies.

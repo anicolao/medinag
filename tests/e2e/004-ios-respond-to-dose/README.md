@@ -110,8 +110,8 @@
 
 - [x] Alarm permission and real scheduled AlarmKit alarms are confirmed
 - [x] The Firestore event remains visible while the app waits
-- [x] No response is available before an alarm
-- [x] No completion is available before an alarm
+- [x] No response is available before opening the system alarm
+- [x] No completion is available before opening the system alarm
 
 ## MediNag is backgrounded while the alarm remains owned by iOS
 
@@ -183,6 +183,7 @@
 
 - [x] The Firestore listener receives completion
 - [x] The app confirms notification cancellation
+- [x] iOS retains the other occurrences after this dose completes
 
 ## Lori sees Steve's completion and healthy iPhone coverage
 

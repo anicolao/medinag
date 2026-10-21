@@ -3,7 +3,7 @@ import UIKit
 
 enum WalkthroughScreenshotCrop {
   case none
-  case belowSystemAlarm
+  case systemAppIconInterior
   case systemAlarmWithoutAnimatedGlyph
 }
 
@@ -177,14 +177,15 @@ final class TestStepHelper {
     switch crop {
     case .none:
       return nil
-    case .belowSystemAlarm:
-      // The compact AlarmKit aperture is continuously animated. Exclude the
-      // system-owned strip and compare every Home Screen pixel below it.
-      let top = 400
-      guard image.height > top else { return nil }
-      return image.cropping(
-        to: CGRect(x: 0, y: top, width: image.width, height: image.height - top)
-      )
+    case .systemAppIconInterior:
+      // The Simulator renders a subtly nondeterministic Home Screen wallpaper.
+      // Preserve only pixels inside MediNag's system-rendered icon, while the
+      // step assertion independently proves that this icon is on SpringBoard.
+      let rect = CGRect(x: 950, y: 580, width: 150, height: 150)
+      guard image.width >= Int(rect.maxX), image.height >= Int(rect.maxY) else {
+        return nil
+      }
+      return image.cropping(to: rect)
     case .systemAlarmWithoutAnimatedGlyph:
       // Preserve the real expanded AlarmKit title and system close control,
       // but exclude Apple's animated clock-and-bells glyph and unrelated Home

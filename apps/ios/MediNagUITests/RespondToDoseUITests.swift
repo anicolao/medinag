@@ -115,8 +115,14 @@ final class RespondToDoseUITests: XCTestCase {
           environment.medicationName,
           "The Firestore event remains visible while the app waits"
         ),
-        .notExists(app.buttons["yes-i-will"], "No response is available before an alarm"),
-        .notExists(app.buttons["yes-i-did"], "No completion is available before an alarm"),
+        .notExists(
+          app.buttons["reminder-yes-i-will"],
+          "No response is available before opening the system alarm"
+        ),
+        .notExists(
+          app.buttons["reminder-yes-i-did"],
+          "No completion is available before opening the system alarm"
+        ),
       ],
       screenshotElement: app.otherElements["reminder-diagnostics"]
     )
@@ -128,7 +134,7 @@ final class RespondToDoseUITests: XCTestCase {
       verifications: [
         .exists(springboard.icons["MediNag"], "The Home Screen confirms MediNag is backgrounded"),
       ],
-      screenshotCrop: .belowSystemAlarm
+      screenshotCrop: .systemAppIconInterior
     )
     let firstAlertObserved = try await waitForAlarmSignal(
       "alert", after: 0, environment: environment
@@ -231,6 +237,11 @@ final class RespondToDoseUITests: XCTestCase {
           app.staticTexts["action-notice"],
           "cancelled",
           "The app confirms notification cancellation"
+        ),
+        .labelContains(
+          pendingReminderCountElement(in: app),
+          "5 of 5",
+          "iOS retains the other occurrences after this dose completes"
         ),
       ]
     )
