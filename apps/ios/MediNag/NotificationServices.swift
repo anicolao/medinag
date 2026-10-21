@@ -810,7 +810,9 @@ actor LocalNotificationScheduler: NotificationScheduling {
     at logicalDate: Date,
     reminderNumber: Int
   ) async throws {
-    guard logicalDate > timeline.now else { return }
+    guard logicalDate > timeline.now else {
+      throw NotificationSchedulingError.deliveryDeadlinePassed
+    }
     let deliveryDate = timeline.deliveryDate(for: logicalDate)
     guard deliveryDate > Date() else {
       throw NotificationSchedulingError.deliveryDeadlinePassed
