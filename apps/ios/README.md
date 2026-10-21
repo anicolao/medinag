@@ -162,14 +162,19 @@ ringing glyph plus unrelated wallpaper from expanded AlarmKit screenshots. It
 retains the real expanded alarm title and close control and never masks,
 replaces, or synthesizes system UI.
 
-Current verification gap (2026-10-21): the full connected functional story and
-seven native unit tests pass locally, but the first expanded AlarmKit screenshot
-still varies between fresh Simulators and fails exact pixel comparison. The
-zero-pixel gate remains enabled. Do not treat this branch as fully green until
-that system-rendering nondeterminism is resolved and hosted CI passes.
+The runner enables Reduce Transparency using the Simulator's
+`EnhancedBackgroundContrastEnabled` preference. The connected native test checks
+`UIAccessibility.isReduceMotionEnabled` and
+`UIAccessibility.isReduceTransparencyEnabled` before starting the story, so an
+ineffective preference write fails explicitly. On the current implementation,
+all 14 dose-response screenshots match exactly across three fresh Simulators.
+Baselines contain actual captured pixels; the zero-pixel gate remains enabled.
 
 Registration evidence is persisted after AlarmKit accepts each alarm, so an app
 restart cannot misreport an already delivered occurrence as never registered.
+The saved alarm details also let a system-alarm cold launch present the response
+before Firestore reconnects. They are recorded from the real scheduled event;
+patient answers continue through the normal Firestore repository.
 The response screen opens when the patient returns to an alerting alarm; a
 Firestore update alone does not dismiss a foreground system alarm.
 

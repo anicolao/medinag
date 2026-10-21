@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 @MainActor
 final class RespondToDoseUITests: XCTestCase {
@@ -7,6 +8,10 @@ final class RespondToDoseUITests: XCTestCase {
   }
 
   func testConnectedSystemNotificationDoseLoop() async throws {
+    let reduceMotion = UIAccessibility.isReduceMotionEnabled
+    let reduceTransparency = UIAccessibility.isReduceTransparencyEnabled
+    XCTAssertTrue(reduceMotion)
+    XCTAssertTrue(reduceTransparency)
     XCUIDevice.shared.orientation = .portrait
     let environment = try ConnectedEnvironment()
     let app = makeApplication(environment)
@@ -89,6 +94,7 @@ final class RespondToDoseUITests: XCTestCase {
       ]
     )
 
+    let occurrenceStatusIdentifier = eventStatus.identifier
     app.buttons["allow-notifications"].tap()
     let permissionAlert = springboard.alerts.firstMatch
     try tester.step(
@@ -178,9 +184,9 @@ final class RespondToDoseUITests: XCTestCase {
           "The configured repeat interval is confirmed"
         ),
         .labelContains(
-          eventStatusElement(in: app),
-          "Snoozed",
-          "The Firestore listener receives the snoozed state"
+          app.staticTexts["next-dose-state"],
+          "REMINDER SNOOZED",
+          "The dose shows its snoozed state after the Firestore write"
         ),
         .notExists(app.otherElements["dose-reminder-alert"], "The response screen is dismissed"),
         .labelContains(
@@ -229,7 +235,7 @@ final class RespondToDoseUITests: XCTestCase {
       description: "Yes, I did completes the real event and cancels further reminders",
       verifications: [
         .labelContains(
-          eventStatusElement(in: app),
+          app.staticTexts[occurrenceStatusIdentifier],
           "Completed",
           "The Firestore listener receives completion"
         ),

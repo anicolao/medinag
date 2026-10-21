@@ -43,8 +43,10 @@ trap cleanup EXIT INT TERM
 "$xcrun_command" simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
 "$xcrun_command" simctl spawn "$MEDINAG_SIMULATOR_ID" defaults write \
   com.apple.Accessibility ReduceMotionEnabled -bool true
+# This is the Simulator preference behind UIAccessibility's Reduce Transparency
+# value. The similarly named MDM key ReduceTransparencyEnabled has no effect here.
 "$xcrun_command" simctl spawn "$MEDINAG_SIMULATOR_ID" defaults write \
-  com.apple.Accessibility ReduceTransparencyEnabled -bool true
+  com.apple.Accessibility EnhancedBackgroundContrastEnabled -bool true
 "$xcrun_command" simctl shutdown "$MEDINAG_SIMULATOR_ID"
 "$xcrun_command" simctl boot "$MEDINAG_SIMULATOR_ID"
 "$xcrun_command" simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b

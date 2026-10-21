@@ -13,6 +13,7 @@ test('US-005: Lori configures an alerting medication plan', async ({ page }, tes
   const tester = new TestStepHelper(page, testInfo, 'web');
 
   await page.goto('/#/schedules', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   await page.getByRole('button', { name: 'Add dose' }).click();
   await page.getByLabel('Medication label').fill(medicationName);
   await page.getByLabel('Dose time').fill(scheduledTime);

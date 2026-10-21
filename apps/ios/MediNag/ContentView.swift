@@ -634,6 +634,7 @@ private struct NextDoseCard: View {
             .font(.caption2.bold())
             .tracking(1.4)
             .foregroundStyle(MediNagColor.teal)
+            .accessibilityIdentifier("next-dose-state")
           Text(MediNagDateFormatting.wallTime(event.scheduledLocalTime))
             .font(.system(size: 42, weight: .bold, design: .rounded))
             .foregroundStyle(MediNagColor.ink)

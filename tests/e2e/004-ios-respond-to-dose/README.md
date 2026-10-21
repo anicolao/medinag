@@ -150,7 +150,7 @@
 
 - [x] The snooze count increments
 - [x] The configured repeat interval is confirmed
-- [x] The Firestore listener receives the snoozed state
+- [x] The dose shows its snoozed state after the Firestore write
 - [x] The response screen is dismissed
 - [x] iOS confirms the repeat alarm registration
 

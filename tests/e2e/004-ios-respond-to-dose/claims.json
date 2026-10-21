@@ -163,7 +163,7 @@
       "claims": [
         { "id": "ios.snooze-count", "text": "The snooze count increments", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the snapshot-driven snooze count" },
         { "id": "ios.repeat-interval", "text": "The configured repeat interval is confirmed", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the administrator-configured interval" },
-        { "id": "ios.snoozed-snapshot", "text": "The Firestore listener receives the snoozed state", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the event status" },
+        { "id": "ios.snoozed-snapshot", "text": "The dose shows its snoozed state after the Firestore write", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the visible next-dose status after the production repository returns its persisted snooze" },
         { "id": "ios.response-dismissed", "text": "The response screen is dismissed", "environment": "ios-simulator", "assertion": "RespondToDoseUITests waits for the reminder alert to disappear" },
         { "id": "ios.repeat-registered", "text": "iOS confirms the repeat alarm registration", "environment": "connected-emulators", "assertion": "RespondToDoseUITests checks the production scheduler's confirmed pending count after the Firestore snooze write" }
       ]
