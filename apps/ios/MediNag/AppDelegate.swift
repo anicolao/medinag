@@ -80,32 +80,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     GIDSignIn.sharedInstance.handle(url)
   }
 
-  func applicationDidBecomeActive(_ application: UIApplication) {
-    Task {
-      let center = UNUserNotificationCenter.current()
-      let delivered = await center.deliveredNotifications()
-        .filter {
-          $0.request.identifier.hasPrefix("medinag.dose.")
-        }
-        .sorted { $0.date > $1.date }
-      for notification in delivered {
-        let identifier = notification.request.identifier
-        guard NotificationDeliveryLedger.claim(identifier: identifier) else {
-          continue
-        }
-        guard let interaction = NotificationInteraction(
-          actionIdentifier: UNNotificationDefaultActionIdentifier,
-          userInfo: notification.request.content.userInfo
-        ) else {
-          continue
-        }
-        center.removeDeliveredNotifications(withIdentifiers: [identifier])
-        NotificationResponseRouter.shared.route(interaction)
-        break
-      }
-    }
-  }
-
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
@@ -113,22 +87,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       UNNotificationPresentationOptions
     ) -> Void
   ) {
-    let identifier = notification.request.identifier
-    let interaction = NotificationInteraction(
-      actionIdentifier: UNNotificationDefaultActionIdentifier,
-      userInfo: notification.request.content.userInfo
-    )
     // Keep the explicit callback delegate overloads. The async protocol bridge
     // aborted inside UIKit after notification taps on iOS 18.1.
     completionHandler([.banner, .list, .sound])
-    Task { @MainActor in
-      if
-        let interaction,
-        NotificationDeliveryLedger.claim(identifier: identifier)
-      {
-        NotificationResponseRouter.shared.route(interaction)
-      }
-    }
   }
 
   nonisolated func userNotificationCenter(

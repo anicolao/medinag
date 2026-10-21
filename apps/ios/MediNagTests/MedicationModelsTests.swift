@@ -75,4 +75,15 @@ final class MedicationModelsTests: XCTestCase {
     XCTAssertTrue(NotificationDeliveryLedger.claim(identifier: identifier))
     XCTAssertFalse(NotificationDeliveryLedger.claim(identifier: identifier))
   }
+
+  func testAlarmRegistrationSurvivesSchedulerRecreation() {
+    let eventID = "alarm-registration-\(UUID().uuidString)"
+    defer { AlarmRegistrationLedger.remove(eventID: eventID) }
+
+    XCTAssertFalse(AlarmRegistrationLedger.eventIDs.contains(eventID))
+    AlarmRegistrationLedger.record(eventID: eventID)
+    XCTAssertTrue(AlarmRegistrationLedger.eventIDs.contains(eventID))
+    AlarmRegistrationLedger.remove(eventID: eventID)
+    XCTAssertFalse(AlarmRegistrationLedger.eventIDs.contains(eventID))
+  }
 }

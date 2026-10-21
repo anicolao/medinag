@@ -165,6 +165,33 @@ enum NotificationDeliveryLedger {
   }
 }
 
+enum AlarmRegistrationLedger {
+  private static let key = "medinag.registered-alarm-event-identifiers"
+  private static let lock = NSLock()
+
+  static var eventIDs: Set<String> {
+    lock.withLock {
+      Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+    }
+  }
+
+  static func record(eventID: String) {
+    lock.withLock {
+      var values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+      values.insert(eventID)
+      UserDefaults.standard.set(Array(values), forKey: key)
+    }
+  }
+
+  static func remove(eventID: String) {
+    lock.withLock {
+      var values = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+      values.remove(eventID)
+      UserDefaults.standard.set(Array(values), forKey: key)
+    }
+  }
+}
+
 enum MediNagDateFormatting {
   static func wallTime(_ value: String) -> String {
     let parts = value.split(separator: ":").compactMap { Int($0) }
@@ -372,7 +399,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
   private let center: UNUserNotificationCenter
   private let timeline: any NotificationTimeline
   private var acknowledgedAlarmEventIDs: Set<String> = []
-  private var registeredAlarmEventIDs: Set<String> = []
+  private var registeredAlarmEventIDs = AlarmRegistrationLedger.eventIDs
 
   init(
     center: UNUserNotificationCenter = .current(),
@@ -448,6 +475,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
     if #available(iOS 26.0, *) {
       acknowledgedAlarmEventIDs.remove(event.id)
       registeredAlarmEventIDs.remove(event.id)
+      AlarmRegistrationLedger.remove(eventID: event.id)
       try? AlarmManager.shared.cancel(id: MediNagAlarm.identifier(for: event.id))
       try await scheduleAlarm(
         for: event,
@@ -466,6 +494,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
   func cancel(eventID: String) async {
     acknowledgedAlarmEventIDs.remove(eventID)
     registeredAlarmEventIDs.remove(eventID)
+    AlarmRegistrationLedger.remove(eventID: eventID)
     if #available(iOS 26.0, *) {
       try? AlarmManager.shared.cancel(id: MediNagAlarm.identifier(for: eventID))
     }
@@ -578,14 +607,20 @@ actor LocalNotificationScheduler: NotificationScheduling {
     )
   }
 
+  func alertingAlarmIDs() -> Set<UUID> {
+    guard #available(iOS 26.0, *) else { return [] }
+    let current = (try? AlarmManager.shared.alarms) ?? []
+    return Set(current.filter { $0.state == .alerting }.map(\.id))
+  }
+
   func claimAlarmInteraction(
     events: [MedicationEvent],
-    includeAlertingAlarm: Bool = false
+    candidateAlarmIDs: Set<UUID>
   ) -> NotificationInteraction? {
     guard #available(iOS 26.0, *) else { return nil }
-    guard includeAlertingAlarm else { return nil }
     let current = (try? AlarmManager.shared.alarms) ?? []
     let alertingIDs = Set(current.filter { $0.state == .alerting }.map(\.id))
+      .intersection(candidateAlarmIDs)
     guard
       let event = events.first(where: {
         alertingIDs.contains(MediNagAlarm.identifier(for: $0.id))
@@ -627,13 +662,20 @@ actor LocalNotificationScheduler: NotificationScheduling {
     }
     let currentByID = Dictionary(uniqueKeysWithValues: current.map { ($0.id, $0) })
     let unfinished = events.filter { $0.status != .completed }
+    let removedRegisteredEventIDs = registeredAlarmEventIDs.filter { eventID in
+      !unfinished.contains { $0.id == eventID }
+    }
     registeredAlarmEventIDs = registeredAlarmEventIDs.filter { eventID in
       unfinished.contains { $0.id == eventID }
+    }
+    for eventID in removedRegisteredEventIDs {
+      AlarmRegistrationLedger.remove(eventID: eventID)
     }
     for event in unfinished
       where currentByID[MediNagAlarm.identifier(for: event.id)] != nil
     {
       registeredAlarmEventIDs.insert(event.id)
+      AlarmRegistrationLedger.record(eventID: event.id)
     }
     acknowledgedAlarmEventIDs = acknowledgedAlarmEventIDs.filter { eventID in
       unfinished.contains { $0.id == eventID && $0.status == .pending }
@@ -721,6 +763,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
       } ?? false
       if !unchanged {
         registeredAlarmEventIDs.remove(item.event.id)
+        AlarmRegistrationLedger.remove(eventID: item.event.id)
         try? AlarmManager.shared.cancel(id: identifier)
         try await scheduleAlarm(
           for: item.event,
@@ -819,6 +862,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
       )
     }
     registeredAlarmEventIDs.insert(event.id)
+    AlarmRegistrationLedger.record(eventID: event.id)
   }
 
   private func addNotification(

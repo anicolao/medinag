@@ -3,7 +3,6 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 import MediNagCore
-import UIKit
 import UserNotifications
 
 @MainActor
@@ -68,6 +67,14 @@ final class AppViewModel: ObservableObject {
   private let notifications: any NotificationScheduling
   private let liveNotifications: LocalNotificationScheduler?
   private var pendingNotificationInteraction: NotificationInteraction?
+  private var alarmIDsPresentAtActivation: Set<UUID> = []
+  private var activeReconciliation: (
+    id: UUID,
+    events: [MedicationEvent],
+    snoozeMinutes: Int,
+    maximumReminderCount: Int,
+    task: Task<NotificationReconciliation, Error>
+  )?
   private var authenticationDestination: AuthenticationDestination?
   private var authenticationContinuationRequested = false
 
@@ -95,7 +102,10 @@ final class AppViewModel: ObservableObject {
       healthReporter: healthReporter
     )
     installNotificationRouter()
-    Task { await boot() }
+    Task {
+      await captureAlertingAlarmsAtActivation()
+      await boot()
+    }
   }
 
   var nextEvent: MedicationEvent? {
@@ -253,14 +263,14 @@ final class AppViewModel: ObservableObject {
   }
 
   func refreshOnForeground() async {
+    // Capture only alarms that were already alerting when this activation
+    // occurred. An alarm beginning while MediNag remains foregrounded must not
+    // open the response screen until the patient taps the system alarm (or
+    // otherwise reopens the app).
+    await captureAlertingAlarmsAtActivation()
     guard state == .ready, let userID = Auth.auth().currentUser?.uid else { return }
     do {
-      if let interaction = await liveNotifications?.claimAlarmInteraction(
-        events: events,
-        includeAlertingAlarm: true
-      ) {
-        handleNotificationInteraction(interaction)
-      }
+      await claimAlarmInteractionFromActivation(events: events)
       try await directory.updateTimeZone(
         userID: userID,
         timeZone: patientTimeZone.identifier
@@ -310,6 +320,7 @@ final class AppViewModel: ObservableObject {
           ? "Okay. We will remind you again in \(snoozeMinutes) minutes."
           : "Response recorded. The configured reminder limit has been reached."
       } else {
+        try await reconcileNotifications()
         actionNotice = "Dose complete. Further reminders are cancelled."
       }
     } catch {
@@ -470,15 +481,7 @@ final class AppViewModel: ObservableObject {
         switch result {
         case .success(let events):
           self?.events = events
-          if
-            let scheduler = self?.liveNotifications,
-            let interaction = await scheduler.claimAlarmInteraction(
-              events: events,
-              includeAlertingAlarm: UIApplication.shared.applicationState == .active
-            )
-          {
-            self?.handleNotificationInteraction(interaction)
-          }
+          await self?.claimAlarmInteractionFromActivation(events: events)
           self?.consumePendingNotificationInteractionIfPossible()
           await self?.scheduleUnfinishedEventsIfReady()
         case .failure(let error): self?.actionNotice = error.localizedDescription
@@ -572,14 +575,53 @@ final class AppViewModel: ObservableObject {
       let plan = currentPlan,
       let patientID = Auth.auth().currentUser?.uid
     else { return }
-    let result = try await refreshCoordinator.refresh(
-      events: events,
-      administratorID: plan.id,
-      patientID: patientID,
-      timeZone: patientTimeZone.identifier,
-      snoozeIntervalMinutes: snoozeMinutes,
-      maximumReminderCount: maximumReminderCount
+    if let activeReconciliation {
+      if
+        activeReconciliation.events == events,
+        activeReconciliation.snoozeMinutes == snoozeMinutes,
+        activeReconciliation.maximumReminderCount == maximumReminderCount
+      {
+        let result = try await activeReconciliation.task.value
+        applyReconciliation(result)
+        return
+      }
+      _ = try await activeReconciliation.task.value
+      if self.activeReconciliation?.id == activeReconciliation.id {
+        self.activeReconciliation = nil
+      }
+      return try await reconcileNotifications()
+    }
+    let reconciliationID = UUID()
+    let capturedEvents = events
+    let capturedSnoozeMinutes = snoozeMinutes
+    let capturedMaximumReminderCount = maximumReminderCount
+    let task = Task {
+      try await refreshCoordinator.refresh(
+        events: capturedEvents,
+        administratorID: plan.id,
+        patientID: patientID,
+        timeZone: patientTimeZone.identifier,
+        snoozeIntervalMinutes: capturedSnoozeMinutes,
+        maximumReminderCount: capturedMaximumReminderCount
+      )
+    }
+    activeReconciliation = (
+      reconciliationID,
+      capturedEvents,
+      capturedSnoozeMinutes,
+      capturedMaximumReminderCount,
+      task
     )
+    defer {
+      if activeReconciliation?.id == reconciliationID {
+        activeReconciliation = nil
+      }
+    }
+    let result = try await task.value
+    applyReconciliation(result)
+  }
+
+  private func applyReconciliation(_ result: NotificationReconciliation) {
     reminderDiagnostics = ReminderDiagnostics(
       backgroundRefreshRegistered: AppDelegate.reminderRefreshRegistrationSucceeded != false,
       lastReconciledAt: Date(),
@@ -626,6 +668,25 @@ final class AppViewModel: ObservableObject {
     NotificationResponseRouter.shared.handler = { [weak self] interaction in
       self?.handleNotificationInteraction(interaction)
     }
+  }
+
+  private func claimAlarmInteractionFromActivation(
+    events: [MedicationEvent]
+  ) async {
+    guard !alarmIDsPresentAtActivation.isEmpty, !events.isEmpty else { return }
+    let candidateIDs = alarmIDsPresentAtActivation
+    alarmIDsPresentAtActivation.removeAll()
+    if let interaction = await liveNotifications?.claimAlarmInteraction(
+      events: events,
+      candidateAlarmIDs: candidateIDs
+    ) {
+      handleNotificationInteraction(interaction)
+    }
+  }
+
+  private func captureAlertingAlarmsAtActivation() async {
+    let alertingIDs = await liveNotifications?.alertingAlarmIDs() ?? []
+    alarmIDsPresentAtActivation.formUnion(alertingIDs)
   }
 
   private func handleNotificationInteraction(_ interaction: NotificationInteraction) {
