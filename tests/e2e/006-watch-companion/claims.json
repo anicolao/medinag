@@ -1,0 +1,249 @@
+{
+  "storyId": "US-006",
+  "title": "Respond to a medication dose on Apple Watch",
+  "narrative": "As a patient, I want my paired Apple Watch responses to update the real medication event and administrator dashboard.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "covered"
+    },
+    "watchos": {
+      "status": "covered"
+    }
+  },
+  "environments": {
+    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The clock accelerates real iPhone AlarmKit dates. Physical Watch alarm mirroring/sound/haptics are not verified by these captures."
+  },
+  "preconditions": [
+    "An administrator creates and publishes the dose through the dashboard.",
+    "The patient signs in with the generated Auth Emulator Google identity and follows the schedule through the iPhone UI.",
+    "No credentials or fixture schedules are installed in the Watch app.",
+    "Watch sends actual response commands; only an acknowledged phone write changes its displayed state.",
+    "Exact PNG comparison; two-second maximum condition waits and no arbitrary test delays.",
+    "The patient uses the visible Refresh from iPhone control on initial Watch launch. This story does not claim a two-second bound for first-time system pairing/background context delivery."
+  ],
+  "steps": [
+    {
+      "id": "watch-empty-dashboard",
+      "surface": "web",
+      "description": "The administrator opens an empty Firebase-connected plan",
+      "image": "000-watch-empty-dashboard.png",
+      "claims": [
+        {
+          "id": "watch.web.empty",
+          "text": "No doses exist before the administrator adds one",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    },
+    {
+      "id": "watch-published-plan",
+      "surface": "web",
+      "description": "The administrator publishes the medication dose for the paired devices",
+      "image": "001-watch-published-plan.png",
+      "claims": [
+        {
+          "id": "watch.web.published",
+          "text": "The dose is published through the real repository",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    },
+    {
+      "id": "phone-sign-in",
+      "surface": "ios",
+      "description": "The patient sets up the paired iPhone first",
+      "image": "000-phone-sign-in.png",
+      "claims": [
+        {
+          "id": "watch.phone.signin",
+          "text": "Google sign-in is available on iPhone",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-setup",
+      "surface": "watchos",
+      "description": "The Watch asks for setup on the paired iPhone",
+      "image": "000-watch-setup.png",
+      "claims": [
+        {
+          "id": "watch.setup",
+          "text": "No schedule or identity is invented on Watch",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "phone-following",
+      "surface": "ios",
+      "description": "The iPhone receives the published dose and registers its system alarm",
+      "image": "001-phone-following.png",
+      "claims": [
+        {
+          "id": "watch.phone.event",
+          "text": "The real Firestore dose is visible on iPhone",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        },
+        {
+          "id": "watch.phone.alarm",
+          "text": "iOS confirms the scheduled medication alarms",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-refresh-schedule",
+      "surface": "watchos",
+      "description": "The patient refreshes the Watch schedule from the paired iPhone",
+      "image": "001-watch-refresh-schedule.png",
+      "claims": [
+        {
+          "id": "watch.refresh",
+          "text": "The public Refresh from iPhone action is ready",
+          "environment": "connected-pair",
+          "assertion": "XCTest hittable/enabled real Watch refresh button, followed by a real UI tap"
+        }
+      ]
+    },
+    {
+      "id": "watch-dose",
+      "surface": "watchos",
+      "description": "WatchConnectivity delivers the actual followed medication dose",
+      "image": "002-watch-dose.png",
+      "claims": [
+        {
+          "id": "watch.dose",
+          "text": "Watch shows the dose created through the dashboard",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        },
+        {
+          "id": "watch.dose.ready",
+          "text": "Watch explains that its paired iPhone owns the alarms",
+          "environment": "connected-pair",
+          "assertion": "XCTest labelContains watch-alarm-readiness"
+        }
+      ]
+    },
+    {
+      "id": "watch-response-actions",
+      "surface": "watchos",
+      "description": "Both Watch response actions have equal weight",
+      "image": "003-watch-response-actions.png",
+      "claims": [
+        {
+          "id": "watch.actions.did",
+          "text": "Yes, I did is available on Watch",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        },
+        {
+          "id": "watch.actions.will",
+          "text": "Yes, I will is available on Watch",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        },
+        {
+          "id": "watch.actions.equal",
+          "text": "Neither Watch response is a default or stronger action",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-choose-snooze",
+      "surface": "watchos",
+      "description": "The patient chooses the equally weighted Watch snooze action",
+      "image": "004-watch-choose-snooze.png",
+      "claims": [
+        {
+          "id": "watch.choose-snooze",
+          "text": "The actual Yes, I will control is ready to tap",
+          "environment": "connected-pair",
+          "assertion": "XCTest hittable and enabled on the real Watch snooze button"
+        }
+      ]
+    },
+    {
+      "id": "watch-repeat",
+      "surface": "watchos",
+      "description": "A confirmed Watch snooze produces a real repeat iOS alarm",
+      "image": "005-watch-repeat.png",
+      "claims": [
+        {
+          "id": "watch.repeat",
+          "text": "The phone confirms the Firestore snooze rather than optimistic Watch state",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-completion-pending",
+      "surface": "watchos",
+      "description": "Watch displays progress while awaiting the real phone response",
+      "image": "006-watch-completion-pending.png",
+      "claims": [
+        {
+          "id": "watch.completion-pending",
+          "text": "The patient sees an actual in-flight confirmation state",
+          "environment": "connected-pair",
+          "assertion": "XCTest labelContains watch-notice Connecting to iPhone while the real WatchConnectivity request is pending"
+        }
+      ]
+    },
+    {
+      "id": "watch-server-completed",
+      "surface": "watchos",
+      "description": "The server-acknowledged completed event reaches Watch",
+      "image": "007-watch-server-completed.png",
+      "claims": [
+        {
+          "id": "watch.server-completed",
+          "text": "The real server transaction has completed before the final alarm acknowledgement",
+          "environment": "connected-pair",
+          "assertion": "XCTest labelContains watch-completed event row after the production server transaction"
+        }
+      ]
+    },
+    {
+      "id": "watch-completed",
+      "surface": "watchos",
+      "description": "The phone confirms completion from the Watch response",
+      "image": "008-watch-completed.png",
+      "claims": [
+        {
+          "id": "watch.completed",
+          "text": "Completion is acknowledged only after the real Firestore write and alarm reconciliation",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-dashboard-completed",
+      "surface": "web",
+      "description": "The administrator receives the Watch completion through Firestore",
+      "image": "002-watch-dashboard-completed.png",
+      "claims": [
+        {
+          "id": "watch.web.completed",
+          "text": "The real followed occurrence is completed on the dashboard",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    }
+  ]
+}
