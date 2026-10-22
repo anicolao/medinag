@@ -1,0 +1,28 @@
+import Foundation
+import MediNagCore
+import XCTest
+
+final class CompanionModelsTests: XCTestCase {
+  func testWatchCannotRespondEarlyAndUsesConfiguredSnooze() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    var event = MedicationEvent(id: "unit-event", scheduleID: "unit-schedule", medicationName: "Unit test dose",
+                                timeZone: "America/Toronto", scheduledTime: now.addingTimeInterval(60), status: .pending, snoozeCount: 0)
+    func snapshot() -> CompanionSnapshot {
+      CompanionSnapshot(patientID: "unit-patient", administratorID: "unit-admin", administratorName: "Unit admin",
+                         planName: "Unit plan", events: [event], snoozeMinutes: 15, maximumReminderCount: 3,
+                         ready: true, readinessMessage: "", logicalDate: now, realDate: now)
+    }
+    XCTAssertFalse(snapshot().canRespond(to: event, at: now))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(60)))
+    event.status = .snoozed
+    event.snoozeCount = 1
+    event.lastSnoozedAt = now
+    XCTAssertFalse(snapshot().canRespond(to: event, at: now.addingTimeInterval(899)))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(900)))
+    event.status = .completed
+    XCTAssertFalse(snapshot().canRespond(to: event, at: now.addingTimeInterval(3600)))
+    let restored = try JSONDecoder().decode(CompanionSnapshot.self, from: JSONEncoder().encode(snapshot()))
+    XCTAssertEqual(restored.events, [event])
+    XCTAssertEqual(restored.snoozeMinutes, 15)
+  }
+}

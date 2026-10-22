@@ -6,6 +6,7 @@ let package = Package(
   name: "MediNagCore",
   platforms: [
     .iOS(.v17),
+    .watchOS(.v10),
     .macOS(.v14),
   ],
   products: [

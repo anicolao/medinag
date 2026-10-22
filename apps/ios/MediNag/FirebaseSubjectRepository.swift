@@ -309,6 +309,44 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
     return event
   }
 
+  /// Both phone and Watch responses use a server transaction. A stale snapshot
+  /// cannot increment a snooze twice or undo a completion on the other device.
+  func respond(_ response: DoseResponse, to expected: MedicationEvent, at date: Date) async throws -> MedicationEvent {
+    let reference = eventReference(eventID: expected.id)
+    let result = try await database.runTransaction { transaction, errorPointer in
+      do {
+        let document = try transaction.getDocument(reference)
+        guard var event = Self.event(document) else { throw PatientRepositoryError.missingEvent }
+        guard event.status != .completed, event.status == expected.status,
+              event.snoozeCount == expected.snoozeCount,
+              event.lastSnoozedAt == expected.lastSnoozedAt else { throw DoseMutationError.staleEvent }
+        switch response {
+        case .yesIWill:
+          event.status = .snoozed
+          event.snoozeCount += 1
+          event.lastSnoozedAt = date
+          transaction.updateData([
+            "status": event.status.rawValue, "snoozeCount": event.snoozeCount,
+            "lastSnoozedAt": Timestamp(date: date), "updatedAt": FieldValue.serverTimestamp(),
+          ], forDocument: reference)
+        case .yesIDid:
+          event.status = .completed
+          event.completedAt = date
+          transaction.updateData([
+            "status": event.status.rawValue, "completedAt": Timestamp(date: date),
+            "updatedAt": FieldValue.serverTimestamp(),
+          ], forDocument: reference)
+        }
+        return try JSONEncoder().encode(event)
+      } catch {
+        errorPointer?.pointee = error as NSError
+        return nil
+      }
+    }
+    guard let data = result as? Data else { throw PatientRepositoryError.missingEvent }
+    return try JSONDecoder().decode(MedicationEvent.self, from: data)
+  }
+
   private func eventReference(eventID: String) -> DocumentReference {
     database.document(
       "administrators/\(administratorID)/medicationEvents/\(eventID)"

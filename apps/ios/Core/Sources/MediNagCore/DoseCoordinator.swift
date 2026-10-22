@@ -13,6 +13,16 @@ public struct SystemClock: Clock {
 public protocol MedicationEventStore: Sendable {
   func snooze(eventID: String, at date: Date) async throws -> MedicationEvent
   func complete(eventID: String, at date: Date) async throws -> MedicationEvent
+  func respond(_ response: DoseResponse, to event: MedicationEvent, at date: Date) async throws -> MedicationEvent
+}
+
+public extension MedicationEventStore {
+  func respond(_ response: DoseResponse, to event: MedicationEvent, at date: Date) async throws -> MedicationEvent {
+    switch response {
+    case .yesIWill: try await snooze(eventID: event.id, at: date)
+    case .yesIDid: try await complete(eventID: event.id, at: date)
+    }
+  }
 }
 
 public protocol NotificationScheduling: Sendable {
@@ -75,10 +85,7 @@ public actor DoseCoordinator {
   ) async throws -> MedicationEvent {
     switch response {
     case .yesIWill:
-      let updated = try await eventStore.snooze(
-        eventID: event.id,
-        at: clock.now
-      )
+      let updated = try await eventStore.respond(response, to: event, at: clock.now)
       if updated.snoozeCount < maximumReminderCount {
         try await notifications.scheduleRepeat(
           for: updated,
@@ -88,10 +95,7 @@ public actor DoseCoordinator {
       return updated
 
     case .yesIDid:
-      let updated = try await eventStore.complete(
-        eventID: event.id,
-        at: clock.now
-      )
+      let updated = try await eventStore.respond(response, to: event, at: clock.now)
       await notifications.cancel(eventID: event.id)
       return updated
     }
