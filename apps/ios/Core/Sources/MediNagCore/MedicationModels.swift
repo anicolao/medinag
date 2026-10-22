@@ -72,3 +72,14 @@ public enum DoseResponse: String, Codable, Sendable {
   case yesIWill
   case yesIDid
 }
+
+public extension MedicationEvent {
+  /// Status plus the monotonic snooze count identify a patient-response
+  /// version. Do not compare fractional Date values after JSON/Firestore
+  /// round-trips: their sub-microsecond representations can differ.
+  func hasSameResponseVersion(as other: MedicationEvent) -> Bool {
+    id == other.id && scheduleID == other.scheduleID
+      && medicationName == other.medicationName && scheduledTime == other.scheduledTime
+      && timeZone == other.timeZone && status == other.status && snoozeCount == other.snoozeCount
+  }
+}

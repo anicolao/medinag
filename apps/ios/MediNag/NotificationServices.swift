@@ -242,11 +242,13 @@ enum MediNagDateFormatting {
 }
 
 protocol NotificationTimeline: Clock {
+  var realSecondsPerLogicalSecond: Double { get }
   func deliveryDate(for logicalDeadline: Date) -> Date
   func didReceiveNotification(at logicalDeadline: Date)
 }
 
 struct SystemNotificationTimeline: NotificationTimeline {
+  var realSecondsPerLogicalSecond: Double { 1 }
   var now: Date { Date() }
   func deliveryDate(for logicalDeadline: Date) -> Date { logicalDeadline }
   func didReceiveNotification(at logicalDeadline: Date) {}
@@ -254,6 +256,7 @@ struct SystemNotificationTimeline: NotificationTimeline {
 
 #if E2E
   final class ScaledNotificationTimeline: NotificationTimeline, @unchecked Sendable {
+    var realSecondsPerLogicalSecond: Double { scale }
     private static let realAnchorKey = "medinag.e2e.real-anchor"
     private let logicalAnchor: Date
     private let scale: Double

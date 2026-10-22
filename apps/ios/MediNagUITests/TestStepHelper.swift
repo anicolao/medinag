@@ -5,6 +5,7 @@ enum WalkthroughScreenshotCrop {
   case none
   case systemAppIconInterior
   case systemAlarmWithoutAnimatedGlyph
+  case watchApplicationContent
 }
 
 @MainActor
@@ -61,7 +62,7 @@ struct StepVerification {
   ) -> StepVerification {
     StepVerification(spec: spec) {
       let expectation = XCTNSPredicateExpectation(
-        predicate: NSPredicate(format: "hittable == true"),
+        predicate: NSPredicate(format: "hittable == true AND enabled == true"),
         object: element
       )
       return XCTWaiter.wait(
@@ -91,16 +92,19 @@ final class TestStepHelper {
 
   private unowned let testCase: XCTestCase
   private let claims: ClaimsManifest
+  private let surface: String
   private var nextScreenshotIndex: Int
 
   init(
     testCase: XCTestCase,
     application: XCUIApplication,
     storyID: String,
-    startingStepIndex: Int = 0
+    startingStepIndex: Int = 0,
+    surface: String = "ios"
   ) {
     self.testCase = testCase
     self.nextScreenshotIndex = startingStepIndex
+    self.surface = surface
     _ = application
     let expectedStoryId = "US-\(storyID.prefix(3))"
     guard
@@ -125,7 +129,7 @@ final class TestStepHelper {
     screenshotCrop: WalkthroughScreenshotCrop = .none
   ) throws {
     guard let manifestStep = claims.steps.first(where: {
-      $0.id == identifier && $0.surface == "ios"
+      $0.id == identifier && $0.surface == surface
     }) else {
       XCTFail("No claims-manifest step matches ios:\(identifier).")
       return
@@ -177,6 +181,13 @@ final class TestStepHelper {
     switch crop {
     case .none:
       return nil
+    case .watchApplicationContent:
+      // watchOS draws its live clock over the scroll surface and does not
+      // support status-bar overrides. Exclude the native navigation header;
+      // retain all visible patient content below it, without altering pixels.
+      let header = 120
+      guard image.height > header else { return nil }
+      return image.cropping(to: CGRect(x: 0, y: header, width: image.width, height: image.height - header))
     case .systemAppIconInterior:
       // The Simulator renders a subtly nondeterministic Home Screen wallpaper.
       // Preserve only pixels inside MediNag's system-rendered icon, while the

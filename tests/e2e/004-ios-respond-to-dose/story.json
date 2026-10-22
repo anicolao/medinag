@@ -15,7 +15,7 @@
     },
     "watchos": {
       "status": "not-applicable",
-      "reason": "watchOS is deferred until after the iOS MVP."
+      "reason": "This story verifies the iPhone notification lifecycle; the paired Watch companion is covered in US-006."
     }
   }
 }

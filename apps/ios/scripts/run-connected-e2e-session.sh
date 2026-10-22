@@ -25,7 +25,12 @@ cleanup_alarm_monitor() {
 trap cleanup_alarm_monitor EXIT INT TERM
 
 story="${MEDINAG_E2E_STORY:-dose-response}"
-if [[ "$story" == "notification-failure" ]]; then
+if [[ "$story" == "watch" ]]; then
+  setup_spec="tests/e2e/006-watch-companion/setup.spec.ts"
+  completion_spec="tests/e2e/006-watch-companion/completion.spec.ts"
+  native_test="MediNagUITests/WatchPairingUITests/testPhoneBeforeSignIn"
+  result_name="WatchPhoneSignIn"
+elif [[ "$story" == "notification-failure" ]]; then
   setup_spec="tests/e2e/005-notification-failure/setup.spec.ts"
   completion_spec="tests/e2e/005-notification-failure/completion.spec.ts"
   recovery_spec="tests/e2e/005-notification-failure/recovery.spec.ts"
@@ -63,15 +68,26 @@ run_xcodebuild() {
 run_native_test() {
   local test_name="$1"
   local bundle="$2"
+  local scheme="${3:-MediNag}"
+  local destination="platform=iOS Simulator,id=$simulator_id"
+  if [[ "$scheme" == "MediNagWatch" ]]; then
+    destination="platform=watchOS Simulator,id=$MEDINAG_WATCH_SIMULATOR_ID"
+  fi
   local test_results
+  if [[ -d "$bundle" ]]; then
+    /usr/bin/find "$bundle" -depth -delete
+  fi
   if run_xcodebuild -quiet test-without-building \
     -project apps/ios/MediNag.xcodeproj \
-    -scheme MediNag \
+    -scheme "$scheme" \
     -configuration E2E \
-    -destination "platform=iOS Simulator,id=$simulator_id" \
+    -destination "$destination" \
     -derivedDataPath "$derived_data_directory" \
     -only-testing:"$test_name" \
     -resultBundlePath "$bundle"; then
+    DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun xcresulttool get test-results summary \
+      --path "$bundle" --format json | jq -e \
+      '.failedTests == 0 and .skippedTests == 0 and .passedTests > 0' >/dev/null
     return
   fi
 
@@ -86,12 +102,15 @@ run_native_test() {
   /usr/bin/find "$bundle" -depth -delete
   run_xcodebuild -quiet test-without-building \
     -project apps/ios/MediNag.xcodeproj \
-    -scheme MediNag \
+    -scheme "$scheme" \
     -configuration E2E \
-    -destination "platform=iOS Simulator,id=$simulator_id" \
+    -destination "$destination" \
     -derivedDataPath "$derived_data_directory" \
     -only-testing:"$test_name" \
     -resultBundlePath "$bundle"
+  DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun xcresulttool get test-results summary \
+    --path "$bundle" --format json | jq -e \
+    '.failedTests == 0 and .skippedTests == 0 and .passedTests > 0' >/dev/null
 }
 
 run_xcodebuild -quiet build-for-testing \
@@ -115,11 +134,32 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_FIRESTORE_PORT="$MEDINAG_E2E_FIRESTORE_PORT" \
   MEDINAG_E2E_ALARM_MONITOR_PORT="$MEDINAG_E2E_ALARM_MONITOR_PORT"
 
+if [[ "$story" == "dose-response" ]]; then
+  run_native_test MediNagTests "$derived_data_directory/NativeUnitChecks.xcresult"
+fi
+
 result_bundle="$derived_data_directory/$result_name.xcresult"
 if [[ -d "$result_bundle" ]]; then
   /usr/bin/find "$result_bundle" -depth -delete
 fi
 run_native_test "$native_test" "$result_bundle"
+
+if [[ "$story" == "watch" ]]; then
+  run_xcodebuild -quiet build-for-testing \
+    -project apps/ios/MediNag.xcodeproj -scheme MediNagWatch -configuration E2E \
+    -destination "platform=watchOS Simulator,id=$MEDINAG_WATCH_SIMULATOR_ID" \
+    -derivedDataPath "$derived_data_directory" \
+    MEDINAG_E2E_MEDICATION_NAME="$MEDINAG_E2E_MEDICATION_NAME" \
+    MEDINAG_E2E_ALARM_MONITOR_PORT="$MEDINAG_E2E_ALARM_MONITOR_PORT"
+  run_native_test MediNagWatchUITests/WatchCompanionUITests/testUnconfiguredWatch \
+    "$derived_data_directory/WatchSetup.xcresult" MediNagWatch
+  run_native_test MediNagUITests/WatchPairingUITests/testFollowScheduleOnPhone \
+    "$derived_data_directory/WatchPhoneFollowing.xcresult"
+  DEVELOPER_DIR="$developer_directory" /usr/bin/xcrun simctl launch \
+    "$simulator_id" org.boardgamescafe.medinag
+  run_native_test MediNagWatchUITests/WatchCompanionUITests/testWatchResponsesReachDashboard \
+    "$derived_data_directory/WatchResponses.xcresult" MediNagWatch
+fi
 
 run_playwright "$completion_spec"
 

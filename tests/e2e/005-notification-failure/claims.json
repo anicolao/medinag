@@ -5,7 +5,7 @@
   "surfaces": {
     "web": { "status": "covered" },
     "ios": { "status": "covered" },
-    "watchos": { "status": "not-applicable", "reason": "watchOS is deferred until after the iOS MVP." }
+    "watchos": { "status": "not-applicable", "reason": "This story verifies the iPhone notification lifecycle; the paired Watch companion is covered in US-006." }
   },
   "environments": {
     "connected-emulators": "Fresh Firebase Authentication, Firestore, and Functions emulators running production rules and function code.",

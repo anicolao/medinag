@@ -22,6 +22,9 @@ function filesUnder(path) {
 const applicationAndTestFiles = [
   ...filesUnder('apps/ios/MediNag'),
   ...filesUnder('apps/ios/MediNagUITests'),
+  ...filesUnder('apps/ios/MediNagWatch'),
+  ...filesUnder('apps/ios/MediNagWatchUITests'),
+  ...filesUnder('apps/ios/Shared'),
   ...filesUnder('tests/e2e'),
   ...filesUnder('scripts')
 ].filter((path) => path !== auditScript);
@@ -56,6 +59,7 @@ const rules = [
     name: 'arbitrary E2E wait',
     files: [
       ...filesUnder('apps/ios/MediNagUITests'),
+      ...filesUnder('apps/ios/MediNagWatchUITests'),
       ...filesUnder('tests/e2e')
     ],
     pattern: /waitForTimeout\s*\(|\b(?:sleep|usleep|Thread\.sleep|Task\.sleep)\s*\(|new Promise\s*\([^)]*setTimeout/

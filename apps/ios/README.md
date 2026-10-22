@@ -98,6 +98,11 @@ handoff.
 
 ## Release through TestFlight
 
+The iPhone archive now embeds the [Apple Watch companion](MediNagWatch/README.md).
+Both apps share a version/build number, and the release script validates the
+embedded Watch identity and signing before upload. The Watch uses the paired
+iPhone's authenticated Firestore/AlarmKit path; it is not a standalone scheduler.
+
 MediNag reuses the owner-only App Store Connect handoff already installed for
 the Board Games Cafe Apple team. Apple does not permit app-record creation via
 its API, so the first release requires one manual App Store Connect record with

@@ -15,9 +15,7 @@ story_directory="$2"
 claims_file="${3:-$repository_root/tests/e2e/004-ios-respond-to-dose/claims.json}"
 shift $(( $# >= 3 ? 3 : 2 ))
 attachment_directories+=("$@")
-screenshot_directory="$story_directory/screenshots/ios"
 
-mkdir -p "$screenshot_directory"
 
 copy_attachment() {
   local attachment_name="$1"
@@ -57,9 +55,10 @@ copy_attachment() {
   exit 1
 }
 
-while IFS= read -r screenshot; do
-  copy_attachment "$screenshot" "$screenshot_directory/$screenshot"
-done < <(jq -r '.steps[] | select(.surface == "ios") | .image' "$claims_file")
+while IFS=$'\t' read -r surface screenshot; do
+  mkdir -p "$story_directory/screenshots/$surface"
+  copy_attachment "$screenshot" "$story_directory/screenshots/$surface/$screenshot"
+done < <(jq -r '.steps[] | select(.surface != "web") | [.surface, .image] | @tsv' "$claims_file")
 
 node "$repository_root/scripts/generate-walkthrough.mjs" \
   "$claims_file" \

@@ -23,7 +23,9 @@ ux/mockups/   Approved UX mockup boards
 web/          Vite/TypeScript administrator dashboard
 ```
 
-watchOS and SMS escalation are planned but not yet implemented.
+The paired [watchOS companion](apps/ios/MediNagWatch/README.md) uses the iPhone's
+authenticated schedule and response path. Backend incident/SMS escalation is
+implemented. Independent Watch operation is not supported.
 
 ## Web dashboard
 

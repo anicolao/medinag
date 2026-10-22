@@ -46,18 +46,21 @@ final class AppViewModel: ObservableObject {
     var missedEventCount = 0
   }
 
-  @Published private(set) var state: State = .starting
+  @Published private(set) var state: State = .starting { didSet { publishWatchSnapshot() } }
   @Published private(set) var availablePlans: [PublishedPlan] = []
-  @Published private(set) var currentPlan: PublishedPlan?
+  @Published private(set) var currentPlan: PublishedPlan? { didSet { publishWatchSnapshot() } }
   @Published private(set) var schedules: [MedicationSchedule] = []
-  @Published private(set) var events: [MedicationEvent] = []
-  @Published private(set) var notificationReadiness: NotificationReadiness = .unknown
+  @Published private(set) var events: [MedicationEvent] = [] { didSet { publishWatchSnapshot() } }
+  @Published private(set) var notificationReadiness: NotificationReadiness = .unknown { didSet { publishWatchSnapshot() } }
   @Published private(set) var actionNotice = ""
   @Published private(set) var isWorking = false
-  @Published private(set) var activeReminder: ReminderPresentation?
+  @Published private(set) var activeReminder: ReminderPresentation? { didSet { publishWatchSnapshot() } }
   @Published private(set) var reminderDiagnostics = ReminderDiagnostics()
 
   private var listeners: [ListenerRegistration] = []
+  private let companionSession = CompanionSession()
+  private var initialization: Task<Void, Never>?
+  private var eventsReceived = false
   private var coordinator: DoseCoordinator?
   private var confirmedAccessAdministratorID: String?
   private let directory = FirebasePatientDirectory()
@@ -102,7 +105,13 @@ final class AppViewModel: ObservableObject {
       healthReporter: healthReporter
     )
     installNotificationRouter()
-    Task {
+    companionSession.handleCommand = { [unowned self] command in await handleWatchCommand(command) }
+    companionSession.reportFailure = { [weak self] error in
+      await self?.reportIncident(code: "watch_sync_failed",
+                                message: "The patient iPhone could not synchronize the paired Watch.",
+                                severity: "critical", context: ["error": error])
+    }
+    initialization = Task {
       await captureAlertingAlarmsAtActivation()
       await claimAlarmInteractionFromActivation(events: [])
       await boot()
@@ -289,8 +298,9 @@ final class AppViewModel: ObservableObject {
     }
   }
 
-  func respond(_ response: DoseResponse, to event: MedicationEvent) async {
-    guard let coordinator else { return }
+  @discardableResult
+  func respond(_ response: DoseResponse, to event: MedicationEvent) async -> Bool {
+    guard let coordinator else { return false }
     isWorking = true
     activeReminder = nil
     defer { isWorking = false }
@@ -315,7 +325,7 @@ final class AppViewModel: ObservableObject {
             severity: "critical",
             context: ["error": error.localizedDescription]
           )
-          return
+          return false
         }
         actionNotice = updated.snoozeCount < maximumReminderCount
           ? "Okay. We will remind you again in \(snoozeMinutes) minutes."
@@ -324,8 +334,10 @@ final class AppViewModel: ObservableObject {
         try await reconcileNotifications()
         actionNotice = "Dose complete. Further reminders are cancelled."
       }
+      return true
     } catch {
       actionNotice = "Could not record that response: \(error.localizedDescription)"
+      return false
     }
   }
 
@@ -481,6 +493,7 @@ final class AppViewModel: ObservableObject {
       Task { @MainActor [weak self] in
         switch result {
         case .success(let events):
+          self?.eventsReceived = true
           self?.events = events
           await self?.claimAlarmInteractionFromActivation(events: events)
           self?.consumePendingNotificationInteractionIfPossible()
@@ -527,6 +540,7 @@ final class AppViewModel: ObservableObject {
   }
 
   private func disconnectListeners() {
+    eventsReceived = false
     for listener in listeners { listener.remove() }
     listeners = []
     coordinator = nil
@@ -723,5 +737,70 @@ final class AppViewModel: ObservableObject {
     #else
       .autoupdatingCurrent
     #endif
+  }
+
+  private func watchSnapshot() -> CompanionSnapshot {
+    let connected = state == .ready && currentPlan != nil
+    // Bound the WatchConnectivity payload without letting old completion
+    // history crowd out the upcoming doses.
+    let sharedEvents = Array(events.filter { $0.status != .completed }.prefix(24))
+      + Array(events.filter { $0.status == .completed }.suffix(3))
+    return CompanionSnapshot(
+      patientID: connected ? Auth.auth().currentUser?.uid : nil,
+      administratorID: connected ? currentPlan?.id : nil,
+      administratorName: connected ? currentPlan?.administratorName ?? "" : "",
+      planName: connected ? currentPlan?.planName ?? "" : "",
+      events: connected ? sharedEvents : [],
+      snoozeMinutes: snoozeMinutes, maximumReminderCount: maximumReminderCount,
+      ready: connected && eventsReceived,
+      readinessMessage: connected
+        ? (!eventsReceived ? "Synchronizing doses with iPhone…" :
+            (notificationReadiness == .failed || notificationReadiness == .denied
+              ? "Check alarm readiness on iPhone"
+              : notificationReadiness == .needsPermission
+                ? "Allow alarms on iPhone" : "Alarms managed by iPhone"))
+        : "Sign in and choose your schedule in MediNag on iPhone.",
+      logicalDate: timeline.now, realDate: Date(), clockScale: timeline.realSecondsPerLogicalSecond
+    )
+  }
+
+  private func publishWatchSnapshot() { companionSession.publish(watchSnapshot()) }
+
+  private func handleWatchCommand(_ command: CompanionCommand) async -> CompanionReply {
+    await initialization?.value
+    guard let response = command.response else {
+      if state == .ready, let plan = currentPlan {
+        do {
+          let refreshed = try await FirebaseFollowedPlanRepository(administratorID: plan.id)
+            .fetchEvents(source: .server)
+          eventsReceived = true
+          events = refreshed
+        } catch {
+          await reportIncident(code: "watch_refresh_failed",
+                               message: "The iPhone could not refresh the paired Watch's medication events.",
+                               severity: "critical", context: ["error": error.localizedDescription])
+          return CompanionReply(snapshot: watchSnapshot(), accepted: false,
+                                message: "Could not refresh from the server. Check MediNag on iPhone.")
+        }
+      }
+      return CompanionReply(snapshot: watchSnapshot(), accepted: true, message: "")
+    }
+    guard state == .ready, !isWorking,
+          command.patientID == Auth.auth().currentUser?.uid,
+          command.administratorID == currentPlan?.id,
+          let expected = command.event,
+          let event = events.first(where: { $0.id == expected.id }),
+          event.hasSameResponseVersion(as: expected), watchSnapshot().canRespond(to: event) else {
+      return CompanionReply(snapshot: watchSnapshot(), accepted: false,
+                            message: "Dose or connection changed. Refresh and check your schedule.")
+    }
+    let accepted = await respond(response, to: event)
+    if !accepted {
+      await reportIncident(code: "watch_response_failed",
+                           message: "The paired Apple Watch could not confirm a medication response.",
+                           severity: "critical", context: ["eventID": event.id, "error": actionNotice])
+    }
+    publishWatchSnapshot()
+    return CompanionReply(snapshot: watchSnapshot(), accepted: accepted, message: actionNotice)
   }
 }

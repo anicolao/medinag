@@ -16,6 +16,13 @@ if [[ -f "${ios_dir}/../../tests/e2e/005-notification-failure/claims.json" ]]; t
   cp "${ios_dir}/../../tests/e2e/005-notification-failure/claims.json" \
     "${claims_directory}/005-notification-failure-claims.json"
 fi
+if [[ -f "${ios_dir}/../../tests/e2e/006-watch-companion/claims.json" ]]; then
+  cp "${ios_dir}/../../tests/e2e/006-watch-companion/claims.json" \
+    "${claims_directory}/006-watch-companion-claims.json"
+  mkdir -p "${ios_dir}/MediNagWatchUITests/Claims"
+  cp "${ios_dir}/../../tests/e2e/006-watch-companion/claims.json" \
+    "${ios_dir}/MediNagWatchUITests/Claims/006-watch-companion-claims.json"
+fi
 
 if [[ ! -x "${xcodegen}" ]]; then
   mkdir -p "${ios_dir}/.tools"

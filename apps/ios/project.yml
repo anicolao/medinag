@@ -29,6 +29,7 @@ targets:
       - path: MediNag
         excludes:
           - Resources/GoogleService-Info.plist
+      - path: Shared
     configFiles:
       Debug: Config/Debug.xcconfig
       E2E: Config/E2E.xcconfig
@@ -40,6 +41,8 @@ targets:
         PRODUCT_NAME: MediNag
         TARGETED_DEVICE_FAMILY: "1"
     dependencies:
+      - target: MediNagWatch
+        embed: true
       - package: MediNagCore
         product: MediNagCore
       - package: Firebase
@@ -78,6 +81,47 @@ targets:
             /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id" "$product_info"
           fi
 
+  MediNagWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: MediNagWatch
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.watchkitapp
+        PRODUCT_NAME: MediNagWatch
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagWatch/Info.plist
+        TARGETED_DEVICE_FAMILY: "4"
+    dependencies:
+      - package: MediNagCore
+        product: MediNagCore
+
+  MediNagWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: MediNagWatchUITests
+      - path: MediNagUITests/TestStepHelper.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.watchkitapp.uitests
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagWatchUITests/Info.plist
+        TEST_TARGET_NAME: MediNagWatch
+    dependencies:
+      - target: MediNagWatch
+
   MediNagTests:
     type: bundle.unit-test
     platform: iOS
@@ -115,6 +159,18 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagWatch:
+    build:
+      targets:
+        MediNagWatch: all
+        MediNagWatchUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagWatchUITests
   MediNag:
     build:
       targets:

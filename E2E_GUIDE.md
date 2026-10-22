@@ -171,6 +171,14 @@ these connected runners. Preview-only visual checks use the explicitly named
 `npm run test:ui:preview`; they are not end-to-end tests and must never be
 presented as evidence of an end-to-end data flow.
 
+Use `npm run ios:e2e:watch` for the paired-companion story (US-006). It uses actual
+WatchConnectivity between clean paired iOS 26.5 and watchOS 26.5 Simulators and
+the same isolated Firebase environment. Watch state is not injected. Because
+watchOS has no Simulator status-bar override, native captures exclude the system
+clock/navigation header or focus on the actual control being verified; retained
+pixels are never replaced or normalized. Physical Watch alarm mirroring,
+sound/haptics, and locked-phone routing remain separate device checks.
+
 ## 6. Timing Requirements
 
 The maximum acceptable timeout for **any condition is 2000 ms** on every platform.

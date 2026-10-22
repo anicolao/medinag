@@ -268,10 +268,10 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       }
   }
 
-  func fetchEvents() async throws -> [MedicationEvent] {
+  func fetchEvents(source: FirestoreSource = .default) async throws -> [MedicationEvent] {
     let snapshot = try await database.collection(
       "administrators/\(administratorID)/medicationEvents"
-    ).order(by: "scheduledTime").getDocuments()
+    ).order(by: "scheduledTime").getDocuments(source: source)
     return snapshot.documents.compactMap(Self.event)
   }
 
@@ -317,9 +317,8 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       do {
         let document = try transaction.getDocument(reference)
         guard var event = Self.event(document) else { throw PatientRepositoryError.missingEvent }
-        guard event.status != .completed, event.status == expected.status,
-              event.snoozeCount == expected.snoozeCount,
-              event.lastSnoozedAt == expected.lastSnoozedAt else { throw DoseMutationError.staleEvent }
+        guard event.status != .completed, event.hasSameResponseVersion(as: expected)
+        else { throw DoseMutationError.staleEvent }
         switch response {
         case .yesIWill:
           event.status = .snoozed

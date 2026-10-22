@@ -36,10 +36,26 @@ cleanup() {
     return
   fi
   "$xcrun_command" simctl delete "$MEDINAG_SIMULATOR_ID" 2>/dev/null || true
+  if [[ -n "${MEDINAG_WATCH_SIMULATOR_ID:-}" ]]; then
+    "$xcrun_command" simctl delete "$MEDINAG_WATCH_SIMULATOR_ID" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
-"$xcrun_command" simctl boot "$MEDINAG_SIMULATOR_ID"
+if [[ "${MEDINAG_E2E_STORY:-}" == "watch" && -z "${MEDINAG_WATCH_SIMULATOR_ID:-}" ]]; then
+  export MEDINAG_WATCH_SIMULATOR_ID="$($xcrun_command simctl create \
+    'MediNag Watch E2E' com.apple.CoreSimulator.SimDeviceType.Apple-Watch-Series-11-46mm \
+    com.apple.CoreSimulator.SimRuntime.watchOS-26-5)"
+  "$xcrun_command" simctl pair "$MEDINAG_WATCH_SIMULATOR_ID" "$MEDINAG_SIMULATOR_ID"
+fi
+
+if ! "$xcrun_command" simctl list devices --json | node -e '
+  let input = ""; process.stdin.on("data", data => input += data);
+  process.stdin.on("end", () => process.exit(Object.values(JSON.parse(input).devices).flat()
+    .some(device => device.udid === process.env.MEDINAG_SIMULATOR_ID && device.state === "Booted") ? 0 : 1));
+'; then
+  "$xcrun_command" simctl boot "$MEDINAG_SIMULATOR_ID"
+fi
 "$xcrun_command" simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
 "$xcrun_command" simctl spawn "$MEDINAG_SIMULATOR_ID" defaults write \
   com.apple.Accessibility ReduceMotionEnabled -bool true
@@ -53,6 +69,20 @@ trap cleanup EXIT INT TERM
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" appearance light
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" increase_contrast enabled
 "$xcrun_command" simctl ui "$MEDINAG_SIMULATOR_ID" content_size medium
+if [[ -n "${MEDINAG_WATCH_SIMULATOR_ID:-}" ]]; then
+  if ! "$xcrun_command" simctl list devices --json | node -e '
+    let input = ""; process.stdin.on("data", data => input += data);
+    process.stdin.on("end", () => process.exit(Object.values(JSON.parse(input).devices).flat()
+      .some(device => device.udid === process.env.MEDINAG_WATCH_SIMULATOR_ID && device.state === "Booted") ? 0 : 1));
+  '; then
+    "$xcrun_command" simctl boot "$MEDINAG_WATCH_SIMULATOR_ID"
+  fi
+  "$xcrun_command" simctl bootstatus "$MEDINAG_WATCH_SIMULATOR_ID" -b
+  "$xcrun_command" simctl spawn "$MEDINAG_WATCH_SIMULATOR_ID" defaults write \
+    com.apple.Accessibility ReduceMotionEnabled -bool true
+  "$xcrun_command" simctl spawn "$MEDINAG_WATCH_SIMULATOR_ID" defaults write \
+    com.apple.Accessibility EnhancedBackgroundContrastEnabled -bool true
+fi
 status_bar_time=$(node -e '
   const date = new Date(2026, 7, 3, 8, 0, 0);
   const offset = -date.getTimezoneOffset();
@@ -66,6 +96,8 @@ status_bar_time=$(node -e '
   --batteryState charged --batteryLevel 100 \
   --wifiMode active --wifiBars 3 \
   --cellularMode active --cellularBars 4
+# watchOS does not support simctl status_bar overrides. Watch walkthroughs
+# capture the real application scroll surface, excluding the system clock.
 
 export MEDINAG_E2E_PROJECT_ID="demo-medinag"
 export MEDINAG_E2E_AUTH_PORT="${MEDINAG_E2E_AUTH_PORT:-9099}"

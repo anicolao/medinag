@@ -169,6 +169,16 @@ info_plist="$application_path/Info.plist"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$info_plist")" == "false" ]] \
   || fail "The archive is missing its encryption declaration"
 codesign --verify --deep --strict "$application_path"
+watch_application="$application_path/Watch/MediNagWatch.app"
+watch_info="$watch_application/Info.plist"
+[[ -f "$watch_info" ]] || fail "The archive is missing the Watch companion"
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$watch_info")" == "$bundle_identifier.watchkitapp" ]] \
+  || fail "The Watch companion has the wrong bundle identifier"
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :WKCompanionAppBundleIdentifier' "$watch_info")" == "$bundle_identifier" ]] \
+  || fail "The Watch companion is linked to a different iPhone app"
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$watch_info")" == "$build_number" ]] \
+  || fail "The Watch and iPhone build numbers differ"
+codesign --verify --deep --strict "$watch_application"
 
 echo "Uploading MediNag $marketing_version ($build_number) to App Store Connect..."
 xcodebuild -exportArchive \

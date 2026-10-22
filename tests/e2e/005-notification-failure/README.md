@@ -6,7 +6,7 @@
 
 - **Web Admin Dashboard:** covered
 - **iOS:** covered
-- **watchOS:** not-applicable — watchOS is deferred until after the iOS MVP.
+- **watchOS:** not-applicable — This story verifies the iPhone notification lifecycle; the paired Watch companion is covered in US-006.
 
 ## Evidence environments
 

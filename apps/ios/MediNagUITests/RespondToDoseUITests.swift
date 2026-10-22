@@ -14,7 +14,7 @@ final class RespondToDoseUITests: XCTestCase {
     XCTAssertTrue(reduceTransparency)
     XCUIDevice.shared.orientation = .portrait
     let environment = try ConnectedEnvironment()
-    let app = makeApplication(environment)
+    let app = environment.makeApplication()
     let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     let tester = makeTester(application: app)
     app.launch()
@@ -254,7 +254,12 @@ final class RespondToDoseUITests: XCTestCase {
 
   }
 
-  private func makeApplication(_ environment: ConnectedEnvironment) -> XCUIApplication {
+}
+
+@MainActor
+extension ConnectedEnvironment {
+  func makeApplication() -> XCUIApplication {
+    let environment = self
     let app = XCUIApplication()
     app.launchArguments += [
       "-e2e",
@@ -277,6 +282,10 @@ final class RespondToDoseUITests: XCTestCase {
     app.launchEnvironment["TZ"] = "America/Toronto"
     return app
   }
+}
+
+@MainActor
+extension RespondToDoseUITests {
 
   private func eventStatusElement(in app: XCUIApplication) -> XCUIElement {
     app.staticTexts.matching(

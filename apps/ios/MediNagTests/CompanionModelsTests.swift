@@ -3,6 +3,26 @@ import MediNagCore
 import XCTest
 
 final class CompanionModelsTests: XCTestCase {
+  func testResponseVersionRejectsDuplicateSnoozesButNotTimestampRounding() {
+    let date = Date(timeIntervalSince1970: 1_800_000_000)
+    var event = MedicationEvent(id: "unit-event", scheduleID: "unit-schedule", medicationName: "Unit dose",
+                                scheduledTime: date, status: .snoozed, snoozeCount: 1, lastSnoozedAt: date)
+    var copy = event
+    copy.lastSnoozedAt = date.addingTimeInterval(0.0000002)
+    XCTAssertTrue(event.hasSameResponseVersion(as: copy))
+    copy.snoozeCount = 2
+    XCTAssertFalse(event.hasSameResponseVersion(as: copy))
+    copy = event
+    copy.status = .completed
+    XCTAssertFalse(event.hasSameResponseVersion(as: copy))
+    event.status = .completed
+    XCTAssertTrue(event.hasSameResponseVersion(as: copy))
+    copy = event
+    copy = MedicationEvent(id: "other-event", scheduleID: copy.scheduleID, medicationName: copy.medicationName,
+                            scheduledTime: date, status: .completed, snoozeCount: 1)
+    XCTAssertFalse(event.hasSameResponseVersion(as: copy))
+  }
+
   func testWatchCannotRespondEarlyAndUsesConfiguredSnooze() throws {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     var event = MedicationEvent(id: "unit-event", scheduleID: "unit-schedule", medicationName: "Unit test dose",

@@ -39,6 +39,56 @@ permissions:
   contents: read
 
 jobs:
+  watch-companion-e2e:
+    name: Dashboard → iPhone → Watch → Firebase
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.6.app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Ensure pinned Watch runtime
+        run: |
+          if ! xcrun simctl list runtimes | grep -q 'com.apple.CoreSimulator.SimRuntime.watchOS-26-5'; then
+            xcodebuild -downloadPlatform watchOS -buildVersion 26.5
+          fi
+      - name: Install dependencies
+        run: npm ci && npm ci --prefix functions
+      - name: Install Chromium
+        run: npx playwright install chromium
+      - name: Audit E2E truthfulness
+        run: npm run test:e2e:audit
+      - name: Run real paired Watch story
+        run: npm run ios:e2e:watch
+        env:
+          CI: true
+          MEDINAG_E2E_DERIVED_DATA: apps/ios/DerivedData
+          MEDINAG_E2E_RUNTIME_ID: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+      - name: Export paired walkthrough
+        run: apps/ios/scripts/export-watch-walkthrough.sh apps/ios/DerivedData apps/ios/DerivedData/ActualWatchWalkthrough
+      - name: Enforce zero-pixel paired screenshots
+        run: |
+          swift apps/ios/scripts/compare-walkthrough.swift tests/e2e/006-watch-companion/screenshots/ios apps/ios/DerivedData/ActualWatchWalkthrough/screenshots/ios
+          swift apps/ios/scripts/compare-walkthrough.swift tests/e2e/006-watch-companion/screenshots/watchos apps/ios/DerivedData/ActualWatchWalkthrough/screenshots/watchos
+      - name: Upload Watch evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connected-watch-walkthrough-actual
+          retention-days: 7
+          path: |
+            apps/ios/DerivedData/ActualWatchWalkthrough/
+            apps/ios/DerivedData/Watch*.xcresult/
+            test-results/
+
   connected-e2e:
     name: Dashboard → Firebase → iOS notification → Firebase
     runs-on: macos-26
@@ -164,6 +214,7 @@ jobs:
             apps/ios/DerivedData/ActualWalkthrough/
             apps/ios/DerivedData/SystemNotificationAttachments/
             apps/ios/DerivedData/SystemNotification.xcresult/
+            apps/ios/DerivedData/NativeUnitChecks.xcresult/
             apps/ios/DerivedData/ActualFailureWalkthrough/
             apps/ios/DerivedData/NotificationFailureAttachments/
             apps/ios/DerivedData/NotificationRecoveryAttachments/
