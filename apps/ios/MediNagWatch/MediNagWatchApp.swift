@@ -10,7 +10,7 @@ struct MediNagWatchApp: App {
     WindowGroup {
       WatchScheduleView(connection: connection)
         .tint(.teal)
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
           if phase == .active { Task { await connection.refreshOnActivation() } }
         }
     }
@@ -30,9 +30,11 @@ struct WatchScheduleView: View {
         if let snapshot = connection.snapshot, snapshot.ready {
           if let event = snapshot.nextEvent {
             Text(event.medicationName).font(.headline).lineLimit(2)
+              .fixedSize(horizontal: false, vertical: true)
               .accessibilityIdentifier("watch-dose-name")
             Text(displayTime(snapshot.nextReminder(for: event), timeZone: event.timeZone))
-              .font(.title3).accessibilityIdentifier("watch-dose-time")
+              .font(.body).lineLimit(1).minimumScaleFactor(0.75)
+              .accessibilityIdentifier("watch-dose-time")
             if snapshot.canRespond(to: event, at: context.date) {
               responseButton("Yes, I did", response: .yesIDid, event: event, id: "watch-yes-i-did")
               responseButton("Yes, I will", response: .yesIWill, event: event, id: "watch-yes-i-will")
@@ -76,8 +78,16 @@ struct WatchScheduleView: View {
   }
 
   private func displayTime(_ date: Date, timeZone: String) -> String {
-    var format = Date.FormatStyle(date: .abbreviated, time: .shortened)
-    format.timeZone = TimeZone(identifier: timeZone) ?? .current
+    let zone = TimeZone(identifier: timeZone) ?? .current
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = zone
+    if calendar.isDateInToday(date) {
+      var format = Date.FormatStyle(date: .omitted, time: .shortened)
+      format.timeZone = zone
+      return date.formatted(format)
+    }
+    var format = Date.FormatStyle.dateTime.month(.abbreviated).day().hour().minute()
+    format.timeZone = zone
     return date.formatted(format)
   }
 }

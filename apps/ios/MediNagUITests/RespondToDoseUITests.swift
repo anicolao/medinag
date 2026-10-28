@@ -160,13 +160,13 @@ final class RespondToDoseUITests: XCTestCase {
 
 @MainActor
 extension ConnectedEnvironment {
-  func makeApplication() -> XCUIApplication {
+  func makeApplication(timeScale: Double = 0.003) -> XCUIApplication {
     let environment = self
     let app = XCUIApplication()
     app.launchArguments += [
       "-e2e",
       "-e2e-logical-now", environment.logicalNow,
-      "-e2e-time-scale", "0.003",
+      "-e2e-time-scale", String(timeScale),
       "-firebase-emulator-project-id", environment.projectID,
       "-firebase-emulator-api-key", environment.apiKey,
       "-firebase-emulator-app-id", environment.appID,

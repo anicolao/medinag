@@ -468,7 +468,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
       // Migration from installed builds: never leave an old Stop-only alarm
       // alongside the new actionable notification sequence.
       let id = MediNagAlarm.identifier(for: eventID)
-      if (try? AlarmManager.shared.alarms.contains(where: { $0.id == id })) == true {
+      if try AlarmManager.shared.alarms.contains(where: { $0.id == id }) {
         try AlarmManager.shared.cancel(id: id)
       }
     }

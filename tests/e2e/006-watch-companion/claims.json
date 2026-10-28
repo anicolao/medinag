@@ -14,7 +14,7 @@
     }
   },
   "environments": {
-    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The clock scales production UserNotifications dates. This story verifies responses and synchronization, not physical simultaneous notification delivery, sound or haptics."
+    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The Watch response story uses a fixed logical offset at normal clock speed; it does not wait for or claim notification delivery. This story verifies responses and synchronization, not physical simultaneous notification delivery, sound or haptics."
   },
   "preconditions": [
     "An administrator creates and publishes the dose through the dashboard.",
@@ -154,16 +154,22 @@
       ]
     },
     {
-      "id": "watch-response-pending",
+      "id": "watch-snoozed",
       "surface": "watchos",
-      "description": "The Watch waits for a server-confirmed response",
-      "image": "003-watch-response-pending.png",
+      "description": "The Watch receives the server-confirmed snooze",
+      "image": "003-watch-snoozed.png",
       "claims": [
         {
-          "id": "watchos.watch-response-pending.1",
-          "text": "A pending response is not displayed as saved",
+          "id": "watch.snoozed.1",
+          "text": "The server-confirmed snooze version reaches the Watch",
           "environment": "connected-pair",
-          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+          "assertion": "XCTest checks the actual server-acknowledged Watch snapshot version and absence of the pending indicator"
+        },
+        {
+          "id": "watch.snoozed.2",
+          "text": "No pending response remains after the server acknowledgement",
+          "environment": "connected-pair",
+          "assertion": "XCTest checks the actual server-acknowledged Watch snapshot version and absence of the pending indicator"
         }
       ]
     },

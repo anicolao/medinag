@@ -88,7 +88,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     #if os(watchOS)
       guard !hasPendingResponse else { return }
       pendingResponse = command
-      // Guaranteed background transfer complements interactive delivery. The
+      // OS-managed background transfer complements interactive delivery. The
       // Firestore response-version transaction makes duplicate delivery safe.
       if let data = try? JSONEncoder().encode(command) { session?.transferUserInfo(["command": data]) }
     #endif
@@ -168,7 +168,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     // Background contexts and interactive replies use different delivery
     // channels. A delayed pre-response context must not undo an acknowledged
     // snooze/completion on the Watch.
-    guard snapshot.map({ value.realDate >= $0.realDate }) ?? true else { return }
+    guard value.canReplace(snapshot) else { return }
     if snapshot?.patientID != value.patientID || snapshot?.administratorID != value.administratorID {
       notice = ""
     }
@@ -181,7 +181,9 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         pendingResponse = nil
         notice = ""
       }
-      notificationWork = Task { await reconcileWatchNotifications() }
+      notificationWork = Task {
+        await reconcileWatchNotifications(requestPermission: WKApplication.shared().applicationState == .active)
+      }
     #endif
   }
 
@@ -226,7 +228,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         }
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
-        if requestPermission && WKExtension.shared().applicationState == .active
+        if requestPermission && WKApplication.shared().applicationState == .active
           && settings.authorizationStatus == .notDetermined {
           _ = try await center.requestAuthorization(options: [.alert, .sound, .badge])
         }
@@ -242,6 +244,10 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         _ = try await notifications.reconcile(events: snapshot.events,
           snoozeInterval: Double(snapshot.snoozeMinutes * 60), logicalNow: now,
           clockScale: snapshot.clockScale, snapshot: snapshot)
+        if notice == "Allow MediNag notifications in Watch Settings."
+          || notice == "Watch reminders failed. Open MediNag on iPhone." {
+          notice = ""
+        }
       } catch is CancellationError {
         // A newer snapshot superseded this queue reconciliation.
       } catch {

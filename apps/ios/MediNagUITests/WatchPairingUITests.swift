@@ -5,7 +5,7 @@ final class WatchPairingUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   func testPhoneBeforeSignIn() throws {
-    let app = try ConnectedEnvironment().makeApplication()
+    let app = try ConnectedEnvironment().makeApplication(timeScale: 1)
     app.launch()
     let tester = TestStepHelper(testCase: self, application: app, storyID: "006-watch-companion")
     try tester.step("phone-sign-in", description: "The patient sets up the paired iPhone first",
@@ -14,7 +14,7 @@ final class WatchPairingUITests: XCTestCase {
 
   func testFollowScheduleOnPhone() throws {
     let environment = try ConnectedEnvironment()
-    let app = environment.makeApplication()
+    let app = environment.makeApplication(timeScale: 1)
     app.launch()
     XCTAssertTrue(app.buttons["patient-google-sign-in"].waitForExistence(timeout: 2))
     app.buttons["patient-google-sign-in"].tap()

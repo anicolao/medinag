@@ -15,11 +15,15 @@ public struct CompanionSnapshot: Codable, Sendable {
   public let logicalDate: Date
   public let realDate: Date
   public let clockScale: Double
+  /// Absent in older payloads. Only an authoritative unlink/sign-out may clear
+  /// a ready Watch cache; a phone restart/network failure must not erase it.
+  public let scheduleCleared: Bool?
 
   public init(patientID: String?, administratorID: String?, administratorName: String,
               planName: String, events: [MedicationEvent], snoozeMinutes: Int,
               maximumReminderCount: Int, ready: Bool, readinessMessage: String,
-              logicalDate: Date, realDate: Date, clockScale: Double = 1) {
+              logicalDate: Date, realDate: Date, clockScale: Double = 1,
+              scheduleCleared: Bool = false) {
     self.patientID = patientID
     self.administratorID = administratorID
     self.administratorName = administratorName
@@ -32,6 +36,7 @@ public struct CompanionSnapshot: Codable, Sendable {
     self.logicalDate = logicalDate
     self.realDate = realDate
     self.clockScale = clockScale > 0 ? clockScale : 1
+    self.scheduleCleared = scheduleCleared
   }
 
   public func nextReminder(for event: MedicationEvent) -> Date {
@@ -49,6 +54,12 @@ public struct CompanionSnapshot: Codable, Sendable {
     events.filter { $0.status != .completed }.min {
       nextReminder(for: $0) < nextReminder(for: $1)
     }
+  }
+
+  public func canReplace(_ cached: CompanionSnapshot?) -> Bool {
+    guard let cached else { return true }
+    guard realDate >= cached.realDate else { return false }
+    return ready || scheduleCleared == true || !cached.ready
   }
 }
 

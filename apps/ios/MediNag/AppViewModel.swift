@@ -311,7 +311,7 @@ final class AppViewModel: ObservableObject {
       }
       if response == .yesIWill {
         do {
-          // The coordinator has registered the replacement AlarmKit alarm.
+          // The coordinator has registered the replacement notification queue.
           // Reconcile immediately so the patient sees confirmation even when
           // the Firestore listener delivered the snooze while `isWorking` was
           // suppressing its normal reconciliation pass.
@@ -758,19 +758,33 @@ final class AppViewModel: ObservableObject {
       readinessMessage: connected
         ? (!eventsReceived ? "Synchronizing doses with iPhone…" :
             (notificationReadiness == .failed || notificationReadiness == .denied
-              ? "Check alarm readiness on iPhone"
+              ? "Check notification readiness on iPhone"
               : notificationReadiness == .needsPermission
-                ? "Allow alarms on iPhone" : "Alarms managed by iPhone"))
+                ? "Allow notifications on iPhone" : "Independent notifications on both devices"))
         : "Sign in and choose your schedule in MediNag on iPhone.",
-      logicalDate: timeline.now, realDate: Date(), clockScale: timeline.realSecondsPerLogicalSecond
+      logicalDate: timeline.now, realDate: Date(), clockScale: timeline.realSecondsPerLogicalSecond,
+      scheduleCleared: state == .signedOut || state == .choosingSchedule
     )
   }
 
-  private func publishWatchSnapshot() { companionSession.publish(watchSnapshot()) }
+  private func publishWatchSnapshot() {
+    // A cold start is not a sign-out. Keep the Watch's OS-owned notifications
+    // intact until real data or an authoritative relationship change arrives.
+    switch state {
+    case .ready: guard eventsReceived else { return }
+    case .signedOut, .choosingSchedule: break
+    default: return
+    }
+    companionSession.publish(watchSnapshot())
+  }
 
   private func handleWatchCommand(_ command: CompanionCommand) async -> CompanionReply {
     await initialization?.value
     guard let response = command.response else {
+      guard state == .ready || state == .signedOut || state == .choosingSchedule else {
+        return CompanionReply(snapshot: watchSnapshot(), accepted: false,
+          message: "iPhone reconnecting. Last synced reminders remain active.")
+      }
       if state == .ready, let plan = currentPlan {
         do {
           let refreshed = try await FirebaseFollowedPlanRepository(administratorID: plan.id)

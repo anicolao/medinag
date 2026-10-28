@@ -3,6 +3,27 @@ import MediNagCore
 import XCTest
 
 final class CompanionModelsTests: XCTestCase {
+  func testPhoneRestartCannotEraseIndependentWatchRemindersButUnlinkCan() throws {
+    let now = Date()
+    func snapshot(ready: Bool, cleared: Bool = false, date: Date) -> CompanionSnapshot {
+      CompanionSnapshot(patientID: ready ? "unit-patient" : nil,
+        administratorID: ready ? "unit-admin" : nil, administratorName: "Unit admin",
+        planName: "Unit plan", events: [], snoozeMinutes: 10, maximumReminderCount: 3,
+        ready: ready, readinessMessage: "", logicalDate: date, realDate: date,
+        scheduleCleared: cleared)
+    }
+    let cached = snapshot(ready: true, date: now)
+    XCTAssertFalse(snapshot(ready: false, date: now.addingTimeInterval(1)).canReplace(cached))
+    XCTAssertTrue(snapshot(ready: false, cleared: true, date: now.addingTimeInterval(1)).canReplace(cached))
+    XCTAssertTrue(snapshot(ready: true, date: now.addingTimeInterval(1)).canReplace(cached))
+    XCTAssertFalse(snapshot(ready: true, date: now.addingTimeInterval(-1)).canReplace(cached))
+    // Older saved snapshots decode without the newly introduced optional flag.
+    let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(cached)) as! [String: Any]
+    let older = encoded.filter { $0.key != "scheduleCleared" }
+    let restored = try JSONDecoder().decode(CompanionSnapshot.self, from: JSONSerialization.data(withJSONObject: older))
+    XCTAssertNil(restored.scheduleCleared)
+    XCTAssertTrue(restored.ready)
+  }
   func testResponseVersionRejectsDuplicateSnoozesButNotTimestampRounding() {
     let date = Date(timeIntervalSince1970: 1_800_000_000)
     var event = MedicationEvent(id: "unit-event", scheduleID: "unit-schedule", medicationName: "Unit dose",

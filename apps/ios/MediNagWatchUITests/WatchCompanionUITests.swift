@@ -45,13 +45,17 @@ final class WatchCompanionUITests: XCTestCase {
         .sameSize(taken, later, "Neither response has stronger visual weight"),
       ], screenshotElement: app.otherElements["watch-content"])
     later.tap()
-    try tester.step("watch-response-pending", description: "The Watch waits for a server-confirmed response",
-      verifications: [.exists(app.staticTexts["watch-progress"], "A pending response is not displayed as saved")],
-      screenshotElement: app.otherElements["watch-content"])
     let predicate = NSPredicate(format: "value CONTAINS %@", "|snoozed|1")
     let acknowledged = XCTNSPredicateExpectation(predicate: predicate, object: content)
     XCTAssertEqual(XCTWaiter.wait(for: [acknowledged], timeout: 2), .completed,
       "The real iPhone transaction must acknowledge snooze before another Watch response")
+    try tester.step("watch-snoozed", description: "The Watch receives the server-confirmed snooze",
+      verifications: [
+        StepVerification(spec: "The server-confirmed snooze version reaches the Watch") {
+          (content.value as? String)?.contains("|snoozed|1") == true
+        },
+        .notExists(app.staticTexts["watch-progress"], "No pending response remains after the server acknowledgement"),
+      ], screenshotElement: content)
     taken.tap()
     let completed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "NOT (value BEGINSWITH %@)", firstID + "|"), object: content)
     XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 2), .completed)
