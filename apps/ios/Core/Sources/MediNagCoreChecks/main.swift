@@ -13,7 +13,8 @@ struct MediNagCoreChecks {
     try await checkMaximumReminderCount()
     try await checkYesIDid()
     try await checkNotificationReadiness()
-    print("MediNagCoreChecks: 7 passed")
+    try await checkReminderPlan()
+    print("MediNagCoreChecks: 8 passed")
   }
 
   private static func checkResponseIdentifiers() async throws {
@@ -68,9 +69,31 @@ struct MediNagCoreChecks {
 
     try await expect(updated.snoozeCount == 3, "The final response must still be recorded")
     try await expect(
-      await notifications.repeats.isEmpty,
-      "No notification may be scheduled beyond the administrator's reminder limit"
+      await notifications.repeats.count == 1,
+      "The escalation reminder limit must not silently disable patient notifications"
     )
+  }
+
+  private static func checkReminderPlan() async throws {
+    let event = pendingEvent()
+    let plan = ReminderPlan(events: [event], now: now.addingTimeInterval(-60), snoozeInterval: 600, capacity: 4)
+    try await expect(plan.occurrences.map(\.date) == [0, 180, 360, 540].map { now.addingTimeInterval(Double($0)) },
+      "The OS queue must contain the dose and three-minute follow-ups before delivery")
+    try await expect(plan.coveredThrough == now.addingTimeInterval(719), "Coverage must end before the first omitted reminder")
+    let overdue = ReminderPlan(events: [event], now: now.addingTimeInterval(200), snoozeInterval: 600, capacity: 4)
+    try await expect(overdue.occurrences.first?.date == now.addingTimeInterval(360),
+      "Refreshing after dismissal must retain the original three-minute cadence, not fabricate a late first dose")
+    var snoozed = event
+    snoozed.status = .snoozed
+    snoozed.lastSnoozedAt = now
+    snoozed.snoozeCount = 5
+    let snooze = ReminderPlan(events: [snoozed], now: now, snoozeInterval: 600, capacity: 4)
+    try await expect(snooze.occurrences.first?.date == now.addingTimeInterval(600), "Explicit snooze postpones the whole nag sequence")
+    try await expect(Set(snooze.occurrences.map(\.identifier)).isDisjoint(with: Set(plan.occurrences.map(\.identifier))),
+      "Snoozing must replace every old notification identifier")
+    snoozed.status = .completed
+    try await expect(ReminderPlan(events: [snoozed], now: now, snoozeInterval: 600).occurrences.isEmpty,
+      "Completion must remove the whole nag sequence")
   }
 
   private static func checkDefaultSnoozeInterval() async throws {

@@ -32,11 +32,11 @@ final class WatchPairingUITests: XCTestCase {
     XCTAssertTrue(permission.waitForExistence(timeout: 2))
     permission.buttons["Allow"].tap()
     let tester = TestStepHelper(testCase: self, application: app, storyID: "006-watch-companion", startingStepIndex: 1)
-    try tester.step("phone-following", description: "The iPhone receives the published dose and registers its system alarm",
+    try tester.step("phone-following", description: "The iPhone receives the published dose and registers its actionable notifications",
                     verifications: [
                       .labelContains(app.staticTexts["next-dose-name"], environment.medicationName, "The real Firestore dose is visible on iPhone"),
                       .labelContains(app.descendants(matching: .any).matching(identifier: "pending-reminder-count").firstMatch,
-                                     "6 of 6", "iOS confirms the scheduled medication alarms"),
+                                     "60 of 60", "iOS confirms the scheduled medication notifications"),
                     ], screenshotElement: app.otherElements["reminder-diagnostics"])
   }
 }

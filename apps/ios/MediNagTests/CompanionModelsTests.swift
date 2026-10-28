@@ -23,7 +23,7 @@ final class CompanionModelsTests: XCTestCase {
     XCTAssertFalse(event.hasSameResponseVersion(as: copy))
   }
 
-  func testWatchCannotRespondEarlyAndUsesConfiguredSnooze() throws {
+  func testWatchResponseWindowIsStrictlyLessThanFifteenMinutes() throws {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     var event = MedicationEvent(id: "unit-event", scheduleID: "unit-schedule", medicationName: "Unit test dose",
                                 timeZone: "America/Toronto", scheduledTime: now.addingTimeInterval(60), status: .pending, snoozeCount: 0)
@@ -32,12 +32,16 @@ final class CompanionModelsTests: XCTestCase {
                          planName: "Unit plan", events: [event], snoozeMinutes: 15, maximumReminderCount: 3,
                          ready: true, readinessMessage: "", logicalDate: now, realDate: now)
     }
-    XCTAssertFalse(snapshot().canRespond(to: event, at: now))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now))
+    XCTAssertFalse(snapshot().canRespond(to: event, at: now.addingTimeInterval(-840)))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(-839)))
     XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(60)))
     event.status = .snoozed
     event.snoozeCount = 1
     event.lastSnoozedAt = now
-    XCTAssertFalse(snapshot().canRespond(to: event, at: now.addingTimeInterval(899)))
+    XCTAssertFalse(snapshot().canRespond(to: event, at: now))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(1)))
+    XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(899)))
     XCTAssertTrue(snapshot().canRespond(to: event, at: now.addingTimeInterval(900)))
     event.status = .completed
     XCTAssertFalse(snapshot().canRespond(to: event, at: now.addingTimeInterval(3600)))

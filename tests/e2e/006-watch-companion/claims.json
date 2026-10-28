@@ -14,7 +14,7 @@
     }
   },
   "environments": {
-    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The clock accelerates real iPhone AlarmKit dates. Physical Watch alarm mirroring/sound/haptics are not verified by these captures."
+    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The clock scales production UserNotifications dates. This story verifies responses and synchronization, not physical simultaneous notification delivery, sound or haptics."
   },
   "preconditions": [
     "An administrator creates and publishes the dose through the dashboard.",
@@ -22,7 +22,7 @@
     "No credentials or fixture schedules are installed in the Watch app.",
     "Watch sends actual response commands; only an acknowledged phone write changes its displayed state.",
     "Exact PNG comparison; two-second maximum condition waits and no arbitrary test delays.",
-    "The patient uses the visible Refresh from iPhone control on initial Watch launch. This story does not claim a two-second bound for first-time system pairing/background context delivery."
+    "The Watch requests the current schedule automatically on activation. Physical dual-device routing, dismissal follow-ups, offline cancellation and sound must pass the device checklist separately."
   ],
   "steps": [
     {
@@ -68,23 +68,9 @@
       ]
     },
     {
-      "id": "watch-setup",
-      "surface": "watchos",
-      "description": "The Watch asks for setup on the paired iPhone",
-      "image": "000-watch-setup.png",
-      "claims": [
-        {
-          "id": "watch.setup",
-          "text": "No schedule or identity is invented on Watch",
-          "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
-        }
-      ]
-    },
-    {
       "id": "phone-following",
       "surface": "ios",
-      "description": "The iPhone receives the published dose and registers its system alarm",
+      "description": "The iPhone receives the published dose and registers its actionable notifications",
       "image": "001-phone-following.png",
       "claims": [
         {
@@ -95,23 +81,23 @@
         },
         {
           "id": "watch.phone.alarm",
-          "text": "iOS confirms the scheduled medication alarms",
+          "text": "iOS confirms the scheduled medication notifications",
           "environment": "connected-pair",
           "assertion": "XCTest StepVerification matching this claim text"
         }
       ]
     },
     {
-      "id": "watch-refresh-schedule",
+      "id": "watch-setup",
       "surface": "watchos",
-      "description": "The patient refreshes the Watch schedule from the paired iPhone",
-      "image": "001-watch-refresh-schedule.png",
+      "description": "The Watch asks for setup on the paired iPhone",
+      "image": "000-watch-setup.png",
       "claims": [
         {
-          "id": "watch.refresh",
-          "text": "The public Refresh from iPhone action is ready",
+          "id": "watchos.watch-setup.1",
+          "text": "No schedule or identity is invented on Watch",
           "environment": "connected-pair",
-          "assertion": "XCTest hittable/enabled real Watch refresh button, followed by a real UI tap"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         }
       ]
     },
@@ -119,115 +105,85 @@
       "id": "watch-dose",
       "surface": "watchos",
       "description": "WatchConnectivity delivers the actual followed medication dose",
-      "image": "002-watch-dose.png",
+      "image": "001-watch-dose.png",
       "claims": [
         {
-          "id": "watch.dose",
-          "text": "Watch shows the dose created through the dashboard",
+          "id": "watchos.watch-dose.1",
+          "text": "The Watch shows the dose created through the dashboard",
           "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         },
         {
-          "id": "watch.dose.ready",
-          "text": "Watch explains that its paired iPhone owns the alarms",
+          "id": "watchos.watch-dose.2",
+          "text": "The Watch has no dashboard controls",
           "environment": "connected-pair",
-          "assertion": "XCTest labelContains watch-alarm-readiness"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-dose.3",
+          "text": "The administrator header does not crowd the dose",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         }
       ]
     },
     {
       "id": "watch-response-actions",
       "surface": "watchos",
-      "description": "Both Watch response actions have equal weight",
-      "image": "003-watch-response-actions.png",
+      "description": "The nearby dose has just two equally weighted response buttons",
+      "image": "002-watch-response-actions.png",
       "claims": [
         {
-          "id": "watch.actions.did",
-          "text": "Yes, I did is available on Watch",
+          "id": "watchos.watch-response-actions.1",
+          "text": "Yes, I did is visible without scrolling",
           "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         },
         {
-          "id": "watch.actions.will",
-          "text": "Yes, I will is available on Watch",
+          "id": "watchos.watch-response-actions.2",
+          "text": "Yes, I will is visible without scrolling",
           "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         },
         {
-          "id": "watch.actions.equal",
-          "text": "Neither Watch response is a default or stronger action",
+          "id": "watchos.watch-response-actions.3",
+          "text": "Neither response has stronger visual weight",
           "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         }
       ]
     },
     {
-      "id": "watch-choose-snooze",
+      "id": "watch-response-pending",
       "surface": "watchos",
-      "description": "The patient chooses the equally weighted Watch snooze action",
-      "image": "004-watch-choose-snooze.png",
+      "description": "The Watch waits for a server-confirmed response",
+      "image": "003-watch-response-pending.png",
       "claims": [
         {
-          "id": "watch.choose-snooze",
-          "text": "The actual Yes, I will control is ready to tap",
+          "id": "watchos.watch-response-pending.1",
+          "text": "A pending response is not displayed as saved",
           "environment": "connected-pair",
-          "assertion": "XCTest hittable and enabled on the real Watch snooze button"
-        }
-      ]
-    },
-    {
-      "id": "watch-repeat",
-      "surface": "watchos",
-      "description": "A confirmed Watch snooze produces a real repeat iOS alarm",
-      "image": "005-watch-repeat.png",
-      "claims": [
-        {
-          "id": "watch.repeat",
-          "text": "The phone confirms the Firestore snooze rather than optimistic Watch state",
-          "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
-        }
-      ]
-    },
-    {
-      "id": "watch-completion-pending",
-      "surface": "watchos",
-      "description": "Watch displays progress while awaiting the real phone response",
-      "image": "006-watch-completion-pending.png",
-      "claims": [
-        {
-          "id": "watch.completion-pending",
-          "text": "The patient sees an actual in-flight confirmation state",
-          "environment": "connected-pair",
-          "assertion": "XCTest labelContains watch-notice Connecting to iPhone while the real WatchConnectivity request is pending"
-        }
-      ]
-    },
-    {
-      "id": "watch-server-completed",
-      "surface": "watchos",
-      "description": "The server-acknowledged completed event reaches Watch",
-      "image": "007-watch-server-completed.png",
-      "claims": [
-        {
-          "id": "watch.server-completed",
-          "text": "The real server transaction has completed before the final alarm acknowledgement",
-          "environment": "connected-pair",
-          "assertion": "XCTest labelContains watch-completed event row after the production server transaction"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         }
       ]
     },
     {
       "id": "watch-completed",
       "surface": "watchos",
-      "description": "The phone confirms completion from the Watch response",
-      "image": "008-watch-completed.png",
+      "description": "The server-confirmed completion removes this dose from the Watch",
+      "image": "004-watch-completed.png",
       "claims": [
         {
-          "id": "watch.completed",
-          "text": "Completion is acknowledged only after the real Firestore write and alarm reconciliation",
+          "id": "watchos.watch-completed.1",
+          "text": "The completed medication occurrence is no longer the Watch's current dose",
           "environment": "connected-pair",
-          "assertion": "XCTest StepVerification matching this claim text"
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-completed.2",
+          "text": "The phone has acknowledged the completion",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
         }
       ]
     },

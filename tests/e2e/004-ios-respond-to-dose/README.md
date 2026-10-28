@@ -1,5 +1,11 @@
 # Test: Lori schedules and Steve responds to a dose
 
+> Historical AlarmKit walkthrough: the current implementation uses regular
+> actionable notifications and independent phone/Watch queues. The claims and
+> native test have changed; the screenshots below do not validate that new
+> design. Current sound/routing checks are in
+> [WATCH_NOTIFICATION_TESTING.md](../../../WATCH_NOTIFICATION_TESTING.md).
+
 > As Lori and Steve, we want a dashboard schedule to become an iOS notification and Steve’s response to return to the dashboard.
 
 ## Surface coverage

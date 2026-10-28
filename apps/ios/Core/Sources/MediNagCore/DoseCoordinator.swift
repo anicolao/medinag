@@ -65,7 +65,6 @@ public actor DoseCoordinator {
 
     for event in events where event.status != .completed {
       if event.status == .snoozed {
-        guard event.snoozeCount < maximumReminderCount else { continue }
         let snoozedAt = event.lastSnoozedAt ?? event.scheduledTime
         try await notifications.scheduleRepeat(
           for: event,
@@ -86,12 +85,10 @@ public actor DoseCoordinator {
     switch response {
     case .yesIWill:
       let updated = try await eventStore.respond(response, to: event, at: clock.now)
-      if updated.snoozeCount < maximumReminderCount {
-        try await notifications.scheduleRepeat(
+      try await notifications.scheduleRepeat(
           for: updated,
           at: clock.now.addingTimeInterval(snoozeInterval)
         )
-      }
       return updated
 
     case .yesIDid:

@@ -10,6 +10,7 @@
 		00BF20E1E4C15677C229AFF8 /* 006-watch-companion-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E9DED6AAD6DF6EF68F32E1C /* 006-watch-companion-claims.json */; };
 		09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */; };
 		121F0F2704A37FD4377A17D2 /* 004-ios-respond-to-dose-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */; };
+		18813EDBADEA939F200D330F /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
 		1C9B2DEA9A595B0C0611ECE7 /* 005-notification-failure-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */; };
 		2119AAE55EFA6B65A7D612F8 /* WatchPairingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6BBFC88A0C012B4B571B799 /* WatchPairingUITests.swift */; };
@@ -24,11 +25,13 @@
 		430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */; };
 		470882BFE2E693C7EF0A374F /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3C74746627D6BF26ECF6DCC1 /* MediNagCore */; };
 		5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F2D0A0FBA33DECBAAAC014 /* README.md */; };
+		60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
 		726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A35C5F490D783A4224F82302 /* FirebaseCore */; };
 		7D991235E598EBA73F04C765 /* TestStepHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827A83DB040E02286EA2824 /* TestStepHelper.swift */; };
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
+		98D2C5272C3851AE631EA207 /* ReminderPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */; };
 		9F0D5242AA773DB2C1BC00F6 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = F16159FF6F437046BB1C6A4A /* MediNagCore */; };
 		A7F834F2CC01371860D6A5D4 /* WatchCompanionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0B0C5EC339DAA7FD9F11A16 /* WatchCompanionUITests.swift */; };
 		A8347510D7D1BD1F636567A0 /* CompanionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */; };
@@ -116,6 +119,7 @@
 		8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
 		8FD40690383616CF75360A1A /* MediNagApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagApp.swift; sourceTree = "<group>"; };
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPlanTests.swift; sourceTree = "<group>"; };
 		A0D5968B67C3A32EAE04FAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
 		A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagWatchApp.swift; sourceTree = "<group>"; };
@@ -129,6 +133,7 @@
 		D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespondToDoseUITests.swift; sourceTree = "<group>"; };
 		D84D3ED11E3629FD0FC1A856 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D8EDA23C6B76FF5E6490770D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceReminderNotifications.swift; sourceTree = "<group>"; };
 		E0B0C5EC339DAA7FD9F11A16 /* WatchCompanionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanionUITests.swift; sourceTree = "<group>"; };
 		E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
 		E6BBFC88A0C012B4B571B799 /* WatchPairingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPairingUITests.swift; sourceTree = "<group>"; };
@@ -229,6 +234,7 @@
 			isa = PBXGroup;
 			children = (
 				BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */,
+				DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -280,6 +286,7 @@
 			children = (
 				558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */,
 				06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */,
+				97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */,
 			);
 			path = MediNagTests;
 			sourceTree = "<group>";
@@ -548,6 +555,7 @@
 				E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */,
 				66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */,
 				E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */,
+				18813EDBADEA939F200D330F /* DeviceReminderNotifications.swift in Sources */,
 				828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */,
 				B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */,
 				3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */,
@@ -574,6 +582,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2EF3171D42CBB859DBAD9437 /* CompanionSession.swift in Sources */,
+				60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */,
 				430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -584,6 +593,7 @@
 			files = (
 				A8347510D7D1BD1F636567A0 /* CompanionModelsTests.swift in Sources */,
 				24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */,
+				98D2C5272C3851AE631EA207 /* ReminderPlanTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

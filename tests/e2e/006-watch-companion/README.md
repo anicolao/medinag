@@ -1,5 +1,15 @@
 # Watch companion: verification in progress
 
+## Current design supersedes the earlier evidence below
+
+The current source replaces AlarmKit with independent actionable notification
+queues and a one-dose Watch screen. The claims and native tests have been
+updated accordingly; earlier screenshots and passing alarm runs below do not
+validate this implementation. See [the physical-device procedure](../../../WATCH_NOTIFICATION_TESTING.md).
+No new screenshot baseline or simultaneous audible-delivery claim is approved.
+
+## Earlier build 10 evidence (historical only)
+
 The Watch companion is implemented and uploaded for manual testing in TestFlight
 0.1.0 (10). This is **not yet an approved end-to-end walkthrough** or a green CI
 result.

@@ -577,6 +577,10 @@ private struct NotificationReadinessCard: View {
         )
         .font(.headline)
         .accessibilityIdentifier("notification-readiness")
+        Text("For alerts on both devices: in the iPhone Watch app, turn off MediNag notification mirroring, then open MediNag on your Watch and allow its own notifications. Follow-ups repeat every 3 minutes within the registered coverage window.")
+          .font(.caption2)
+          .foregroundStyle(MediNagColor.muted)
+          .accessibilityIdentifier("independent-watch-notification-instructions")
         Text(
           viewModel.notificationReadiness == .ready
             ? "iOS has \(viewModel.reminderDiagnostics.actualPendingCount) scheduled dose alert\(viewModel.reminderDiagnostics.actualPendingCount == 1 ? "" : "s")."

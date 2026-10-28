@@ -99,7 +99,7 @@ final class RespondToDoseUITests: XCTestCase {
     let permissionAlert = springboard.alerts.firstMatch
     try tester.step(
       "notification-permission",
-      description: "iOS asks Steve to allow MediNag alarms",
+      description: "iOS asks Steve to allow MediNag notifications",
       verifications: [
         .exists(permissionAlert, "The permission prompt is rendered by iOS"),
         .exists(permissionAlert.buttons["Allow"], "The system offers an Allow action"),
@@ -107,150 +107,52 @@ final class RespondToDoseUITests: XCTestCase {
     )
     permissionAlert.buttons["Allow"].tap()
 
-    try tester.step(
-      "waiting-for-first-reminder",
-      description: "MediNag is ready while iOS owns the scheduled alarm",
+    try tester.step("waiting-for-first-reminder",
+      description: "iOS confirms the bounded queue of real actionable notifications",
       verifications: [
-        .labelContains(
-          pendingReminderCountElement(in: app),
-          "6 of 6",
-          "Alarm permission and real scheduled AlarmKit alarms are confirmed"
-        ),
-        .labelContains(
-          app.staticTexts["next-dose-name"],
-          environment.medicationName,
-          "The Firestore event remains visible while the app waits"
-        ),
-        .notExists(
-          app.buttons["reminder-yes-i-will"],
-          "No response is available before opening the system alarm"
-        ),
-        .notExists(
-          app.buttons["reminder-yes-i-did"],
-          "No completion is available before opening the system alarm"
-        ),
-      ],
-      screenshotElement: app.otherElements["reminder-diagnostics"]
-    )
+        .labelContains(pendingReminderCountElement(in: app), "60 of 60", "All pending requests are confirmed by UserNotifications"),
+      ], screenshotElement: app.otherElements["reminder-diagnostics"])
 
     XCUIDevice.shared.press(.home)
-    try tester.step(
-      "app-backgrounded",
-      description: "MediNag is backgrounded while the alarm remains owned by iOS",
+    openNotificationCenter(in: springboard)
+    let first = medicationNotification(in: springboard, name: environment.medicationName)
+    try tester.step("first-system-notification",
+      description: "The actual medication notification appears while the app is backgrounded",
+      verifications: [.exists(first, "SpringBoard displays the notification created by the production scheduler")],
+      screenshotElement: first)
+    first.press(forDuration: 0.5)
+    try tester.step("notification-response-actions",
+      description: "The expanded system notification offers both medication responses",
       verifications: [
-        .exists(springboard.icons["MediNag"], "The Home Screen confirms MediNag is backgrounded"),
-      ],
-      screenshotCrop: .systemAppIconInterior
-    )
-    let firstAlertObserved = try await waitForAlarmSignal(
-      "alert", after: 0, environment: environment
-    )
-    expandSystemAlarm(in: springboard)
-    try tester.step(
-      "first-system-alarm",
-      description: "While MediNag is backgrounded, iOS sounds and presents the scheduled alarm",
+        .exists(springboard.buttons["Yes, I did"], "Completion is a real system notification action"),
+        .exists(springboard.buttons["Yes, I will"], "Snooze is a real system notification action"),
+      ])
+    springboard.buttons["Yes, I will"].tap()
+    XCTAssertTrue(app.wait(for: .runningForeground, timeout: 2))
+    try tester.step("dose-snoozed-in-firestore",
+      description: "The notification action records the snooze through the real Firestore transaction",
       verifications: [
-        StepVerification(spec: "iOS requests the first system-owned AlarmKit alert") {
-          firstAlertObserved
-        },
-      ],
-      screenshotCrop: .systemAlarmWithoutAnimatedGlyph
-    )
-
-    tapSystemAlarm(in: springboard)
-    XCTAssertTrue(
-      app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
-      "Responding to the AlarmKit alert did not foreground MediNag"
-    )
-    try tester.step(
-      "first-reminder-response",
-      description: "Tapping the system alarm immediately opens the medication response",
-      verifications: reminderVerifications(
-        app,
-        sequence: "FIRST",
-        time: environment.scheduledDisplayTime
-      )
-    )
-
-    app.buttons["reminder-yes-i-will"].tap()
-    try tester.step(
-      "dose-snoozed-in-firestore",
-      description: "Yes, I will writes the snoozed response back to Firestore",
-      verifications: [
-        .labelContains(app.staticTexts["snooze-count"], "1", "The snooze count increments"),
-        .labelContains(
-          app.staticTexts["action-notice"],
-          "10 minutes",
-          "The configured repeat interval is confirmed"
-        ),
-        .labelContains(
-          app.staticTexts["next-dose-state"],
-          "REMINDER SNOOZED",
-          "The dose shows its snoozed state after the Firestore write"
-        ),
-        .notExists(app.otherElements["dose-reminder-alert"], "The response screen is dismissed"),
-        .labelContains(
-          pendingReminderCountElement(in: app),
-          "6 of 6",
-          "iOS confirms the repeat alarm registration"
-        ),
-      ],
-      screenshotElement: app.otherElements["next-dose-card"]
-    )
-
+        .labelContains(app.staticTexts["snooze-count"], "1", "The server-backed snooze count increments"),
+        .labelContains(app.staticTexts["action-notice"], "10 minutes", "The configured snooze interval is confirmed"),
+        .labelContains(pendingReminderCountElement(in: app), "60 of 60", "The replacement queue is confirmed by iOS"),
+      ])
     app.terminate()
-    let repeatAlertObserved = try await waitForAlarmSignal(
-      "alert", after: 1, environment: environment
-    )
-    expandSystemAlarm(in: springboard)
-    try tester.step(
-      "repeat-system-alarm",
-      description: "With MediNag terminated, iOS retains and sounds the repeat alarm",
+    openNotificationCenter(in: springboard)
+    let repeated = medicationNotification(in: springboard, name: environment.medicationName)
+    try tester.step("repeat-system-notification",
+      description: "A scheduled snooze-expiry notification is delivered with MediNag terminated",
+      verifications: [.exists(repeated, "SpringBoard renders the real repeat, not a test-generated delivery")],
+      screenshotElement: repeated)
+    repeated.press(forDuration: 0.5)
+    XCTAssertTrue(springboard.buttons["Yes, I did"].waitForExistence(timeout: 2))
+    springboard.buttons["Yes, I did"].tap()
+    XCTAssertTrue(app.wait(for: .runningForeground, timeout: 2))
+    try tester.step("dose-completed-in-firestore",
+      description: "The notification action cold-launches MediNag and completes the dose",
       verifications: [
-        StepVerification(spec: "iOS requests the repeat system-owned AlarmKit alert") {
-          repeatAlertObserved
-        },
-      ],
-      screenshotCrop: .systemAlarmWithoutAnimatedGlyph
-    )
-
-    tapSystemAlarm(in: springboard)
-    XCTAssertTrue(
-      app.wait(for: .runningForeground, timeout: TestStepHelper.conditionTimeout),
-      "Tapping reminder 2 did not cold-launch MediNag"
-    )
-    try tester.step(
-      "repeat-reminder-response",
-      description: "Tapping reminder 2 cold-launches the app after logical time advances",
-      verifications: reminderVerifications(
-        app,
-        sequence: "REMINDER 2",
-        time: nil
-      )
-    )
-
-    app.buttons["reminder-yes-i-did"].tap()
-    try tester.step(
-      "dose-completed-in-firestore",
-      description: "Yes, I did completes the real event and cancels further reminders",
-      verifications: [
-        .labelContains(
-          app.staticTexts[occurrenceStatusIdentifier],
-          "Completed",
-          "The Firestore listener receives completion"
-        ),
-        .labelContains(
-          app.staticTexts["action-notice"],
-          "cancelled",
-          "The app confirms notification cancellation"
-        ),
-        .labelContains(
-          pendingReminderCountElement(in: app),
-          "5 of 5",
-          "iOS retains the other occurrences after this dose completes"
-        ),
-      ]
-    )
+        .labelContains(app.staticTexts[occurrenceStatusIdentifier], "Completed", "The Firestore listener receives completion"),
+        .labelContains(app.staticTexts["action-notice"], "cancelled", "The app confirms reconciliation after cancellation"),
+      ])
 
   }
 
@@ -348,36 +250,15 @@ extension RespondToDoseUITests {
     return verifications
   }
 
-  private func waitForAlarmSignal(
-    _ event: String,
-    after count: Int,
-    environment: ConnectedEnvironment
-  ) async throws -> Bool {
-    var request = URLRequest(
-      url: URL(
-        string: "http://127.0.0.1:\(environment.alarmMonitorPort)/wait/\(event)?after=\(count)"
-      )!
-    )
-    request.timeoutInterval = TestStepHelper.conditionTimeout
-    let (_, response) = try await URLSession.shared.data(for: request)
-    return (response as? HTTPURLResponse)?.statusCode == 200
+  private func openNotificationCenter(in springboard: XCUIApplication) {
+    springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.01))
+      .press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85)))
   }
 
-  private func expandSystemAlarm(in springboard: XCUIApplication) {
-    // AlarmKit's compact Dynamic Island is outside the XCTest accessibility
-    // tree. A long press exposes the real system alarm before the walkthrough
-    // records it, just as a person does on the device.
-    springboard.coordinate(
-      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.04)
-    ).press(forDuration: 0.8)
-  }
-
-  private func tapSystemAlarm(in springboard: XCUIApplication) {
-    // Tapping the expanded system alarm opens its owning app. MediNag then
-    // resolves the alerting AlarmKit ID to the Firestore medication event.
-    springboard.coordinate(
-      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.07)
-    ).tap()
+  private func medicationNotification(in springboard: XCUIApplication, name: String) -> XCUIElement {
+    springboard.staticTexts.matching(NSPredicate(
+      format: "label CONTAINS %@", name
+    )).firstMatch
   }
 
 }

@@ -42,7 +42,13 @@ public struct CompanionSnapshot: Codable, Sendable {
 
   public func canRespond(to event: MedicationEvent, at date: Date = Date()) -> Bool {
     let now = logicalDate.addingTimeInterval(date.timeIntervalSince(realDate) / clockScale)
-    return ready && event.status != .completed && nextReminder(for: event) <= now
+    return ready && event.status != .completed && nextReminder(for: event).timeIntervalSince(now) < 15 * 60
+  }
+
+  public var nextEvent: MedicationEvent? {
+    events.filter { $0.status != .completed }.min {
+      nextReminder(for: $0) < nextReminder(for: $1)
+    }
   }
 }
 

@@ -17,6 +17,6 @@
     "Firebase Auth and Firestore SDKs/security rules",
     "WatchConnectivity on a real paired Simulator session",
     "Transactional patient responses",
-    "iPhone AlarmKit scheduling and cancellation"
+    "Independent UserNotifications scheduling on iPhone and Watch; physical dual-device routing remains a manual device check"
   ]
 }

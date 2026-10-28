@@ -327,9 +327,7 @@ final class AppViewModel: ObservableObject {
           )
           return false
         }
-        actionNotice = updated.snoozeCount < maximumReminderCount
-          ? "Okay. We will remind you again in \(snoozeMinutes) minutes."
-          : "Response recorded. The configured reminder limit has been reached."
+        actionNotice = "Okay. We will remind you again in \(snoozeMinutes) minutes."
       } else {
         try await reconcileNotifications()
         actionNotice = "Dose complete. Further reminders are cancelled."
@@ -716,11 +714,15 @@ final class AppViewModel: ObservableObject {
         timeZoneIdentifier: interaction.timeZoneIdentifier
       )
     case .response(let response):
-      guard events.contains(where: { $0.id == interaction.eventID }) else {
+      guard let event = events.first(where: { $0.id == interaction.eventID }) else {
         pendingNotificationInteraction = interaction
         return
       }
-      Task { await respond(response, toEventID: interaction.eventID) }
+      guard event.status != .completed, event.snoozeCount + 1 == interaction.reminderNumber else {
+        actionNotice = "This dose was already answered. Showing the current schedule."
+        return
+      }
+      Task { await respond(response, to: event) }
     }
   }
 
