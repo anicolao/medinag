@@ -1,11 +1,13 @@
 # Independent phone and Watch reminders
 
-TestFlight **0.1.0 (11)** was uploaded, processed successfully and assigned to the
-Internal group on 2026-10-28. It embeds the matching signed Watch app. Local
-checks: 14 native unit tests and eight portable core checks passed; both native
-targets compiled. The updated connected walkthroughs and physical dual-device
-delivery are not yet approved evidence. The first updated iPhone run reached
-real system delivery but failed its notification accessibility locator.
+The current manual-testing candidate is **0.1.0 (14)**, including the matching
+signed Watch app. Builds 11–13 were intermediate uploads; use 14. Local checks:
+15 native unit tests and eight portable core checks passed; both native targets
+compiled. The updated connected walkthroughs and physical dual-device delivery
+are not approved evidence. The first updated iPhone run reached real system
+delivery but failed its notification accessibility locator. The latest paired
+run failed initial Watch dose synchronization within the strict two-second
+condition. No timeouts were extended or failed captures promoted to baselines.
 
 ## Behavior
 
@@ -26,6 +28,9 @@ interactive WatchConnectivity plus a persisted background transfer. A duplicate
 or stale response cannot increment snooze twice. Neither device claims success
 until the server transaction is acknowledged. A disconnected Watch response
 remains pending and its reminders remain active until confirmation arrives.
+Transient phone startup/reconnection snapshots cannot erase a ready Watch cache
+or its queued alerts. Only a confirmed unlink/sign-out can clear it; a native
+regression test verifies this distinction and older cached-payload decoding.
 
 The Watch shows only the medication and next reminder time. At strictly less
 than 15 minutes before that time, or when overdue, it also shows the two equally

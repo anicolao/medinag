@@ -171,13 +171,17 @@ these connected runners. Preview-only visual checks use the explicitly named
 `npm run test:ui:preview`; they are not end-to-end tests and must never be
 presented as evidence of an end-to-end data flow.
 
-Use `npm run ios:e2e:watch` for the paired-companion story (US-006). It uses actual
+Use `npm run ios:e2e:watch` for the paired-companion response story (US-006). It uses actual
 WatchConnectivity between clean paired iOS 26.5 and watchOS 26.5 Simulators and
 the same isolated Firebase environment. Watch state is not injected. Because
 watchOS has no Simulator status-bar override, native captures exclude the system
 clock/navigation header or focus on the actual control being verified; retained
-pixels are never replaced or normalized. Physical Watch alarm mirroring,
-sound/haptics, and locked-phone routing remain separate device checks.
+pixels are never replaced or normalized. The response story uses a normal-speed
+clock with a logical date offset and verifies real server-backed responses, not
+notification delivery. Physical independent notification delivery, sound/haptics,
+dismissal follow-ups and locked-phone routing remain separate device checks
+described in `WATCH_NOTIFICATION_TESTING.md`. Passing this response story must
+not be presented as proof that both devices audibly alert.
 
 ## 6. Timing Requirements
 
@@ -212,7 +216,7 @@ The numbered story suite must grow with the product. At minimum, it must documen
 
 * **Admin web dashboard**: authentication; schedule creation, editing, and disabling; medication labels; snooze and escalation rules; SMS destination; today's live states; historical compliance; and export.
 * **iOS app**: notification permission and readiness; next-dose status; intrusive alert; "Yes, I will" snooze; repeat nag; "Yes, I did" completion; cancellation of further nags; history; and offline local fallback.
-* **watchOS app**: ready/next-dose status; intrusive alert; both response actions; snooze count; completion feedback; and synchronization with the phone/backend.
+* **watchOS app**: minimal next-dose view; two equal response actions when strictly less than 15 minutes away or overdue; actionable system notifications and dismissal follow-ups; confirmed snooze/completion; and synchronization with the phone/backend. Sound and dual-device routing require physical-device evidence.
 * **Closed-loop system**: a schedule created by Lori reaches both Apple clients; a Steve action appears on Lori's dashboard; an overdue unconfirmed dose produces exactly one captured SMS-gateway fixture and an escalated dashboard state.
 
 Haptics, sounds, outbound SMS, and other nonvisual effects still require programmatic verification of the emitted event or gateway request. The screenshot documents the accompanying visible state.
