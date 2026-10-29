@@ -1,0 +1,193 @@
+name: MediNag
+
+options:
+  minimumXcodeGenVersion: 2.46.0
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  E2E: debug
+  Release: release
+
+packages:
+  MediNagCore:
+    path: Core
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    exactVersion: 12.17.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS.git
+    exactVersion: 9.2.0
+
+targets:
+  MediNag:
+    type: application
+    platform: iOS
+    sources:
+      - path: MediNag
+        excludes:
+          - Resources/GoogleService-Info.plist
+      - path: Shared
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNag/Info.plist
+        PRODUCT_NAME: MediNag
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: MediNagWatch
+        embed: true
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts:
+      - name: Embed local Firebase configuration
+        basedOnDependencyAnalysis: false
+        script: |
+          configuration="$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist"
+          if [ -f "$configuration" ]; then
+            destination="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+            mkdir -p "$destination"
+            cp "$configuration" "$destination/GoogleService-Info.plist"
+
+            reversed_client_id="$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' "$configuration")"
+            case "$reversed_client_id" in
+              *[!A-Za-z0-9.-]*|'')
+                echo "GoogleService-Info.plist contains an invalid reversed client ID." >&2
+                exit 1
+                ;;
+            esac
+            product_info="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+            /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' "$product_info" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' "$product_info"
+            /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' "$product_info"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id" "$product_info"
+          fi
+
+  MediNagWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: MediNagWatch
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.watchkitapp
+        PRODUCT_NAME: MediNagWatch
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagWatch/Info.plist
+        TARGETED_DEVICE_FAMILY: "4"
+    dependencies:
+      - package: MediNagCore
+        product: MediNagCore
+
+  MediNagWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: MediNagWatchUITests
+      - path: MediNagUITests/TestStepHelper.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.watchkitapp.uitests
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagWatchUITests/Info.plist
+        TEST_TARGET_NAME: MediNagWatch
+    dependencies:
+      - target: MediNagWatch
+
+  MediNagTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MediNagTests
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.tests
+    dependencies:
+      - target: MediNag
+      - package: MediNagCore
+        product: MediNagCore
+
+  MediNagUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MediNagUITests
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      E2E: Config/E2E.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MediNagUITests/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.uitests
+        TEST_TARGET_NAME: MediNag
+    dependencies:
+      - target: MediNag
+
+schemes:
+  MediNagWatch:
+    build:
+      targets:
+        MediNagWatch: all
+        MediNagWatchUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagWatchUITests
+  MediNag:
+    build:
+      targets:
+        MediNag: all
+        MediNagTests: [test]
+        MediNagUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      # Hosted Xcode 26 runners do not include a usable LLDB version store.
+      # UI tests do not need a debugger, and disabling it prevents Xcode from
+      # timing out before XCUIApplication can launch the app under test.
+      debugEnabled: false
+      gatherCoverageData: true
+      targets:
+        - MediNagTests
+        - MediNagUITests
+    archive:
+      config: Release

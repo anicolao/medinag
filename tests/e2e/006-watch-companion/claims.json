@@ -1,0 +1,211 @@
+{
+  "storyId": "US-006",
+  "title": "Respond to a medication dose on Apple Watch",
+  "narrative": "As a patient, I want my paired Apple Watch responses to update the real medication event and administrator dashboard.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "covered"
+    },
+    "watchos": {
+      "status": "covered"
+    }
+  },
+  "environments": {
+    "connected-pair": "Isolated Firebase Auth, Firestore and Functions emulators with paired iPhone 17/iOS 26.5 and Watch Series 11 46mm/watchOS 26.5. Actual WatchConnectivity, not injected Watch state. The Watch response story uses a fixed logical offset at normal clock speed; it does not wait for or claim notification delivery. This story verifies responses and synchronization, not physical simultaneous notification delivery, sound or haptics."
+  },
+  "preconditions": [
+    "An administrator creates and publishes the dose through the dashboard.",
+    "The patient signs in with the generated Auth Emulator Google identity and follows the schedule through the iPhone UI.",
+    "No credentials or fixture schedules are installed in the Watch app.",
+    "Watch sends actual response commands; only an acknowledged phone write changes its displayed state.",
+    "Exact PNG comparison; two-second maximum condition waits and no arbitrary test delays.",
+    "The Watch requests the current schedule automatically on activation. Physical dual-device routing, dismissal follow-ups, offline cancellation and sound must pass the device checklist separately."
+  ],
+  "steps": [
+    {
+      "id": "watch-empty-dashboard",
+      "surface": "web",
+      "description": "The administrator opens an empty Firebase-connected plan",
+      "image": "000-watch-empty-dashboard.png",
+      "claims": [
+        {
+          "id": "watch.web.empty",
+          "text": "No doses exist before the administrator adds one",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    },
+    {
+      "id": "watch-published-plan",
+      "surface": "web",
+      "description": "The administrator publishes the medication dose for the paired devices",
+      "image": "001-watch-published-plan.png",
+      "claims": [
+        {
+          "id": "watch.web.published",
+          "text": "The dose is published through the real repository",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    },
+    {
+      "id": "phone-sign-in",
+      "surface": "ios",
+      "description": "The patient sets up the paired iPhone first",
+      "image": "000-phone-sign-in.png",
+      "claims": [
+        {
+          "id": "watch.phone.signin",
+          "text": "Google sign-in is available on iPhone",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "phone-following",
+      "surface": "ios",
+      "description": "The iPhone receives the published dose and registers its actionable notifications",
+      "image": "001-phone-following.png",
+      "claims": [
+        {
+          "id": "watch.phone.event",
+          "text": "The real Firestore dose is visible on iPhone",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        },
+        {
+          "id": "watch.phone.alarm",
+          "text": "iOS confirms the scheduled medication notifications",
+          "environment": "connected-pair",
+          "assertion": "XCTest StepVerification matching this claim text"
+        }
+      ]
+    },
+    {
+      "id": "watch-setup",
+      "surface": "watchos",
+      "description": "The Watch asks for setup on the paired iPhone",
+      "image": "000-watch-setup.png",
+      "claims": [
+        {
+          "id": "watchos.watch-setup.1",
+          "text": "No schedule or identity is invented on Watch",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        }
+      ]
+    },
+    {
+      "id": "watch-dose",
+      "surface": "watchos",
+      "description": "WatchConnectivity delivers the actual followed medication dose",
+      "image": "001-watch-dose.png",
+      "claims": [
+        {
+          "id": "watchos.watch-dose.1",
+          "text": "The Watch shows the dose created through the dashboard",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-dose.2",
+          "text": "The Watch has no dashboard controls",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-dose.3",
+          "text": "The administrator header does not crowd the dose",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        }
+      ]
+    },
+    {
+      "id": "watch-response-actions",
+      "surface": "watchos",
+      "description": "The nearby dose has just two equally weighted response buttons",
+      "image": "002-watch-response-actions.png",
+      "claims": [
+        {
+          "id": "watchos.watch-response-actions.1",
+          "text": "Yes, I did is visible without scrolling",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-response-actions.2",
+          "text": "Yes, I will is visible without scrolling",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-response-actions.3",
+          "text": "Neither response has stronger visual weight",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        }
+      ]
+    },
+    {
+      "id": "watch-snoozed",
+      "surface": "watchos",
+      "description": "The Watch receives the server-confirmed snooze",
+      "image": "003-watch-snoozed.png",
+      "claims": [
+        {
+          "id": "watch.snoozed.1",
+          "text": "The server-confirmed snooze version reaches the Watch",
+          "environment": "connected-pair",
+          "assertion": "XCTest checks the actual server-acknowledged Watch snapshot version and absence of the pending indicator"
+        },
+        {
+          "id": "watch.snoozed.2",
+          "text": "No pending response remains after the server acknowledgement",
+          "environment": "connected-pair",
+          "assertion": "XCTest checks the actual server-acknowledged Watch snapshot version and absence of the pending indicator"
+        }
+      ]
+    },
+    {
+      "id": "watch-completed",
+      "surface": "watchos",
+      "description": "The server-confirmed completion removes this dose from the Watch",
+      "image": "004-watch-completed.png",
+      "claims": [
+        {
+          "id": "watchos.watch-completed.1",
+          "text": "The completed medication occurrence is no longer the Watch's current dose",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        },
+        {
+          "id": "watchos.watch-completed.2",
+          "text": "The phone has acknowledged the completion",
+          "environment": "connected-pair",
+          "assertion": "XCTest assertion against actual system or application accessibility state; no injected delivery or patient data"
+        }
+      ]
+    },
+    {
+      "id": "watch-dashboard-completed",
+      "surface": "web",
+      "description": "The administrator receives the Watch completion through Firestore",
+      "image": "002-watch-dashboard-completed.png",
+      "claims": [
+        {
+          "id": "watch.web.completed",
+          "text": "The real followed occurrence is completed on the dashboard",
+          "environment": "connected-pair",
+          "assertion": "Playwright locator assertion"
+        }
+      ]
+    }
+  ]
+}

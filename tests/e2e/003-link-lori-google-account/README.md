@@ -1,41 +1,30 @@
-# Test: US-003: Lori links her existing schedules to Google
+# Test: US-003: anyone can become an administrator with Google
 
-> As Lori, I want to link my existing schedules to my Google account so that my work is preserved and ready to sync with Steve's devices.
+> As a family member, I want to sign in with Google so that I can publish one medication plan.
 
 ## Surface coverage
 
 - **Web Admin Dashboard:** covered
-- **iOS:** not-applicable — Phase 1 establishes the shared Firebase contract before the iOS client is implemented.
+- **iOS:** not-applicable — This story covers administrator onboarding in the web dashboard.
 - **watchOS:** not-applicable — The watchOS client is explicitly deferred until after the iOS MVP.
 
-## Lori sees that her guest schedules can move with her
+## A signed-out visitor sees the administrator entry point
 
-![Lori sees that her guest schedules can move with her](./screenshots/000-existing-guest-schedules.png)
-
-**Verifications:**
-
-- [x] The dashboard is deterministically ready
-- [x] The Google linking explanation is visible
-- [x] Lori can see her existing medication schedule before linking
-
-## Lori links Gmail without losing the schedule she already entered
-
-![Lori links Gmail without losing the schedule she already entered](./screenshots/001-google-account-linked.png)
+![A signed-out visitor sees the administrator entry point](./screenshots/000-administrator-sign-in.png)
 
 **Verifications:**
 
-- [x] The linked dashboard finishes rendering
-- [x] The dashboard confirms that Google and Firebase are connected
-- [x] The migration confirmation reports one preserved schedule
-- [x] The existing schedule remains available after linking
+- [x] The page explains the administrator purpose
+- [x] Google is the only sign-in method
+- [x] No email or password fields are present
 
-## Lori sees Steve's latest dose status in the shared household
+## Google Sign-In creates a new administrator plan
 
-![Lori sees Steve's latest dose status in the shared household](./screenshots/002-today-status-visible.png)
+![Google Sign-In creates a new administrator plan](./screenshots/001-administrator-created.png)
 
 **Verifications:**
 
-- [x] The Today route finishes rendering
-- [x] The completed morning dose is visible
-- [x] The dose status is completed
-- [x] The confirmation time is shown in Toronto time
+- [x] The authenticated dashboard finishes rendering
+- [x] The visitor is identified as an administrator
+- [x] A single unpublished plan is ready for its first dose
+- [x] No household linking step appears
