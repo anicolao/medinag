@@ -13,7 +13,8 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import {
   escalateMedicationEvent,
   escalationIncidentId,
-  isMedicationEventOverdue
+  isMedicationEventOverdue,
+  isMedicationEventSuperseded
 } from './escalation.js';
 import { buildOccurrences, type DoseDefinition } from './materialization.js';
 
@@ -304,12 +305,20 @@ export const checkUnconfirmedEvents = onSchedule(
         .collection('medicationEvents')
         .where('scheduledTime', '<=', cutoff)
         .get();
+      // Completed doses still form a boundary. Simultaneous medications share
+      // a dose window; only a strictly later scheduled time supersedes it.
+      const latestDue = await administratorDocument.ref.collection('medicationEvents')
+        .where('scheduledTime', '<=', Timestamp.fromDate(now))
+        .orderBy('scheduledTime', 'desc').limit(1).get();
+      const latestTime = latestDue.docs[0]?.data().scheduledTime;
 
       await Promise.all(candidates.docs.map(async (eventDocument) => {
         const event = eventDocument.data();
         if (!['pending', 'snoozed'].includes(String(event.status))) return;
         if (event.escalatedAt instanceof Timestamp) return;
         if (!(event.scheduledTime instanceof Timestamp)) return;
+        if (isMedicationEventSuperseded(event.scheduledTime.toDate(),
+          latestTime instanceof Timestamp ? latestTime.toDate() : undefined, now)) return;
         if (!isMedicationEventOverdue(
           event.scheduledTime.toDate(),
           deadlineMinutes,

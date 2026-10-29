@@ -3,7 +3,8 @@ import test from 'node:test';
 import {
   escalateMedicationEvent,
   escalationIncidentId,
-  isMedicationEventOverdue
+  isMedicationEventOverdue,
+  isMedicationEventSuperseded
 } from './escalation.js';
 
 test('creates the administrator incident before marking the event escalated', async () => {
@@ -19,6 +20,15 @@ test('creates the administrator incident before marking the event escalated', as
   });
 
   assert.deepEqual(operations, ['incident', 'event']);
+});
+
+test('a later dose retires historical escalation only when that later dose is due', () => {
+  const ten = new Date('2026-10-28T14:00:00Z');
+  const noon = new Date('2026-10-28T16:00:00Z');
+  assert.equal(isMedicationEventSuperseded(ten, noon, new Date('2026-10-28T15:59:59Z')), false);
+  assert.equal(isMedicationEventSuperseded(ten, noon, noon), true);
+  assert.equal(isMedicationEventSuperseded(noon, noon, noon), false);
+  assert.equal(isMedicationEventSuperseded(ten, undefined, noon), false);
 });
 
 test('does not mark the event when the administrator incident cannot be created', async () => {

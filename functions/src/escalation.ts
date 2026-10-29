@@ -15,6 +15,16 @@ export function isMedicationEventOverdue(
   return scheduledTime.getTime() + escalationDeadlineMinutes * 60_000 <= now.getTime();
 }
 
+export function isMedicationEventSuperseded(
+  scheduledTime: Date,
+  latestScheduledTime: Date | undefined,
+  now: Date
+): boolean {
+  return latestScheduledTime !== undefined
+    && latestScheduledTime.getTime() > scheduledTime.getTime()
+    && latestScheduledTime.getTime() <= now.getTime();
+}
+
 /**
  * Preserve the safety invariant that an event never claims to be escalated
  * unless the corresponding administrator incident already exists.
