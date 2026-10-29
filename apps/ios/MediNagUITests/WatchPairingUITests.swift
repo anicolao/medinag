@@ -35,8 +35,8 @@ final class WatchPairingUITests: XCTestCase {
     try tester.step("phone-following", description: "The iPhone receives the published dose and registers its actionable notifications",
                     verifications: [
                       .labelContains(app.staticTexts["next-dose-name"], environment.medicationName, "The real Firestore dose is visible on iPhone"),
-                      .labelContains(app.descendants(matching: .any).matching(identifier: "pending-reminder-count").firstMatch,
-                                     "60 of 60", "iOS confirms the scheduled medication notifications"),
+                      .confirmedPending(app.descendants(matching: .any).matching(identifier: "pending-reminder-count").firstMatch,
+                                     "iOS confirms the scheduled medication notifications"),
                     ], screenshotElement: app.otherElements["reminder-diagnostics"])
   }
 }

@@ -426,18 +426,19 @@ private struct TodayView: View {
           NotificationReadinessCard(viewModel: viewModel)
           ReminderDiagnosticsCard(diagnostics: viewModel.reminderDiagnostics)
 
-          if let next = viewModel.nextEvent {
-            NextDoseCard(
-              event: next,
-              administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator"
-            )
-          } else if let schedule = viewModel.schedules.first {
-            ScheduleWaitingCard(
-              schedule: schedule,
-              administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator"
-            )
-          } else {
-            EmptyPlanCard()
+          TimelineView(.periodic(from: .now, by: 1)) { _ in
+            Group {
+              if let next = viewModel.nextEvent {
+                NextDoseCard(event: next,
+                  administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator")
+              } else if let schedule = viewModel.schedules.first {
+                ScheduleWaitingCard(schedule: schedule,
+                  administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator")
+              } else {
+                EmptyPlanCard()
+              }
+            }
+            .task(id: viewModel.nextEvent?.id) { viewModel.retireSupersededReminder() }
           }
 
           if !viewModel.events.isEmpty {

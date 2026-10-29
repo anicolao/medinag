@@ -84,6 +84,14 @@ struct StepVerification {
         && abs(firstSize.height - secondSize.height) < 0.5
     }
   }
+
+  static func confirmedPending(_ element: XCUIElement, _ spec: String) -> StepVerification {
+    StepVerification(spec: spec) {
+      let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate(format: "label MATCHES %@", #".*\b([1-9][0-9]*) of \1\b.*"#), object: element)
+      return XCTWaiter.wait(for: [expectation], timeout: TestStepHelper.conditionTimeout) == .completed
+    }
+  }
 }
 
 @MainActor

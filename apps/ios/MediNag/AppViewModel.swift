@@ -50,7 +50,9 @@ final class AppViewModel: ObservableObject {
   @Published private(set) var availablePlans: [PublishedPlan] = []
   @Published private(set) var currentPlan: PublishedPlan? { didSet { publishWatchSnapshot() } }
   @Published private(set) var schedules: [MedicationSchedule] = []
-  @Published private(set) var events: [MedicationEvent] = [] { didSet { publishWatchSnapshot() } }
+  @Published private(set) var events: [MedicationEvent] = [] {
+    didSet { retireSupersededReminder(); publishWatchSnapshot() }
+  }
   @Published private(set) var notificationReadiness: NotificationReadiness = .unknown { didSet { publishWatchSnapshot() } }
   @Published private(set) var actionNotice = ""
   @Published private(set) var isWorking = false
@@ -108,8 +110,13 @@ final class AppViewModel: ObservableObject {
     companionSession.handleCommand = { [unowned self] command in await handleWatchCommand(command) }
     companionSession.reportFailure = { [weak self] error in
       await self?.reportIncident(code: "watch_sync_failed",
-                                message: "The patient iPhone could not synchronize the paired Watch.",
+                                message: "The paired Watch schedule synchronization has a persistent or non-retryable failure.",
                                 severity: "critical", context: ["error": error])
+    }
+    companionSession.reportNotificationFailure = { [weak self] error in
+      await self?.reportIncident(code: "watch_notification_registration_failed",
+        message: "The patient's Watch could not register medication reminders.",
+        severity: "critical", context: ["error": error])
     }
     initialization = Task {
       await captureAlertingAlarmsAtActivation()
@@ -119,7 +126,13 @@ final class AppViewModel: ObservableObject {
   }
 
   var nextEvent: MedicationEvent? {
-    events.first { $0.status != .completed }
+    DoseWindow.nextEvent(in: events, at: timeline.now, snoozeInterval: Double(snoozeMinutes * 60))
+  }
+
+  func retireSupersededReminder() {
+    guard let reminder = activeReminder,
+      let event = events.first(where: { $0.id == reminder.eventID }) else { return }
+    if !DoseWindow.isActive(event, among: events, at: timeline.now) { activeReminder = nil }
   }
 
   var snoozeMinutes: Int {
@@ -301,6 +314,11 @@ final class AppViewModel: ObservableObject {
   @discardableResult
   func respond(_ response: DoseResponse, to event: MedicationEvent) async -> Bool {
     guard let coordinator else { return false }
+    guard DoseWindow.isActive(event, among: events, at: timeline.now) else {
+      actionNotice = "A later dose has replaced this reminder. Its history has not been changed."
+      activeReminder = nil
+      return false
+    }
     isWorking = true
     activeReminder = nil
     defer { isWorking = false }
@@ -745,8 +763,12 @@ final class AppViewModel: ObservableObject {
     let connected = state == .ready && currentPlan != nil
     // Bound the WatchConnectivity payload without letting old completion
     // history crowd out the upcoming doses.
-    let sharedEvents = Array(events.filter { $0.status != .completed }.prefix(24))
-      + Array(events.filter { $0.status == .completed }.suffix(3))
+    let latestDue = events.filter { $0.scheduledTime <= timeline.now }.map(\.scheduledTime).max()
+    // Include completed doses at the current boundary: they still supersede
+    // older unanswered doses. Old history must not crowd upcoming doses out.
+    let sharedEvents = Array(events.filter { event in
+      latestDue.map { event.scheduledTime >= $0 } ?? true
+    }.prefix(48))
     return CompanionSnapshot(
       patientID: connected ? Auth.auth().currentUser?.uid : nil,
       administratorID: connected ? currentPlan?.id : nil,
@@ -783,7 +805,7 @@ final class AppViewModel: ObservableObject {
     guard let response = command.response else {
       guard state == .ready || state == .signedOut || state == .choosingSchedule else {
         return CompanionReply(snapshot: watchSnapshot(), accepted: false,
-          message: "iPhone reconnecting. Last synced reminders remain active.")
+          message: "iPhone reconnecting. Last synced reminders remain active.", retryable: true)
       }
       if state == .ready, let plan = currentPlan {
         do {
@@ -796,12 +818,16 @@ final class AppViewModel: ObservableObject {
                                message: "The iPhone could not refresh the paired Watch's medication events.",
                                severity: "critical", context: ["error": error.localizedDescription])
           return CompanionReply(snapshot: watchSnapshot(), accepted: false,
-                                message: "Could not refresh from the server. Check MediNag on iPhone.")
+                                message: "Could not refresh from the server. Check MediNag on iPhone.", retryable: true)
         }
       }
       return CompanionReply(snapshot: watchSnapshot(), accepted: true, message: "")
     }
-    guard state == .ready, !isWorking,
+    guard state == .ready, !isWorking else {
+      return CompanionReply(snapshot: watchSnapshot(), accepted: false,
+        message: "iPhone is reconnecting or saving another response. Retry your choice.", retryable: true)
+    }
+    guard
           command.patientID == Auth.auth().currentUser?.uid,
           command.administratorID == currentPlan?.id,
           let expected = command.event,
@@ -817,6 +843,7 @@ final class AppViewModel: ObservableObject {
                            severity: "critical", context: ["eventID": event.id, "error": actionNotice])
     }
     publishWatchSnapshot()
-    return CompanionReply(snapshot: watchSnapshot(), accepted: accepted, message: actionNotice)
+    return CompanionReply(snapshot: watchSnapshot(), accepted: accepted, message: actionNotice,
+      retryable: !accepted)
   }
 }

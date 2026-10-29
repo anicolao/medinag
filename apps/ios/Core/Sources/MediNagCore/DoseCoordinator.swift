@@ -63,7 +63,7 @@ public actor DoseCoordinator {
     let authorized = try await notifications.requestAuthorization()
     guard authorized else { return false }
 
-    for event in events where event.status != .completed {
+    for event in events where DoseWindow.isActive(event, among: events, at: clock.now) {
       if event.status == .snoozed {
         let snoozedAt = event.lastSnoozedAt ?? event.scheduledTime
         try await notifications.scheduleRepeat(

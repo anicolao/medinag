@@ -42,6 +42,12 @@ actor DeviceReminderNotifications {
     let version = revision
     let plan = ReminderPlan(events: events, now: logicalNow, snoozeInterval: snoozeInterval)
     let desired = Set(plan.occurrences.map(\.identifier))
+    // Calendar triggers have second precision. Never round a deadline down
+    // into the past, especially when registering a near-due follow-up.
+    func deliveryDate(_ occurrence: ReminderPlan.Occurrence) -> Date {
+      let raw = realNow.addingTimeInterval(occurrence.date.timeIntervalSince(logicalNow) * clockScale)
+      return Date(timeIntervalSince1970: ceil(raw.timeIntervalSince1970))
+    }
     let pending = await center.pendingNotificationRequests()
     guard revision == version else { throw CancellationError() }
     center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter {
@@ -54,7 +60,8 @@ actor DeviceReminderNotifications {
     center.removeDeliveredNotifications(withIdentifiers: delivered.filter { notification in
       let info = notification.request.content.userInfo
       guard let id = info[MediNagNotification.eventID] as? String else { return false }
-      guard let event = events.first(where: { $0.id == id }), event.status != .completed else { return true }
+      guard let event = events.first(where: { $0.id == id }),
+            DoseWindow.isActive(event, among: events, at: logicalNow) else { return true }
       return info[MediNagNotification.reminderNumber] as? Int != event.snoozeCount + 1
     }.map { $0.request.identifier })
     for item in plan.occurrences {
@@ -86,7 +93,7 @@ actor DeviceReminderNotifications {
         content.userInfo[MediNagNotification.command] = try JSONEncoder().encode(
           CompanionCommand(snapshot: snapshot, event: item.event))
       }
-      let date = realNow.addingTimeInterval(item.date.timeIntervalSince(logicalNow) * clockScale)
+      let date = deliveryDate(item)
       let components = Calendar.current.dateComponents(
         [.calendar, .timeZone, .year, .month, .day, .hour, .minute, .second], from: date)
       try await center.add(UNNotificationRequest(identifier: item.identifier, content: content,
@@ -94,13 +101,21 @@ actor DeviceReminderNotifications {
     }
     let confirmed = await center.pendingNotificationRequests()
     guard revision == version else { throw CancellationError() }
-    let count = confirmed.filter { desired.contains($0.identifier) }.count
-    guard count == desired.count else {
+    // Already-due requests can legitimately have left the pending inventory
+    // while the async registration calls were in progress. Do not call them
+    // pending or claim they were delivered; verify FUTURE requests only.
+    let verifiedAt = Date()
+    let future = plan.occurrences.filter { deliveryDate($0) > verifiedAt }
+    let inventory = ReminderInventory(
+      deadlines: Dictionary(uniqueKeysWithValues: plan.occurrences.map { ($0.identifier, deliveryDate($0)) }),
+      pending: Set(confirmed.map(\.identifier)), at: verifiedAt)
+    let count = inventory.actual.count
+    guard inventory.complete else {
       throw NSError(domain: "MediNag.NotificationQueue", code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "Only \(count) of \(desired.count) medication alerts were registered."])
+        userInfo: [NSLocalizedDescriptionKey: "Only \(count) of \(inventory.expected.count) future medication alerts were registered (\(plan.occurrences.count - future.count) became due during reconciliation)."])
     }
     return Result(count: count, coveredThrough: plan.coveredThrough,
-                  nextReminder: plan.occurrences.first?.date,
+                  nextReminder: future.first?.date,
                   registeredEventIDs: Set(plan.occurrences.map { $0.event.id }))
   }
 

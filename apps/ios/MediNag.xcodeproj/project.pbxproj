@@ -14,6 +14,7 @@
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
 		1C9B2DEA9A595B0C0611ECE7 /* 005-notification-failure-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */; };
 		2119AAE55EFA6B65A7D612F8 /* WatchPairingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6BBFC88A0C012B4B571B799 /* WatchPairingUITests.swift */; };
+		21B6ED7D404AAFC97B9A3E09 /* CompanionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D43564C5D864FA222067FC /* CompanionTransport.swift */; };
 		24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */; };
 		26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */; };
 		27A78E9A46059CCD8B28D3EE /* 006-watch-companion-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 760F763D311BA399CE701AF3 /* 006-watch-companion-claims.json */; };
@@ -22,6 +23,7 @@
 		372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD40690383616CF75360A1A /* MediNagApp.swift */; };
 		3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
 		3DBD33EFF777A06751058117 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A5AC9567CC364E6F9A59ED1 /* Assets.xcassets */; };
+		41C592C4C67FB54821E49D56 /* DoseWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9130650146B03C78F7244550 /* DoseWindowTests.swift */; };
 		430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */; };
 		470882BFE2E693C7EF0A374F /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3C74746627D6BF26ECF6DCC1 /* MediNagCore */; };
 		5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F2D0A0FBA33DECBAAAC014 /* README.md */; };
@@ -36,6 +38,7 @@
 		A7F834F2CC01371860D6A5D4 /* WatchCompanionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0B0C5EC339DAA7FD9F11A16 /* WatchCompanionUITests.swift */; };
 		A8347510D7D1BD1F636567A0 /* CompanionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */; };
 		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
+		AA227CC2FE58C16EA23CDDDB /* CompanionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D43564C5D864FA222067FC /* CompanionTransport.swift */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
@@ -49,6 +52,7 @@
 		EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8187B68655A62CA3923A2B4 /* NotificationServices.swift */; };
 		EF1058B47FD34620B2900096 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */; };
 		FAC147392401A2261952CCFC /* TestStepHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827A83DB040E02286EA2824 /* TestStepHelper.swift */; };
+		FB2795D80590BC446D4F5985 /* CompanionRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A114A877A11FEE3282726CC /* CompanionRecoveryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -109,6 +113,7 @@
 		4C2E252649E3AF386F9CB68E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		4E9DED6AAD6DF6EF68F32E1C /* 006-watch-companion-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "006-watch-companion-claims.json"; sourceTree = "<group>"; };
 		558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionModelsTests.swift; sourceTree = "<group>"; };
+		5A114A877A11FEE3282726CC /* CompanionRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionRecoveryTests.swift; sourceTree = "<group>"; };
 		5D20FBA5ABB23984225C8135 /* MediNagWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MediNagWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemHealthReporter.swift; sourceTree = "<group>"; };
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
@@ -116,9 +121,11 @@
 		760F763D311BA399CE701AF3 /* 006-watch-companion-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "006-watch-companion-claims.json"; sourceTree = "<group>"; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
 		826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "004-ios-respond-to-dose-claims.json"; sourceTree = "<group>"; };
+		84D43564C5D864FA222067FC /* CompanionTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionTransport.swift; sourceTree = "<group>"; };
 		8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
 		8FD40690383616CF75360A1A /* MediNagApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagApp.swift; sourceTree = "<group>"; };
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		9130650146B03C78F7244550 /* DoseWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWindowTests.swift; sourceTree = "<group>"; };
 		97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPlanTests.swift; sourceTree = "<group>"; };
 		A0D5968B67C3A32EAE04FAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
@@ -234,6 +241,7 @@
 			isa = PBXGroup;
 			children = (
 				BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */,
+				84D43564C5D864FA222067FC /* CompanionTransport.swift */,
 				DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */,
 			);
 			path = Shared;
@@ -285,6 +293,8 @@
 			isa = PBXGroup;
 			children = (
 				558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */,
+				5A114A877A11FEE3282726CC /* CompanionRecoveryTests.swift */,
+				9130650146B03C78F7244550 /* DoseWindowTests.swift */,
 				06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */,
 				97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */,
 			);
@@ -554,6 +564,7 @@
 				EF1058B47FD34620B2900096 /* AppDelegate.swift in Sources */,
 				E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */,
 				66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */,
+				21B6ED7D404AAFC97B9A3E09 /* CompanionTransport.swift in Sources */,
 				E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */,
 				18813EDBADEA939F200D330F /* DeviceReminderNotifications.swift in Sources */,
 				828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */,
@@ -582,6 +593,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2EF3171D42CBB859DBAD9437 /* CompanionSession.swift in Sources */,
+				AA227CC2FE58C16EA23CDDDB /* CompanionTransport.swift in Sources */,
 				60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */,
 				430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */,
 			);
@@ -592,6 +604,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A8347510D7D1BD1F636567A0 /* CompanionModelsTests.swift in Sources */,
+				FB2795D80590BC446D4F5985 /* CompanionRecoveryTests.swift in Sources */,
+				41C592C4C67FB54821E49D56 /* DoseWindowTests.swift in Sources */,
 				24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */,
 				98D2C5272C3851AE631EA207 /* ReminderPlanTests.swift in Sources */,
 			);

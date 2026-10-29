@@ -110,7 +110,7 @@ final class RespondToDoseUITests: XCTestCase {
     try tester.step("waiting-for-first-reminder",
       description: "iOS confirms the bounded queue of real actionable notifications",
       verifications: [
-        .labelContains(pendingReminderCountElement(in: app), "60 of 60", "All pending requests are confirmed by UserNotifications"),
+        .confirmedPending(pendingReminderCountElement(in: app), "All pending requests are confirmed by UserNotifications"),
       ], screenshotElement: app.otherElements["reminder-diagnostics"])
 
     XCUIDevice.shared.press(.home)
@@ -134,7 +134,7 @@ final class RespondToDoseUITests: XCTestCase {
       verifications: [
         .labelContains(app.staticTexts["snooze-count"], "1", "The server-backed snooze count increments"),
         .labelContains(app.staticTexts["action-notice"], "10 minutes", "The configured snooze interval is confirmed"),
-        .labelContains(pendingReminderCountElement(in: app), "60 of 60", "The replacement queue is confirmed by iOS"),
+        .confirmedPending(pendingReminderCountElement(in: app), "The replacement queue is confirmed by iOS"),
       ])
     app.terminate()
     openNotificationCenter(in: springboard)

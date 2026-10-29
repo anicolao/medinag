@@ -489,7 +489,8 @@ actor LocalNotificationScheduler: NotificationScheduling {
       let anchor = event.status == .snoozed
         ? (event.lastSnoozedAt ?? event.scheduledTime).addingTimeInterval(snoozeInterval)
         : event.scheduledTime
-      return event.status != .completed && anchor <= now && known[event.id] != event.snoozeCount
+      return DoseWindow.isActive(event, among: events, at: now)
+        && anchor <= now && known[event.id] != event.snoozeCount
     }.map(\.id)
     let result = try await deviceQueue.reconcile(events: events, snoozeInterval: snoozeInterval,
       logicalNow: now, realNow: timeline.deliveryDate(for: now),

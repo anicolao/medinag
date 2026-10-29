@@ -47,13 +47,17 @@ public struct CompanionSnapshot: Codable, Sendable {
 
   public func canRespond(to event: MedicationEvent, at date: Date = Date()) -> Bool {
     let now = logicalDate.addingTimeInterval(date.timeIntervalSince(realDate) / clockScale)
-    return ready && event.status != .completed && nextReminder(for: event).timeIntervalSince(now) < 15 * 60
+    return ready && DoseWindow.isActive(event, among: events, at: now)
+      && nextReminder(for: event).timeIntervalSince(now) < 15 * 60
   }
 
   public var nextEvent: MedicationEvent? {
-    events.filter { $0.status != .completed }.min {
-      nextReminder(for: $0) < nextReminder(for: $1)
-    }
+    nextEvent(at: Date())
+  }
+
+  public func nextEvent(at date: Date) -> MedicationEvent? {
+    let now = logicalDate.addingTimeInterval(date.timeIntervalSince(realDate) / clockScale)
+    return DoseWindow.nextEvent(in: events, at: now, snoozeInterval: Double(snoozeMinutes * 60))
   }
 
   public func canReplace(_ cached: CompanionSnapshot?) -> Bool {
@@ -64,6 +68,7 @@ public struct CompanionSnapshot: Codable, Sendable {
 }
 
 public struct CompanionCommand: Codable, Sendable {
+  public let id: String?
   public let patientID: String?
   public let administratorID: String?
   public let event: MedicationEvent?
@@ -71,10 +76,21 @@ public struct CompanionCommand: Codable, Sendable {
 
   public init(snapshot: CompanionSnapshot? = nil, event: MedicationEvent? = nil,
               response: DoseResponse? = nil) {
+    id = UUID().uuidString
     patientID = snapshot?.patientID
     administratorID = snapshot?.administratorID
     self.event = event
     self.response = response
+  }
+
+  public var identifier: String {
+    id ?? "legacy.\(patientID ?? "").\(administratorID ?? "").\(event?.id ?? "").\(event?.snoozeCount ?? -1).\(response?.rawValue ?? "refresh")"
+  }
+
+  public func remainsPending(in snapshot: CompanionSnapshot, at date: Date) -> Bool {
+    guard patientID == snapshot.patientID, administratorID == snapshot.administratorID,
+      let expected = event, let current = snapshot.events.first(where: { $0.id == expected.id }) else { return false }
+    return current.hasSameResponseVersion(as: expected) && snapshot.canRespond(to: current, at: date)
   }
 }
 
@@ -82,11 +98,25 @@ public struct CompanionReply: Codable, Sendable {
   public let snapshot: CompanionSnapshot
   public let accepted: Bool
   public let message: String
+  public let commandID: String?
+  public let retryable: Bool?
 
-  public init(snapshot: CompanionSnapshot, accepted: Bool, message: String) {
+  public init(snapshot: CompanionSnapshot, accepted: Bool, message: String,
+              commandID: String? = nil, retryable: Bool = false) {
     self.snapshot = snapshot
     self.accepted = accepted
     self.message = message
+    self.commandID = commandID
+    self.retryable = retryable
+  }
+
+  public func acknowledging(_ command: CompanionCommand) -> CompanionReply {
+    CompanionReply(snapshot: snapshot, accepted: accepted, message: message,
+      commandID: command.identifier, retryable: retryable == true)
+  }
+
+  public func resolves(_ command: CompanionCommand) -> Bool {
+    commandID == command.identifier && (accepted || retryable != true)
   }
 }
 

@@ -7,10 +7,14 @@ queues and a one-dose Watch screen. The claims and native tests have been
 updated accordingly; earlier screenshots and passing alarm runs below do not
 validate this implementation. See [the physical-device procedure](../../../WATCH_NOTIFICATION_TESTING.md).
 No new screenshot baseline or simultaneous audible-delivery claim is approved.
-The latest local run on 2026-10-28 passed dashboard publication and phone setup,
-but failed initial Watch dose synchronization within the two-second condition.
-Fifteen native unit tests and eight portable core checks pass, including cached
+The latest local run on 2026-10-28 passed dashboard publication, phone setup, and
+the Watch dose/response-controls steps, but timed out awaiting the real snooze
+acknowledgement within the two-second condition. That is still a failing E2E run.
+Twenty-four native unit tests and eight portable core checks pass, including cached
 reminder retention during phone startup. These are not a passing Watch E2E run.
+The next-dose cutoff, response acknowledgements/recovery, background reachability
+handling, and pending-count race fixes are not yet in TestFlight: Apple requires
+the Account Holder to accept an updated Program License Agreement before upload.
 
 ## Earlier build 10 evidence (historical only)
 
