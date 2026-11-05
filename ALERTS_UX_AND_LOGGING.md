@@ -386,10 +386,30 @@ claiming simultaneous cancellation. No connectivity information reaches the pati
 ### J07 - Offline, crash, and uncertain acknowledgement
 
 Respond with the network unavailable, phone absent from Watch, or backend slow.
-The local response is durable and the surface closes without a spinner. Restart
-at intent persistence, local cancellation, send, server commit, and lost-ACK
-boundaries. Recover exactly once and reconcile the other device/backend.
-A recovered command must not snooze for a new interval from reconnect time.
+The local response is durable and the surface closes without a spinner.
+
+In separate crash-recovery tests, deliberately stop and relaunch the iPhone or
+Watch application process at each point below. This does not mean rebooting the
+device, clearing its saved data, or restarting Firebase. Where Watch sends its
+response through the phone, also interrupt the phone app while it forwards the
+saved response. Preserve real writes and communication; do not fake a successful
+save or acknowledgement to reach a test checkpoint.
+
+| Interruption point | What is happening when the app is stopped | Required result after relaunch |
+| --- | --- | --- |
+| Before the tap is saved locally | The patient tapped, but no durable record exists yet | Do not invent a saved response. The alert remains unanswered and its reminders continue. This is a real failure to retain the tap, not successful recovery; log/escalate it if observable. |
+| After the tap is saved locally | The durable record exists, but subsequent work may not have started | Recover that exact response and continue processing it without another patient tap. |
+| While changing local notifications | The app is removing completion reminders or replacing them with the snooze deadline | Reconcile the actual OS requests with the saved response; finish the cancellation or snooze without creating duplicates. |
+| While sending the response | The response is in transit to the backend, possibly through the phone; the sender may not know whether it arrived | Retry the same saved response until its outcome is known; it must take effect only once. |
+| Immediately before or after the backend saves it | Stop the client app while the real backend write is being processed; the backend itself keeps running | Determine whether the write completed, and retry safely if necessary. A completed write must not become a second response. |
+| After the backend saves it but before confirmation reaches the app | The write succeeded, but the acknowledgement was lost or the receiving app stopped | Discover the existing result or resend the same response safely. Do not treat missing confirmation as proof that the write failed. |
+
+For both Yes, I did and Yes, I will, verify the final local notifications, real
+backend result, and other device's state. A completion must stay completed. A
+recovered snooze uses the deadline saved with the original tap, never a fresh
+interval from relaunch, reconnect, or retry time. No patient saving/retry screen
+or second confirmation tap is introduced.
+
 If local persistence or scheduling fails, record a critical fault and notify the
 administrator where possible; do not pretend the tap was durably saved.
 The recovery design for this rare failure must be approved without adding a
