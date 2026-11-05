@@ -1,0 +1,673 @@
+# Patient Alerts: UX, Timing, and Logging Contract
+
+Status: DRAFT FOR REVIEW - not implementation approval or a claim of working behavior.
+
+Date: 2026-11-04.
+
+## 1. The product we are agreeing to
+
+The patient's application is a response instrument, not a dashboard.
+
+On both the iPhone and Apple Watch its entire normal interaction is:
+
+- **Yes, I did** - complete the active medication alert and stop its reminders.
+- **Yes, I will** - snooze the active alert until its anchored snooze deadline.
+
+There is nothing else for the patient to inspect, acknowledge, navigate, or fix.
+One tap finishes the interaction. The response surface disappears immediately;
+it must not wait for Firebase, the phone, the Watch, or a server acknowledgement.
+
+The application, not the patient, owns timely reminders, background processing,
+durable responses, synchronization, cancellation, retries, and fault reporting.
+Administrators and developers receive operational information outside this
+patient response surface.
+
+This document focuses only on that experience and its proof. It is not another
+general application inventory. Where earlier design proposals conflict with it,
+this is the proposed replacement for patient alert behavior after review.
+In particular, next-dose views, early-response windows, patient history, pending
+confirmation screens, and snooze measured from the response tap are not retained.
+
+No application changes, deployments, migrations, or releases are included in
+this documentation PR. Decisions explicitly marked Proposed remain for review.
+
+## 2. Non-negotiable patient UI constraints
+
+### 2.1 Exactly two application actions
+
+1. The labels are exactly "Yes, I did" and "Yes, I will" on both devices.
+2. Both actions have equal visual weight, readable type, adequate touch targets,
+   and accessible names. Neither is preselected, the default, or visually urged.
+3. No application-level third action: no Stop, Cancel, OK, Done, Retry, Refresh,
+   Continue, confirmation dialog, or extra tap to finish responding.
+4. No medication list, next-dose time, status badge, connection footer, database
+   readiness, spinner, saving screen, waiting-for-confirmation screen, diagnostics,
+   successful-response page, or history on the normal patient surface.
+5. Buttons must not be greyed out because a network connection or acknowledgement
+   is unavailable. Offline response must be possible for a locally known alert.
+6. No follow-up "Are you sure?" or "Response saved" acknowledgement.
+7. Merely viewing the alert, opening the application, dismissing the notification,
+   swiping it away, or pressing an OS Stop/Dismiss control is not either response.
+8. No foreground-only timer may be responsible for required alerts. Navigating
+   away, responding, terminating the process, or a crash must not intentionally
+   stop the reminder plan.
+
+The application-owned response view contains only the two buttons. An OS-owned
+notification may necessarily contain the app name, timestamp, a brief notification
+title, navigation, or OS dismissal controls. We cannot describe those controls as
+absent if the OS renders them. No added technical copy belongs in that notification.
+
+Proposed notification title: "Medication reminder". No response count, connection
+state, or diagnosis text. Approval of this title does not approve extra in-app UI.
+
+### 2.2 One tap ends the interaction
+
+At tap time the application captures one durable, identity-scoped response intent,
+stops this device's current presentation, reconciles its local reminders, and
+returns control without a network round trip. Persistence and local alarm changes
+must be engineered as a crash-recoverable operation, not an unrecorded animation.
+
+The user must not have to keep the app visible, open the phone after answering
+on Watch, wait for a remote acknowledgement, or tap again to make the response count.
+Synchronization continues opportunistically without a patient progress screen.
+
+There are two distinct delivery paths to prove:
+
+- **Notification action:** the patient taps one of the two actions directly in
+  the system notification. Prefer background action handling, so the app need
+  not open at all. The OS dismisses the interaction.
+- **Application response surface:** opening an active notification, or opening
+  the app while an alert is active, exposes only the two buttons. A tap removes
+  that surface. Returning to the previous OS experience without another user
+  action is the requirement; feasibility must be demonstrated on both platforms.
+
+Removing a view, showing a blank full-screen app, or killing the process is not
+automatically proof that the app "closed" from the patient's perspective.
+Apple documents no graceful programmatic iOS quit API and warns against using
+exit. Do not substitute private suspend APIs or a deliberate crash. If the
+foreground return cannot be implemented with supported APIs, bring that precise
+limitation back for approval; do not quietly add a Done button or status screen.
+See [Apple's termination guidance](https://developer.apple.com/library/archive/qa/qa1561/_index.html)
+and [background notification action handling](https://developer.apple.com/documentation/usernotifications/handling-notifications-and-notification-related-actions).
+
+### 2.3 When there is no active alert
+
+There is no patient dashboard and no invitation to answer a future or historical
+dose. A completed or snoozed interaction does not reveal a next-dose page.
+
+Proposed: a manual launch with no currently actionable alert presents no response
+choices and no application information, and returns to the OS if supported.
+The exact manual-launch/no-active-alert behavior needs approval and platform
+proof; a blank foreground page is not an approved substitute for closing.
+
+First-time Google sign-in, schedule selection, permission prompts, and account
+recovery are provisioning, not part of this two-button loop. They still need a
+separate approved route. This document does not authorize hiding an unprovisioned
+or unprotected installation behind a claim that the app is ready. Administrators
+must be able to see whether provisioning/protection actually completed.
+
+## 3. One active medication alert, never a backlog
+
+### 3.1 Most recent due occurrence wins
+
+An occurrence is a concrete scheduled medication time in the patient's time zone,
+resolved to an absolute instant. An alert episode belongs to that occurrence.
+Repeats are attempts within an episode, not separate medication tasks.
+
+At time now, only the most recent due occurrence may own an active episode.
+Future occurrences must not retire it before their due time. Once a later
+occurrence becomes due, every earlier occurrence is permanently retired from
+patient alerts, whether answered, snoozed, ignored, or never seen.
+
+Retirement means:
+
+- Cancel obsolete pending requests on every reachable device.
+- Remove obsolete delivered notifications where the OS permits it.
+- Never schedule another old repeat or snooze expiry.
+- Never expose old buttons when an old notification is tapped.
+- Never revive old work during cache replay, reconnect, restart, upgrade,
+  timezone recalculation, schedule edit, or out-of-order message delivery.
+- Preserve the historical audit result as unconfirmed/superseded, not taken.
+
+If the newest occurrence is completed, there are zero active episodes until
+the next scheduled time. Do not search backward for the newest *unanswered*
+occurrence. Completion of today's alert must never reveal yesterday's alert.
+
+Both devices represent the same one active episode. They do not each own an
+independent medication obligation. Earlier requirements to alert on both devices
+and accept a response on either remain the target; delivery routing must be
+tested rather than inferred from one phone notification.
+
+### 3.2 Simultaneous medications and schedule changes
+
+Proposed: entries with exactly the same due instant form one response episode.
+The two-button response applies to the group. No per-medication paging or extra
+buttons are introduced. This grouping must be explicitly approved because the
+new minimal UI does not identify individual medications.
+
+Use a monotonic episode/version identity, not client arrival order, to select the
+newest occurrence. A delayed old message must not become current merely because
+it arrived last. An old response is bound to its original episode; never apply
+it to a new dose that appeared while the patient was tapping.
+
+Proposed schedule-edit policy: future changes affect future episodes. An active
+episode's repeat/snooze configuration and origin remain frozen. Pause, deletion,
+or explicit withdrawal retires it; resume does not resurrect past work. A change
+must not move its origin to now or extend an old episode beyond a known successor.
+Revisions that remove/change a successor require a reviewed boundary policy,
+not an accidental extension from a stale cache.
+
+### 3.3 Example: yesterday is gone
+
+Yesterday's 8 AM medication was never answered. Today's 8 AM time arrives.
+Only today's alert may notify or accept a response. The patient taps "Yes, I did"
+today. All current reminders stop. Yesterday's missed dose remains only in the
+audit/admin history and must never reappear on either device.
+
+This rule also applies to two doses on the same day: noon replaces an unanswered
+10 AM episode at noon. No old request may intentionally be registered at or after
+that known replacement boundary.
+
+## 4. Exact reminder and snooze timing
+
+### 4.1 Administrator settings
+
+The administrator can set and save:
+
+- **Repeat interval R:** how often an unanswered alert is retried; example 3 minutes.
+- **Snooze interval S:** length of a response window measured from its original
+  alert deadline; example 10 minutes.
+
+Neither value may be hardcoded in a test or native client as hidden product policy.
+Both must flow from the saved web configuration through the real backend to
+both devices. Proposed validation is positive durations with R < S and values
+the selected notification mechanism can actually support. Exact ranges and
+whether settings are global or per schedule need approval. The examples here
+are inputs, not a mandate that every schedule use 3 and 10.
+
+Time is interpreted in the patient's time zone, not the administrator's.
+Calendar/DST resolution must produce one stable instant for each occurrence;
+the exact DST policy is a separate review item, not an excuse for duplicate doses.
+Intervals use elapsed duration, not wall-clock string subtraction.
+
+### 4.2 Definitions
+
+- T: original medication occurrence time.
+- A: scheduled origin of the current alert cycle. Initially A = T.
+- R: configured repeat interval for this episode.
+- S: configured snooze interval for this episode.
+- P: actual time the patient tapped a response.
+- D: anchored snooze deadline, A + S.
+- C: next newer medication occurrence time, or an explicit valid coverage boundary.
+
+The origin is the intended scheduled deadline, not the time the app happens to
+run, the time a push was accepted, the time of a repeated notification, or the
+first time we obtained delivery evidence. A late alert must not reset history.
+
+### 4.3 Before a response
+
+The first alert is due at T. Until an effective response, repeats are due at
+A + R, A + 2R, A + 3R, and so on, strictly before C.
+Ignoring or dismissing an alert, reopening the app, or a failed network operation
+does not move that cadence. Retrying failed scheduling must not quietly create
+an origin of now.
+
+Do not replay all missed deadlines in a burst if a device reconnects late.
+Record missed/unknown attempts, consider only the current episode, and schedule
+the next legitimate boundary. Proposed catch-up: if an active episode is already
+overdue, one immediate current reminder is allowed, followed by the original
+cadence, not a historical flood. Whether that immediate catch-up is desired is
+an explicit review question. It never counts as on-time delivery of old attempts.
+
+### 4.4 Yes, I did
+
+This completes the episode. Stop current presentation, cancel all remaining
+repeat/snooze requests for it, and propagate that decision to the other device
+and backend. It is final for that episode; delayed messages cannot undo it.
+No older episode becomes active as a consequence.
+
+### 4.5 Yes, I will: the central correction
+
+For a response during a cycle, snooze until **D = A + S**, not P + S.
+Cancel the cycle's remaining ordinary repeats before D. If D < C and the episode
+is still incomplete, the next alert is due at D. An action does not earn a fresh
+S minutes merely because the patient waited before responding.
+
+Example with R = 3 minutes and S = 10 minutes:
+
+| Time | Event | Required consequence |
+| --- | --- | --- |
+| 8:00 | Original alert, A = 8:00 | Response window began at 8:00 |
+| 8:03 | Ignored alert repeats | Same episode and same A |
+| 8:03 | Patient taps Yes, I will | Snooze ends at 8:10, leaving 7 minutes |
+| 8:06, 8:09 | Former repeat slots | Cancelled by the effective snooze |
+| 8:10 | Snooze expires unanswered | Actual new OS alert; never a fabricated screenshot |
+
+A tap at 8:04 leaves six minutes. A tap at 8:09:30 leaves thirty seconds.
+The answer must not be rounded into another ten minutes. If a newer occurrence
+is due at 8:08, retirement at 8:08 wins; the old 8:10 snooze must never fire.
+
+### 4.6 Subsequent snoozes and late taps - proposed interpretation
+
+The user's 8:03 -> 8:10 example determines the first window, but not every later
+boundary. The following is proposed explicitly for approval:
+
+1. A legitimate snooze-expiry alert at 8:10 starts the next cycle, A = 8:10.
+   Ignoring it gives repeats at 8:13, 8:16, etc.
+2. A Yes, I will tap at 8:13 snoozes until 8:20, not 8:23.
+3. There is no automatic cycle reset merely because ten minutes elapsed without
+   any response. In an entirely ignored initial cycle, repeats continue at 8:12,
+   8:15, etc.; A remains 8:00 until an approved transition creates a new cycle.
+4. A snooze tap at/after its already-expired D must not create extra time or
+   cause a zero-time notification loop. Proposed: log it as an expired snooze
+   intent, close the surface, and keep the next original repeat boundary.
+   Whether instead to move to the next anchored window needs approval.
+5. Repeated taps or a retransmitted snooze for the same cycle do not extend D.
+6. Reaching C retires the episode regardless of cycle or snooze state.
+
+If "original notification" is intended to mean T for every snooze forever,
+rather than the origin of each actual snooze-expiry cycle, change this section
+before implementation. No client may silently choose its own interpretation.
+
+## 5. Patient journeys to review
+
+These are target acceptance stories, not reports of passing tests.
+Every story applies to both phone and Watch unless a device-specific branch says
+otherwise. The visible endpoint of every response is the OS/previous experience,
+not a saving page. Nonvisual evidence belongs in the test report and admin logs.
+
+### J01 - Timely first alert, Yes, I did
+
+Start: provisioned patient, saved real schedule, supported permissions/settings,
+devices available, apps not running in the foreground. At T, observe the actual
+OS alert. Tap Yes, I did directly in its actions. The presentation disappears
+without another tap. Record local intent before process loss, real completion,
+other-device cancellation, and absence of later alerts for that episode.
+Repeat with app foregrounded and by opening the notification then using the
+application's two-button surface. Capture every system screen and tap.
+
+### J02 - Ignore, repeat, anchored snooze
+
+Start with R = 3 and S = 10 configured through the administrator UI. Ignore the
+first actual alert at 8:00. Observe the actual repeat at 8:03; tap Yes, I will.
+The interaction ends. No 8:06 or 8:09 alert is allowed. An actual alert is due at
+8:10 with apps inactive, not at 8:13. Respond Yes, I did; all remaining alerts stop.
+Repeat with a non-integer tap time, e.g. 8:04:20 -> 8:10.
+
+### J03 - Ignore/dismiss without responding
+
+Swipe away, clear, open without answering, navigate away, lock the phone, and use
+any system-owned dismiss control in separate runs. None records a medication
+response. Repeats continue on the approved cadence. The test must observe actual
+system alerts, not merely a list of pending requests or an in-app timer firing.
+Do not promise that the OS prevents a human dismissing or ignoring a notification.
+
+### J04 - Snooze expires, next cycle, late snooze
+
+Exercise every boundary in section 4.6: before D, exactly D, after D, duplicate
+tap, retry, and response from a stale delivered notification. Show that a repeat
+does not reset A and that only an approved cycle transition can change it.
+Prove the approved late-snooze behavior without displaying a patient error screen.
+
+### J05 - Only the newest dose, then no active work
+
+Leave yesterday and an earlier same-day episode unanswered. When the latest
+episode becomes due, only it alerts. Respond Yes, I did. Reopen both apps,
+restart them, reconnect an old cache, and deliver delayed messages. No historical
+alert or response surface returns. Repeat when the earlier episode was snoozed
+past the newer due time and when the newer episode was already completed elsewhere.
+
+### J06 - Respond on either device
+
+Establish actual phone and Watch delivery under the approved routing design.
+Respond on one; close its interaction immediately. On synchronization, the other
+device removes obsolete alerts and applies the same completion or anchored D.
+Double taps/retries do not create extra actions. Completion wins over a later
+stale snooze for the same episode. A disconnected device cannot know a remote
+response instantly: document and measure that propagation limit rather than
+claiming simultaneous cancellation. No connectivity information reaches the patient UI.
+
+### J07 - Offline, crash, and uncertain acknowledgement
+
+Respond with the network unavailable, phone absent from Watch, or backend slow.
+The local response is durable and the surface closes without a spinner. Restart
+at intent persistence, local cancellation, send, server commit, and lost-ACK
+boundaries. Recover exactly once and reconcile the other device/backend.
+A recovered command must not snooze for a new interval from reconnect time.
+If local persistence or scheduling fails, record a critical fault and notify the
+administrator where possible; do not pretend the tap was durably saved.
+The recovery design for this rare failure must be approved without adding a
+patient technical workflow or silently losing the response.
+
+### J08 - Old notification or simultaneous response race
+
+A newer dose becomes due while an old surface is open. An old notification is
+then tapped, or both devices answer concurrently. Bind every action to the
+episode and cycle actually presented; never mark the new dose taken by accident.
+Reject stale scheduling resurrection. Proposed: a delayed historical action can
+be recorded as historical intent, but cannot activate, snooze, or clear a newer
+episode. Contradictory actions for one episode need a deterministic audited
+policy; proposed completion is terminal and duplicate snoozes share D.
+
+### J09 - Configuration really controls timing
+
+Change R and S on the administrator website, using different valid values from
+the examples. Observe the saved revision through the real backend and native
+clients. Verify future episodes use those exact values. Attempt invalid settings
+and simultaneous edits. Confirm that an existing cycle does not change origin
+or deadline mid-response unless such a change was explicitly approved.
+
+### J10 - Delivery late, missing, or not observable
+
+Induce a real scheduling rejection, queue exhaustion, revoked permission, device
+power-off, app termination, network outage, late remote arrival, and absent
+delivery observation as separate cases. Keep the patient's interface minimal.
+Logs/admin reports distinguish proven failure from unavailable evidence.
+Verify administrator incident and SMS paths, recovery, no backfill storm, and
+that a late request is never counted as an on-time alert.
+
+### J11 - Quiescent/manual launch and provisioning boundary
+
+After completion, while snoozed, and before the first due time, launch manually.
+There is no next-dose/status dashboard and no stale response opportunity.
+Validate the approved close/no-active behavior. Separately prove initial setup
+and recovery do not enter a falsely protected state; that provisioning journey
+requires its own approval rather than expanding the response screen.
+
+## 6. Reliability requirements and limits we must not hide
+
+The goal is no missed required alert in the supported operating conditions,
+persistent reminders until response or supersession, and no silent loss.
+It is not honest to promise that software can force a human to notice, hear,
+or answer, or that a powered-off/uninstalled/unauthorized device must alert.
+
+The system must maintain a ledger of every expected alert attempt independently
+of whether a running patient application reports it. A stopped/crashed client
+cannot be the sole detector of its own failure. A coverage monitor must identify
+unregistered, expired, stale, and unobserved protection with truthful categories.
+Actual failure or loss of approved protection raises a durable administrator
+incident and SMS attempt through the existing escalation policy; a patient-only
+warning is not sufficient. Administrator incident creation precedes marking an
+event escalated, with retries/deduplication if provider submission fails.
+
+Do not treat isReachable = false as a disconnected/broken Watch. Verify required
+communication failures and actual protection coverage. No routine-quiescence SMS.
+Lack of delivery telemetry alone is not proof of failed delivery, but unresolved
+uncertainty must remain visible to the administrator and be handled under an
+approved policy, never greenwashed as successful delivery.
+
+Specific proof obligations:
+
+- First alerts and repeats must be owned by a mechanism that functions when
+  the application is not foregrounded. A Firestore listener alone is not a
+  wake/delivery guarantee. Daily background refresh must not be assumed punctual.
+- A finite pending-notification queue must not quietly run dry. Demonstrate its
+  capacity, coverage end, renewal mechanism, and independent exhaustion detection
+  for the maximum approved repeat duration. A few minutes of success do not prove
+  a day of protection. Infinite unattended repeating cannot be asserted from a
+  finite batch and an assumed background wake.
+- Phone-targeted notifications normally route to one of phone/Watch under OS
+  rules. Both-device alerting requires a separately demonstrated architecture,
+  including unlocked phone, locked phone with worn Watch, and Watch not worn.
+- Sound, haptics, Focus, mute, permission revocation, locked devices, restart,
+  low power, and the exact TestFlight build must be checked on physical hardware.
+- Critical Alert sound privileges require Apple's entitlement and user consent.
+  They do not themselves prove a human heard the alert or solved queue renewal.
+- System-dismiss controls may remain. Dismissal is not a response; persistence
+  means future scheduled attempts continue, not that OS dismissal is impossible.
+
+These are architecture acceptance gates, not permission to add status to the
+patient interface or quietly relax the two-button/one-tap requirement.
+
+## 7. What logging must prove, and what it cannot
+
+### 7.1 Separate the evidence levels
+
+For each expected attempt, record the strongest actual evidence and retain gaps:
+
+| Evidence | It establishes | It does not establish |
+| --- | --- | --- |
+| Expected deadline in the independent ledger | A reminder was required | Anything was sent |
+| Scheduling/send attempted | Code tried | OS/provider accepted it |
+| Local OS registration accepted | OS accepted a request | It presented or sounded at deadline |
+| Pending request inventory | Request existed when queried | It fired or will necessarily fire |
+| Remote provider accepted | Provider accepted submission | Device delivery or attention |
+| Foreground presentation callback | That device reported a presentation opportunity | Audible output or background delivery |
+| Delivered-notification observation | OS reports an item present in Notification Center | Complete delivery history or human attention |
+| System UI captured on hardware | That presentation was visible in the capture | All alerts on every installation were visible |
+| Audio/haptic observation | Output was observed in that device test | The patient perceived it |
+| Action callback / durable response | A named action was invoked/recorded | Medication was actually ingested |
+
+Apple's delivered-notification API returns items still in Notification Center,
+not a universal receipt feed. An absent item can have been dismissed or handled;
+it is not sufficient to declare it never delivered. Likewise, disappearing from
+pending requests is not a delivery acknowledgement. An app asleep at the time
+may have no callback for that presentation.
+
+Therefore the desired "prove every alert delivered on time" is a requirement
+to pursue, not an already available universal production capability. If the
+selected OS mechanism cannot expose a receipt, mark delivery as **unknown**,
+retain scheduled/deadline evidence and obtain physical test evidence. Do not
+invent a delivered log at the planned time. If universal receipt is a hard
+release requirement, the architecture is blocked until a suitable mechanism is
+demonstrated or the requirement is explicitly revised.
+
+### 7.2 Correlation and fields
+
+Use structured, versioned, append-only audit events. They must correlate across
+administrator write -> backend occurrence -> each device request -> OS evidence
+-> tap -> local effects -> backend commit -> other-device reconciliation.
+No developer console session should be necessary to reconstruct a patient's day.
+
+Required fields, where applicable:
+
+- unique audit event ID; type; schema version; source/build/OS version;
+- pseudonymous patient/administrator IDs, installation and device role;
+- schedule revision, episode ID, cycle ID, attempt ID, native request/provider ID;
+- patient zone, T, A, R, S, D, successor/retirement boundary C;
+- intended deadline; registration/send start and acknowledgement timestamps;
+- observation type, source timestamp, collection timestamp and evidence reference;
+- response command ID, exact action, presented episode/cycle/attempt ID, P;
+- local durable-save and surface-dismiss timestamps, cancellation/replacement
+  acknowledgement, server receipt/commit, and peer-device application time;
+- effective result, duplicate/stale/rejected reason, failure code, retry identity;
+- incident ID, SMS request/provider state and recovery linkage;
+- clock source, measured offset/uncertainty, logical test clock mapping, sequence
+  number and device monotonic timing where available.
+
+Do not record access tokens, credentials, SMS secrets, or unnecessary medication
+details in diagnostic logs. Restrict log access. Proposed retention/export policy
+must be reviewed; this document does not authorize publicly readable health logs.
+
+### 7.3 Named audit milestones
+
+At minimum distinguish:
+
+1. occurrence materialized / episode current / episode superseded or completed;
+2. alert expected / registration attempted / accepted or rejected / coverage verified;
+3. send attempted / provider accepted, rejected, or outcome unknown;
+4. presentation observed / delivered item observed / evidence unavailable;
+5. notification opened or dismissed, where actually observable;
+6. response tapped / intent durable / local presentation dismissed;
+7. local repeat cancelled / snooze scheduled / reconciliation failed;
+8. response sent / server accepted, rejected, duplicate, or outcome unknown;
+9. peer response applied / obsolete requests removed;
+10. deadline audit passed, failed, or unverified / incident raised / SMS submitted
+    and subsequent provider status / recovery observed.
+
+An accepted schedule is not a presentation; a submitted SMS is not a delivered SMS;
+an uncertain acknowledgement is not a rejected response. Retries retain causal
+IDs and do not erase earlier failed attempts.
+
+### 7.4 Latency and missing-evidence reports
+
+For every episode and attempt, administrators/developers need a trace showing:
+
+- registration lead time: intended deadline minus registration acknowledgement;
+- observed delivery lateness: actual supported presentation timestamp minus
+  intended deadline, with source and uncertainty;
+- response latency from original cycle origin: P - A;
+- response latency from medication time: P - T;
+- response latency from a specific observed presentation, only if that
+  presentation and response can actually be correlated;
+- tap-to-durable-save, tap-to-surface-dismiss, tap-to-server-commit, and
+  tap-to-other-device-cancellation;
+- all expected attempts, their evidence category, overdue unknowns/failures,
+  suppressions due to snooze/completion/supersession, and coverage end.
+
+If the exact presentation time is unavailable, do not call P - scheduledDeadline
+"time since the user saw it". If the tapped notification's attempt is unknown,
+report that, not a guess based on the latest pending ID. Retain device tap time
+separately from delayed server receipt. Offline and skewed clocks require explicit
+uncertainty; a negative or hours-long apparent duration is investigated, not hidden.
+
+The report must let us investigate the observed hours-late/missing alerts: was
+the occurrence created late, synchronized late, registered late, provider-held,
+presented late, suppressed by settings, superseded, or simply not observable?
+"Everything succeeded" based only on a Firestore write is unacceptable.
+
+## 8. E2E evidence and acceptance
+
+### 8.1 Real flow, not a performance of the desired behavior
+
+Follow [E2E_GUIDE.md](E2E_GUIDE.md) for real Auth/Firestore emulators and enabled
+rules, zero-pixel comparison, generated ordered walkthroughs, event-driven waits,
+and the two-second automated condition timeout. Its older patient screen inventory
+must be reconciled with this contract after approval, not treated as permission
+to keep dashboards or status screens.
+
+Create identities/relationships and schedule/configuration through approved real
+user flows. The actual backend materializes occurrences. Native clients observe
+the same real IDs, schedule through the production notification implementation,
+and respond through the production data path. No encoded event arrays, fake
+delivered callbacks, injected Watch snapshots, in-process repository substitutes,
+or Admin SDK data seeding masquerading as a user journey.
+
+Time acceleration is allowed only through a coherent, documented clock boundary
+shared by the relevant scheduler/backend/clients and mapped to actual OS triggers.
+It may change when time passes; it must not replace notification delivery or
+response handling. If the OS clock cannot be advanced safely, map a logical
+deadline to a near-future real trigger using the same production request path,
+and label precisely what timing was accelerated. Such a run does not prove a
+ten-minute wall-clock timer, calendar/DST behavior, or unattended endurance.
+Separate real-time hardware/soak evidence is required for those properties.
+
+Tests await causally related OS UI, callback, real snapshot, or log-stream events.
+No arbitrary sleeps, delayed success screenshots, fixed polling loops, or increased
+timeouts. A two-second condition limit is not permission to replace an unobserved
+OS event with an assertion that the request was merely queued. Long-duration
+hardware observation must be explicitly labeled separate evidence, not a relaxed
+automated E2E test.
+
+### 8.2 Minimum evidence matrix
+
+| Story | Required proof beyond screenshots |
+| --- | --- |
+| J01 | Real first OS presentation, response, immediate closure, committed result and cancellation |
+| J02 | Actual initial/repeat/snooze-expiry notifications, anchored D, suppressed intermediate slots |
+| J03 | Dismissal is not a response; actual later repeats with apps inactive |
+| J04 | Exact-boundary, repeated/late intent and approved cycle-transition outcomes |
+| J05 | Newest-episode selection including completed newest; no old queued/delivered replay |
+| J06 | Physical routing matrix, either-device action, one result, measured propagation/cancellation |
+| J07 | Real transport partition/process termination, durable intent, no network-dependent UI closure |
+| J08 | Version/identity race outcomes; old action never affects new episode |
+| J09 | Actual admin R/S write and real downstream configuration/timing |
+| J10 | Genuine fault, honest evidence category, incident and captured SMS request, bounded recovery |
+| J11 | Approved manual-launch behavior and separate provisioning proof |
+
+Every walkthrough records source SHA, build, environment, settings, clock mapping,
+actual episode/request IDs and all screen transitions/taps. Capture both buttons
+with equal weight, OS dismissal controls, no patient status UI, and the return
+after tapping. Do not crop out errors or pretend a blank app is the home screen.
+Do not update old visual baselines until the revised UX is explicitly approved.
+
+### 8.3 Timing criteria to approve before implementation
+
+"Timely" must become measured budgets, not subjective screenshots.
+Proposed budgets for controlled, supported conditions:
+
+- Intended trigger timestamp equals the approved deadline at supported resolution;
+  no rounding into the following minute or timer based on tap time.
+- On-time actual presentation: within 5 seconds after the deadline, never
+  intentionally before it. This is a proposed hardware product target to prove,
+  not a claim the OS guarantees it or an extension of E2E condition timeouts.
+- Tap-to-local durable intent and removal of response surface: within 250 ms,
+  with no network dependency. Supported OS transition animation is separately
+  recorded; it does not justify a saving screen.
+- Connected response propagation/cancellation and backend data assertions:
+  within the guide's 2-second condition budget when their causal event is due.
+- Independent missing-protection/deadline evaluation: within 60 seconds; incident
+  creation and provider submission latency are measured separately. Exact SMS
+  dispatch budget, unknown-delivery escalation threshold, and deduplication need
+  approval. A 60-second evaluation does not make an hours-late alert acceptable.
+
+Failures against these budgets remain failures. If a platform cannot meet a
+budget, present the evidence and seek a changed requirement before release.
+
+### 8.4 What passing tests can and cannot claim
+
+We can demonstrate no missing expected attempts in a specified test run, correct
+cadence/cancellation, crash recovery, honest logging, real OS presentation under
+tested settings, and a monitor that finds injected real failures.
+We cannot prove from finite E2E runs that an alert can never be missed on any
+future device, that a person can never ignore it, or that every OS presentation
+produces a production receipt. Release claims must name the operating conditions,
+coverage duration, evidence gaps, and fault response. An unproven hard requirement
+remains a blocker, not a passing test with an optimistic caption.
+
+## 9. Focused review checklist
+
+Confirm the core requirements first:
+
+- [ ] Only two equally weighted actions on phone and Watch; no patient dashboard,
+      status, readiness, confirmation, history, or technical workflow.
+- [ ] One tap ends the interaction without awaiting network acknowledgement.
+- [ ] Timely original alerts and configurable R/S; repeat does not reset origin.
+- [ ] 8:03 snooze of an 8:00 alert with S = 10 ends at 8:10, not 8:13.
+- [ ] Only the newest due occurrence is ever active; completion never reveals old work.
+- [ ] Respond on either device; do not add patient synchronization duties.
+- [ ] Honest per-attempt logs, response latency and administrator failure handling.
+
+Resolve these narrow ambiguities rather than inventing a broader product:
+
+1. Approve subsequent-cycle and expired-snooze rules in section 4.6, or specify
+   whether every snooze must remain anchored to the medication's original T.
+2. Approve simultaneous-entry grouping into one alert/response.
+3. Approve the settings scope, supported ranges and freeze-on-active policy.
+4. Define acceptable foreground close/manual-launch behavior if the OS cannot
+   return to the prior experience programmatically; keep the one-tap goal visible.
+5. Approve a separate provisioning/recovery route without a normal patient dashboard.
+6. Decide immediate current catch-up versus next cadence slot after late startup,
+   and first enrollment's prospective protection boundary (no invented old failure).
+7. Approve concurrency and stale-action policy, especially a late offline response.
+8. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
+   log retention/access. Does unknown presentation evidence block release?
+9. Approve required both-device routing/coverage duration after physical proof,
+   plus the DST and schedule-edit successor-boundary policies.
+
+After approval, implement/prove the small real vertical slice first: actual alert
+on the devices -> one tap -> immediate end of interaction -> durable result ->
+anchored snooze or cancellation -> no old alerts. Then expand fault/race coverage.
+Do not start by rebuilding a patient dashboard or producing another simulated
+walkthrough that cannot establish notification behavior.
+
+## 10. Platform references
+
+These constrain claims; they do not certify our current code:
+
+- [Notification actions](https://developer.apple.com/documentation/usernotifications/handling-notifications-and-notification-related-actions):
+  background action handling can avoid bringing the app to the foreground.
+- [iOS termination guidance](https://developer.apple.com/library/archive/qa/qa1561/_index.html):
+  archived Apple guidance documents no graceful application quit API; a deliberate
+  exit is not an acceptable implementation of the desired interaction.
+- [Delivered-notification inventory](https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/getdeliverednotifications%28completionhandler%3A%29):
+  lists notifications still present, not a complete per-alert receipt history.
+- [Notification forwarding](https://developer.apple.com/documentation/watchos-apps/taking-advantage-of-notification-forwarding):
+  normal phone-targeted notifications route to phone or Watch; Watch-local ones
+  stay on Watch. Both-device delivery requires explicit architectural proof.
+- [Background updates](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app):
+  silent pushes are subject to OS delays/throttling and are not a reliable
+  per-repeat wake guarantee.
+- [Critical Alerts entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.usernotifications.critical-alerts):
+  special sound behavior requires entitlement approval and authorization, not
+  merely a TestFlight build or an urgency setting in our own database.
