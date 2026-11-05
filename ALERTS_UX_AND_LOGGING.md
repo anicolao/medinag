@@ -179,12 +179,14 @@ independent medication obligation. Earlier requirements to alert on both devices
 and accept a response on either remain the target; delivery routing must be
 tested rather than inferred from one phone notification.
 
-### 3.2 Simultaneous medications and schedule changes
+### 3.2 One scheduled alert per time
 
-Proposed: entries with exactly the same due instant form one response episode.
-The two-button response applies to the group. No per-medication paging or extra
-buttons are introduced. This grouping must be explicitly approved because the
-new minimal UI does not identify individual medications.
+A schedule allows only one alert at a given time. The administrator cannot save
+or publish a second alert for the same time on the same scheduled day. This rule
+is enforced in the administrator UI and backend, including when editing alerts.
+There is no grouping, per-medication paging, or multiple-dose response flow.
+
+### Schedule changes
 
 Use a monotonic episode/version identity, not client arrival order, to select the
 newest occurrence. A delayed old message must not become current merely because
@@ -397,6 +399,9 @@ the examples. Observe the saved revision through the real backend and native
 clients. Verify future episodes use those exact values. Attempt invalid settings
 and simultaneous edits. Confirm that an existing cycle does not change origin
 or deadline mid-response unless such a change was explicitly approved.
+Try adding or editing a second alert to the same time on the same scheduled day.
+The administrator UI rejects the conflict, and the backend rejects it as well;
+no duplicate alert is saved or published. Distinct times remain valid.
 
 ### J10 - Delivery late, missing, or not observable
 
@@ -625,7 +630,7 @@ automated E2E test.
 | J06 | Physical routing matrix, either-device action, one result, measured propagation/cancellation |
 | J07 | Real transport partition/process termination, durable intent, no network-dependent UI closure |
 | J08 | Version/identity race outcomes; old action never affects new episode |
-| J09 | Actual admin R/S write and real downstream configuration/timing |
+| J09 | Actual admin R/S write and downstream timing; UI/backend rejection of conflicting scheduled alert times |
 | J10 | Genuine fault, honest evidence category, incident and captured SMS request, bounded recovery |
 | J11 | Next-dose-only UI; exact 15-minute boundary; real early completion, closure and cancellation; no historical replay; separate provisioning proof |
 
@@ -683,6 +688,8 @@ Confirm the core requirements first:
 - [ ] Timely original alerts and configurable R/S; repeat does not reset origin.
 - [ ] 8:03 snooze of an 8:00 alert with S = 10 ends at 8:10, not 8:13.
 - [ ] Only the newest due occurrence is ever active; completion never reveals old work.
+- [ ] A schedule allows only one alert at a given time; duplicate times cannot
+      be saved or published. There is no simultaneous-dose grouping flow.
 - [ ] Respond on either device; do not add patient synchronization duties.
 - [ ] Honest per-attempt logs, response latency and administrator failure handling.
 
@@ -690,19 +697,18 @@ Resolve these narrow ambiguities rather than inventing a broader product:
 
 1. Approve subsequent-cycle and expired-snooze rules in section 4.6, or specify
    whether every snooze must remain anchored to the medication's original T.
-2. Approve simultaneous-entry grouping into one alert/response.
-3. Approve the settings scope, supported ranges and freeze-on-active policy.
-4. Define acceptable foreground close behavior after a response if the OS cannot
+2. Approve the settings scope, supported ranges and freeze-on-active policy.
+3. Define acceptable foreground close behavior after a response if the OS cannot
    return to the prior experience programmatically; keep the one-tap goal visible.
    Approve the proposed no-next-dose empty state separately; manual launch with
    a next dose now has the defined minimal screen, not a blank/auto-close policy.
-5. Approve a separate provisioning/recovery route without a normal patient dashboard.
-6. Decide immediate current catch-up versus next cadence slot after late startup,
+4. Approve a separate provisioning/recovery route without a normal patient dashboard.
+5. Decide immediate current catch-up versus next cadence slot after late startup,
    and first enrollment's prospective protection boundary (no invented old failure).
-7. Approve concurrency and stale-action policy, especially a late offline response.
-8. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
+6. Approve concurrency and stale-action policy, especially a late offline response.
+7. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
    log retention/access. Does unknown presentation evidence block release?
-9. Approve required both-device routing/coverage duration after physical proof,
+8. Approve required both-device routing/coverage duration after physical proof,
    plus the DST and schedule-edit successor-boundary policies.
 
 After approval, implement/prove the small real vertical slice first: actual alert
