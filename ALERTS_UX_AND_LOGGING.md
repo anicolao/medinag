@@ -221,11 +221,15 @@ The administrator can set and save:
 - **Snooze interval S:** length of a response window measured from its original
   alert deadline; example 10 minutes.
 
+R and S are set once per administrator and apply to all of that administrator's
+schedules. There are no per-schedule or per-dose overrides. Each administrator
+controls their own settings independently of other administrators.
+
 Neither value may be hardcoded in a test or native client as hidden product policy.
 Both must flow from the saved web configuration through the real backend to
 both devices. Proposed validation is positive durations with R < S and values
-the selected notification mechanism can actually support. Exact ranges and
-whether settings are global or per schedule need approval. The examples here
+the selected notification mechanism can actually support. Exact ranges still
+need approval. The examples here
 are inputs, not a mandate that every schedule use 3 and 10.
 
 Time is interpreted in the patient's time zone, not the administrator's.
@@ -237,8 +241,8 @@ Intervals use elapsed duration, not wall-clock string subtraction.
 
 - T: original medication occurrence time.
 - A: scheduled origin of the current alert cycle. Initially A = T.
-- R: configured repeat interval for this episode.
-- S: configured snooze interval for this episode.
+- R: administrator's repeat interval applied to this episode.
+- S: administrator's snooze interval applied to this episode.
 - P: actual time the patient tapped a response.
 - D: anchored snooze deadline, A + S.
 - C: next newer medication occurrence time, or an explicit valid coverage boundary.
@@ -396,7 +400,9 @@ policy; proposed completion is terminal and duplicate snoozes share D.
 
 Change R and S on the administrator website, using different valid values from
 the examples. Observe the saved revision through the real backend and native
-clients. Verify future episodes use those exact values. Attempt invalid settings
+clients. Verify future episodes across all of that administrator's schedules use
+those same values, with no per-schedule overrides. Verify another administrator's
+settings and schedules are unaffected. Attempt invalid settings
 and simultaneous edits. Confirm that an existing cycle does not change origin
 or deadline mid-response unless such a change was explicitly approved.
 Try adding or editing a second alert to the same time on the same scheduled day.
@@ -630,7 +636,7 @@ automated E2E test.
 | J06 | Physical routing matrix, either-device action, one result, measured propagation/cancellation |
 | J07 | Real transport partition/process termination, durable intent, no network-dependent UI closure |
 | J08 | Version/identity race outcomes; old action never affects new episode |
-| J09 | Actual admin R/S write and downstream timing; UI/backend rejection of conflicting scheduled alert times |
+| J09 | Administrator-wide R/S write and downstream timing across their schedules; isolation from other administrators; rejection of conflicting scheduled alert times |
 | J10 | Genuine fault, honest evidence category, incident and captured SMS request, bounded recovery |
 | J11 | Next-dose-only UI; exact 15-minute boundary; real early completion, closure and cancellation; no historical replay; separate provisioning proof |
 
@@ -685,7 +691,8 @@ Confirm the core requirements first:
       minutes offer only Yes, I did for early completion. Earlier than that, no action.
 - [ ] Record responses immediately and synchronize as soon as possible, retrying
       until acknowledged; exceptional connectivity delays do not keep the UI open.
-- [ ] Timely original alerts and configurable R/S; repeat does not reset origin.
+- [ ] Timely original alerts and administrator-wide R/S applying to all their
+      schedules without overrides; repeat does not reset origin.
 - [ ] 8:03 snooze of an 8:00 alert with S = 10 ends at 8:10, not 8:13.
 - [ ] Only the newest due occurrence is ever active; completion never reveals old work.
 - [ ] A schedule allows only one alert at a given time; duplicate times cannot
@@ -697,7 +704,8 @@ Resolve these narrow ambiguities rather than inventing a broader product:
 
 1. Approve subsequent-cycle and expired-snooze rules in section 4.6, or specify
    whether every snooze must remain anchored to the medication's original T.
-2. Approve the settings scope, supported ranges and freeze-on-active policy.
+2. Approve the supported R/S ranges and freeze-on-active policy; their
+   administrator-wide scope is settled.
 3. Define acceptable foreground close behavior after a response if the OS cannot
    return to the prior experience programmatically; keep the one-tap goal visible.
    Approve the proposed no-next-dose empty state separately; manual launch with
