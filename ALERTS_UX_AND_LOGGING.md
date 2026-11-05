@@ -240,11 +240,12 @@ Intervals use elapsed duration, not wall-clock string subtraction.
 ### 4.2 Definitions
 
 - T: original medication occurrence time.
-- A: scheduled origin of the current alert cycle. Initially A = T.
+- A: scheduled origin of the current repeat stream. Initially A = T; after a
+  snooze expires, A is that snooze's scheduled expiry time.
 - R: administrator's repeat interval applied to this episode.
 - S: administrator's snooze interval applied to this episode.
 - P: actual time the patient tapped a response.
-- D: anchored snooze deadline, A + S.
+- D: next snooze boundary strictly after P on the grid T + S, T + 2S, T + 3S, etc.
 - C: next newer medication occurrence time, or an explicit valid coverage boundary.
 
 The origin is the intended scheduled deadline, not the time the app happens to
@@ -275,8 +276,15 @@ No older episode becomes active as a consequence.
 
 ### 4.5 Yes, I will: the central correction
 
-For a response during a cycle, snooze until **D = A + S**, not P + S.
-Cancel the cycle's remaining ordinary repeats before D. If D < C and the episode
+Snooze until the next boundary on the grid anchored to T, not P + S:
+
+**D = T + (floor((P - T) / S) + 1) * S.**
+
+For an 8:00 dose with S = 10 minutes, the grid is 8:10, 8:20, 8:30, and so on,
+regardless of whether earlier alerts were ignored or snoozed. For a response
+before 8:10, this is the original 8:10 deadline.
+
+Cancel the current stream's remaining ordinary repeats before D. If D < C and the episode
 is still incomplete, the next alert is due at D. An action does not earn a fresh
 S minutes merely because the patient waited before responding.
 
@@ -294,27 +302,27 @@ A tap at 8:04 leaves six minutes. A tap at 8:09:30 leaves thirty seconds.
 The answer must not be rounded into another ten minutes. If a newer occurrence
 is due at 8:08, retirement at 8:08 wins; the old 8:10 snooze must never fire.
 
-### 4.6 Subsequent snoozes and late taps - proposed interpretation
+### 4.6 Subsequent snoozes and late taps
 
-The user's 8:03 -> 8:10 example determines the first window, but not every later
-boundary. The following is proposed explicitly for approval:
+The snooze grid always remains anchored to the original medication time T.
+Missing a window does not forfeit the ability to snooze to the next boundary.
 
-1. A legitimate snooze-expiry alert at 8:10 starts the next cycle, A = 8:10.
-   Ignoring it gives repeats at 8:13, 8:16, etc.
-2. A Yes, I will tap at 8:13 snoozes until 8:20, not 8:23.
-3. There is no automatic cycle reset merely because ten minutes elapsed without
-   any response. In an entirely ignored initial cycle, repeats continue at 8:12,
-   8:15, etc.; A remains 8:00 until an approved transition creates a new cycle.
-4. A snooze tap at/after its already-expired D must not create extra time or
-   cause a zero-time notification loop. Proposed: log it as an expired snooze
-   intent, close the surface, and keep the next original repeat boundary.
-   Whether instead to move to the next anchored window needs approval.
-5. Repeated taps or a retransmitted snooze for the same cycle do not extend D.
-6. Reaching C retires the episode regardless of cycle or snooze state.
-
-If "original notification" is intended to mean T for every snooze forever,
-rather than the origin of each actual snooze-expiry cycle, change this section
-before implementation. No client may silently choose its own interpretation.
+1. Ignore the 8:00 alert and its 8:03, 8:06, and 8:09 repeats. At 8:12, tap
+   Yes, I will: the next alert is due at **8:20**, leaving eight minutes.
+   The ordinary 8:15 and 8:18 repeats are cancelled. It is not due at 8:15 or 8:22.
+2. If instead the patient snoozed before 8:10, its actual expiry alert is due at
+   8:10. Ignoring that gives repeats at 8:13, 8:16, etc. A tap at 8:13 snoozes
+   until 8:20, not 8:23.
+3. With no response, R still controls repeats; crossing a snooze-grid boundary
+   alone does not create an additional alert or alter the repeat cadence.
+4. A tap exactly at 8:10 snoozes to 8:20; exactly at 8:20 snoozes to 8:30.
+   The selected deadline is always strictly after the tap, never an immediate loop.
+5. Save D with the original response. Duplicate callbacks, retransmissions, and
+   delayed synchronization reuse that saved deadline; they do not recalculate
+   from retry or server receipt time or extend an already-recorded snooze.
+6. At a legitimate snooze expiry, that scheduled expiry becomes A for subsequent
+   R-spaced repeats. It does not move the snooze grid anchored to T.
+7. Reaching C retires the episode regardless of repeat or snooze state.
 
 ## 5. Patient journeys to review
 
@@ -352,9 +360,10 @@ Do not promise that the OS prevents a human dismissing or ignoring a notificatio
 ### J04 - Snooze expires, next cycle, late snooze
 
 Exercise every boundary in section 4.6: before D, exactly D, after D, duplicate
-tap, retry, and response from a stale delivered notification. Show that a repeat
-does not reset A and that only an approved cycle transition can change it.
-Prove the approved late-snooze behavior without displaying a patient error screen.
+tap, retry, and response from a stale delivered notification. Explicitly ignore
+the 8:00 dose until 8:12, tap Yes, I will, and observe the next actual alert at
+8:20, with none at 8:15 or 8:18. Verify the snooze grid never moves from T and
+that retrying the response cannot extend its saved D. No patient error screen.
 
 ### J05 - Only the newest dose, then no active work
 
@@ -631,7 +640,7 @@ automated E2E test.
 | J01 | Real first OS presentation, response, immediate closure, committed result and cancellation |
 | J02 | Actual initial/repeat/snooze-expiry notifications, anchored D, suppressed intermediate slots |
 | J03 | Dismissal is not a response; actual later repeats with apps inactive |
-| J04 | Exact-boundary, repeated/late intent and approved cycle-transition outcomes |
+| J04 | Original-time snooze grid; 8:12 tap -> 8:20 alert; exact-boundary and retry behavior |
 | J05 | Newest-episode selection including completed newest; no old queued/delivered replay |
 | J06 | Physical routing matrix, either-device action, one result, measured propagation/cancellation |
 | J07 | Real transport partition/process termination, durable intent, no network-dependent UI closure |
@@ -694,6 +703,8 @@ Confirm the core requirements first:
 - [ ] Timely original alerts and administrator-wide R/S applying to all their
       schedules without overrides; repeat does not reset origin.
 - [ ] 8:03 snooze of an 8:00 alert with S = 10 ends at 8:10, not 8:13.
+- [ ] 8:12 snooze of that same dose ends at 8:20, not the next R-spaced repeat
+      or ten minutes after the tap; the snooze grid stays anchored to 8:00.
 - [ ] Only the newest due occurrence is ever active; completion never reveals old work.
 - [ ] A schedule allows only one alert at a given time; duplicate times cannot
       be saved or published. There is no simultaneous-dose grouping flow.
@@ -702,21 +713,19 @@ Confirm the core requirements first:
 
 Resolve these narrow ambiguities rather than inventing a broader product:
 
-1. Approve subsequent-cycle and expired-snooze rules in section 4.6, or specify
-   whether every snooze must remain anchored to the medication's original T.
-2. Approve the supported R/S ranges and freeze-on-active policy; their
+1. Approve the supported R/S ranges and freeze-on-active policy; their
    administrator-wide scope is settled.
-3. Define acceptable foreground close behavior after a response if the OS cannot
+2. Define acceptable foreground close behavior after a response if the OS cannot
    return to the prior experience programmatically; keep the one-tap goal visible.
    Approve the proposed no-next-dose empty state separately; manual launch with
    a next dose now has the defined minimal screen, not a blank/auto-close policy.
-4. Approve a separate provisioning/recovery route without a normal patient dashboard.
-5. Decide immediate current catch-up versus next cadence slot after late startup,
+3. Approve a separate provisioning/recovery route without a normal patient dashboard.
+4. Decide immediate current catch-up versus next cadence slot after late startup,
    and first enrollment's prospective protection boundary (no invented old failure).
-6. Approve concurrency and stale-action policy, especially a late offline response.
-7. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
+5. Approve concurrency and stale-action policy, especially a late offline response.
+6. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
    log retention/access. Does unknown presentation evidence block release?
-8. Approve required both-device routing/coverage duration after physical proof,
+7. Approve required both-device routing/coverage duration after physical proof,
    plus the DST and schedule-edit successor-boundary policies.
 
 After approval, implement/prove the small real vertical slice first: actual alert
