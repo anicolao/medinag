@@ -449,8 +449,10 @@ Induce a real scheduling rejection, queue exhaustion, revoked permission, device
 power-off, app termination, network outage, late schedule synchronization, and absent
 delivery observation as separate cases. Keep the patient's interface minimal.
 Logs/admin reports distinguish proven failure from unavailable evidence.
-Verify administrator incident and SMS paths, recovery, no backfill storm, and
-that a late request is never counted as an on-time alert.
+Verify that the client records and reports the fault through the existing
+administrator-reporting path, recovers without a backfill storm, and never
+counts a late request as an on-time alert. Server-side SMS dispatch is outside
+this client story.
 
 ### J11 - Next dose, early completion, and provisioning boundary
 
@@ -487,8 +489,9 @@ cannot be the sole detector of its own failure. A coverage monitor must identify
 unregistered, expired, stale, and unobserved protection with truthful categories.
 Actual failure or loss of approved protection raises a durable administrator
 incident and SMS attempt through the existing escalation policy; a patient-only
-warning is not sufficient. Administrator incident creation precedes marking an
-event escalated, with retries/deduplication if provider submission fails.
+warning is not sufficient. The client's responsibility is to record and report
+the fault. SMS dispatch and its server-side processing are outside this client
+contract; the client does not send SMS.
 
 Do not treat isReachable = false as a disconnected/broken Watch. Verify required
 communication failures and actual protection coverage. Do not send the
@@ -676,7 +679,7 @@ automated E2E test.
 | J07 | Real transport partition/process termination, durable intent, no network-dependent UI closure |
 | J08 | Version/identity race outcomes; old action never affects new episode |
 | J09 | Administrator-wide R/S write and downstream timing across their schedules; isolation from other administrators; rejection of conflicting scheduled alert times |
-| J10 | Genuine fault, honest evidence category, incident and captured SMS request, bounded recovery |
+| J10 | Genuine fault, honest evidence category, client fault recording/reporting, bounded recovery |
 | J11 | Next-dose-only UI; exact 15-minute boundary; real early completion, closure and cancellation; no historical replay; separate provisioning proof |
 
 Every walkthrough records source SHA, build, environment, settings, clock mapping,
@@ -700,10 +703,11 @@ Proposed budgets for controlled, supported conditions:
   recorded; it does not justify a saving screen.
 - Connected response propagation/cancellation and backend data assertions:
   within the guide's 2-second condition budget when their causal event is due.
-- Independent missing-protection/deadline evaluation: within 60 seconds; incident
-  creation and provider submission latency are measured separately. Exact SMS
-  dispatch budget, unknown-delivery escalation threshold, and deduplication need
-  approval. A 60-second evaluation does not make an hours-late alert acceptable.
+- Local missing-alert-registration/deadline evaluation: within 60 seconds when
+  the OS permits the client to execute. Log when the check actually runs; do not
+  claim a sleeping app can guarantee that interval. A 60-second evaluation does
+  not make an hours-late alert acceptable, and no SMS dispatch timing is part of
+  this client requirement.
 
 Failures against these budgets remain failures. If a platform cannot meet a
 budget, present the evidence and seek a changed requirement before release.
@@ -753,7 +757,7 @@ Resolve these narrow ambiguities rather than inventing a broader product:
 4. Decide immediate current catch-up versus next cadence slot after late startup,
    and first enrollment's prospective protection boundary (no invented old failure).
 5. Approve concurrency and stale-action policy, especially a late offline response.
-6. Approve the measurable budgets, unknown-delivery handling, SMS thresholds and
+6. Approve the client timing budgets, unknown-delivery handling, and
    log retention/access. Does unknown presentation evidence block release?
 7. Approve required both-device routing/coverage duration after physical proof,
    plus the DST and schedule-edit successor-boundary policies.
