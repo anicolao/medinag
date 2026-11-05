@@ -465,8 +465,9 @@ early completion, reconnect, restart, and stale-message delivery as separate cas
 Do not automatically navigate to this screen after a response. On a subsequent
 manual launch, show the next actual upcoming dose, not the completed one. Verify
 no-next-dose handling separately, and that an active alert takes precedence.
-Separately prove provisioning and recovery do not enter a falsely protected
-state; that journey must not expand the normal response/next-dose screens.
+Separately verify that initial setup and recovery actually enable scheduled
+alerts, and that failures are reported to the administrator. These checks must
+not add status or technical information to the patient's response/next-dose screens.
 
 ## 6. Reliability requirements and limits we must not hide
 
