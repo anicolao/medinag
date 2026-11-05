@@ -486,7 +486,11 @@ warning is not sufficient. Administrator incident creation precedes marking an
 event escalated, with retries/deduplication if provider submission fails.
 
 Do not treat isReachable = false as a disconnected/broken Watch. Verify required
-communication failures and actual protection coverage. No routine-quiescence SMS.
+communication failures and actual protection coverage. Do not send the
+administrator an SMS merely because the app is idle or the phone and Watch are
+not actively communicating; that can be normal while required alerts remain
+scheduled and working. Send an SMS for an actual failure, such as being unable
+to schedule required alerts, not ordinary inactivity.
 Lack of delivery telemetry alone is not proof of failed delivery, but unresolved
 uncertainty must remain visible to the administrator and be handled under an
 approved policy, never greenwashed as successful delivery.
