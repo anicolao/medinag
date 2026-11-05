@@ -8,13 +8,14 @@ Date: 2026-11-04.
 
 The patient's application is a response instrument, not a dashboard.
 
-On both the iPhone and Apple Watch its entire normal interaction is:
+On both the iPhone and Apple Watch its entire active-alert interaction is:
 
 - **Yes, I did** - complete the active medication alert and stop its reminders.
 - **Yes, I will** - snooze the active alert until its anchored snooze deadline.
 
-There is nothing else for the patient to inspect, acknowledge, navigate, or fix.
-One tap finishes the interaction. The response surface disappears immediately;
+When opened without an active alert, it shows only the next upcoming dose, as
+specified in section 2.3. There is no general patient dashboard.
+One response tap finishes the interaction. The response surface disappears immediately;
 it must not wait for Firebase, the phone, the Watch, or a server acknowledgement.
 
 The application, not the patient, owns timely reminders, background processing,
@@ -25,8 +26,9 @@ patient response surface.
 This document focuses only on that experience and its proof. It is not another
 general application inventory. Where earlier design proposals conflict with it,
 this is the proposed replacement for patient alert behavior after review.
-In particular, next-dose views, early-response windows, patient history, pending
-confirmation screens, and snooze measured from the response tap are not retained.
+In particular, patient history, pending confirmation screens, and snooze measured
+from the response tap are not retained. The sole non-alert view is the minimal
+next-dose screen and its 15-minute early-completion action in section 2.3.
 
 No application changes, deployments, migrations, or releases are included in
 this documentation PR. Decisions explicitly marked Proposed remain for review.
@@ -40,9 +42,10 @@ this documentation PR. Decisions explicitly marked Proposed remain for review.
    and accessible names. Neither is preselected, the default, or visually urged.
 3. No application-level third action: no Stop, Cancel, OK, Done, Retry, Refresh,
    Continue, confirmation dialog, or extra tap to finish responding.
-4. No medication list, next-dose time, status badge, connection footer, database
+4. No medication list, status badge, connection footer, database
    readiness, spinner, saving screen, waiting-for-confirmation screen, diagnostics,
-   successful-response page, or history on the normal patient surface.
+   successful-response page, or history on the normal patient surface. The only
+   dose information outside the active-alert view is section 2.3's next dose.
 5. Buttons must not be greyed out because a network connection or acknowledgement
    is unavailable. Offline response must be possible for a locally known alert.
 6. No follow-up "Are you sure?" or "Response saved" acknowledgement.
@@ -62,14 +65,20 @@ state, or diagnosis text. Approval of this title does not approve extra in-app U
 
 ### 2.2 One tap ends the interaction
 
-At tap time the application captures one durable, identity-scoped response intent,
+At tap time the application durably records the response to that dose,
 stops this device's current presentation, reconciles its local reminders, and
 returns control without a network round trip. Persistence and local alarm changes
 must be engineered as a crash-recoverable operation, not an unrecorded animation.
 
 The user must not have to keep the app visible, open the phone after answering
 on Watch, wait for a remote acknowledgement, or tap again to make the response count.
-Synchronization continues opportunistically without a patient progress screen.
+The application sends the recorded response to the other device and backend as
+soon as possible, without a patient progress screen. Delivery is required, not
+optional: save locally immediately, attempt synchronization immediately, and
+retry until acknowledged. Exceptional conditions such as no network connectivity
+may delay synchronization; resume as soon as conditions permit and log/escalate
+failures under the approved policy. Never wait for synchronization to close the
+response surface.
 
 There are two distinct delivery paths to prove:
 
@@ -92,13 +101,40 @@ and [background notification action handling](https://developer.apple.com/docume
 
 ### 2.3 When there is no active alert
 
-There is no patient dashboard and no invitation to answer a future or historical
-dose. A completed or snoozed interaction does not reveal a next-dose page.
+When the patient opens the application without an active alert, show only the
+next upcoming scheduled dose, including when it is due. This applies equally
+to phone and Watch. No list of later doses, history, status, connection details,
+technical information, or additional navigation is included.
 
-Proposed: a manual launch with no currently actionable alert presents no response
-choices and no application information, and returns to the OS if supported.
-The exact manual-launch/no-active-alert behavior needs approval and platform
-proof; a blank foreground page is not an approved substitute for closing.
+- More than 15 minutes before that dose: show the next dose only. There is no
+  patient action, including no disabled response buttons.
+- Within 15 minutes, including exactly 15 minutes before it: show that same next
+  dose and one enabled action, "Yes, I did". The patient may take the medication
+  early and tap once to complete that upcoming dose. Do not offer "Yes, I will"
+  before the alert is due.
+- On early completion: durably record the response, cancel that dose's initial
+  alert and all repeats on both devices as soon as possible, and close the
+  interaction under section 2.2. No alert is due for the completed dose when its
+  scheduled time arrives. An offline response must be reconciled without reviving it.
+- At its scheduled time, if not already completed: use the ordinary active-alert
+  flow with the two response choices and the normal timing rules.
+
+An already-active alert takes precedence over this no-active-alert screen; do not
+introduce a selector between current and future doses. Snoozing or completing a
+response still closes the interaction, rather than automatically navigating to
+the next-dose screen. That screen appears on a subsequent manual opening when
+there is no active alert to respond to.
+
+Determine the 15-minute boundary from the actual dose instant, not when the app
+was opened. A view left open becomes actionable at that boundary without needing
+a restart or refresh. Early completion changes no other dose and does not revive
+an older one. If a newer dose becomes current during a tap, retain the identity
+of the dose actually presented; do not transfer the response to the newer dose.
+
+Proposed empty-schedule case for review: if there is genuinely no next dose,
+show only "No upcoming dose", with no action. A retrieval failure must not be
+misrepresented as an empty schedule; operational failures remain in admin/logging
+channels, not a new patient technical workflow.
 
 First-time Google sign-in, schedule selection, permission prompts, and account
 recovery are provisioning, not part of this two-button loop. They still need a
@@ -114,7 +150,9 @@ An occurrence is a concrete scheduled medication time in the patient's time zone
 resolved to an absolute instant. An alert episode belongs to that occurrence.
 Repeats are attempts within an episode, not separate medication tasks.
 
-At time now, only the most recent due occurrence may own an active episode.
+At time now, only the most recent due occurrence may own an active alert episode.
+The next upcoming dose may additionally be completed early through section 2.3,
+but it must not start an alert or repeat stream before its due time.
 Future occurrences must not retire it before their due time. Once a later
 occurrence becomes due, every earlier occurrence is permanently retired from
 patient alerts, whether answered, snoozed, ignored, or never seen.
@@ -132,6 +170,9 @@ Retirement means:
 If the newest occurrence is completed, there are zero active episodes until
 the next scheduled time. Do not search backward for the newest *unanswered*
 occurrence. Completion of today's alert must never reveal yesterday's alert.
+If the next occurrence was completed early, its arrival still supersedes every
+earlier occurrence, but starts no alert of its own. Its completed state must be
+retained as a barrier against historical replay.
 
 Both devices represent the same one active episode. They do not each own an
 independent medication obligation. Earlier requirements to alert on both devices
@@ -366,13 +407,26 @@ Logs/admin reports distinguish proven failure from unavailable evidence.
 Verify administrator incident and SMS paths, recovery, no backfill storm, and
 that a late request is never counted as an on-time alert.
 
-### J11 - Quiescent/manual launch and provisioning boundary
+### J11 - Next dose, early completion, and provisioning boundary
 
-After completion, while snoozed, and before the first due time, launch manually.
-There is no next-dose/status dashboard and no stale response opportunity.
-Validate the approved close/no-active behavior. Separately prove initial setup
-and recovery do not enter a falsely protected state; that provisioning journey
-requires its own approval rather than expanding the response screen.
+With no active alert, manually open each app. Show only the next upcoming dose.
+More than 15 minutes before it, show no actions. Check just outside the boundary,
+exactly 15 minutes before it, and just inside it: at/inside the boundary there is
+only "Yes, I did", never a snooze action. Leave the view open across the boundary
+and verify the action appears without a refresh or restart.
+
+Tap Yes, I did once before the due time. The response is saved locally, the
+interaction closes immediately, and synchronization starts as soon as possible.
+Verify the real backend completion and cancellation on both devices. Advance to
+the original dose time and later repeat slots: no alert for the completed dose
+may occur. No older unanswered episode becomes active instead. Exercise offline
+early completion, reconnect, restart, and stale-message delivery as separate cases.
+
+Do not automatically navigate to this screen after a response. On a subsequent
+manual launch, show the next actual upcoming dose, not the completed one. Verify
+no-next-dose handling separately, and that an active alert takes precedence.
+Separately prove provisioning and recovery do not enter a falsely protected
+state; that journey must not expand the normal response/next-dose screens.
 
 ## 6. Reliability requirements and limits we must not hide
 
@@ -573,7 +627,7 @@ automated E2E test.
 | J08 | Version/identity race outcomes; old action never affects new episode |
 | J09 | Actual admin R/S write and real downstream configuration/timing |
 | J10 | Genuine fault, honest evidence category, incident and captured SMS request, bounded recovery |
-| J11 | Approved manual-launch behavior and separate provisioning proof |
+| J11 | Next-dose-only UI; exact 15-minute boundary; real early completion, closure and cancellation; no historical replay; separate provisioning proof |
 
 Every walkthrough records source SHA, build, environment, settings, clock mapping,
 actual episode/request IDs and all screen transitions/taps. Capture both buttons
@@ -622,6 +676,10 @@ Confirm the core requirements first:
 - [ ] Only two equally weighted actions on phone and Watch; no patient dashboard,
       status, readiness, confirmation, history, or technical workflow.
 - [ ] One tap ends the interaction without awaiting network acknowledgement.
+- [ ] Without an active alert, show only the next upcoming dose; at/within 15
+      minutes offer only Yes, I did for early completion. Earlier than that, no action.
+- [ ] Record responses immediately and synchronize as soon as possible, retrying
+      until acknowledged; exceptional connectivity delays do not keep the UI open.
 - [ ] Timely original alerts and configurable R/S; repeat does not reset origin.
 - [ ] 8:03 snooze of an 8:00 alert with S = 10 ends at 8:10, not 8:13.
 - [ ] Only the newest due occurrence is ever active; completion never reveals old work.
@@ -634,8 +692,10 @@ Resolve these narrow ambiguities rather than inventing a broader product:
    whether every snooze must remain anchored to the medication's original T.
 2. Approve simultaneous-entry grouping into one alert/response.
 3. Approve the settings scope, supported ranges and freeze-on-active policy.
-4. Define acceptable foreground close/manual-launch behavior if the OS cannot
+4. Define acceptable foreground close behavior after a response if the OS cannot
    return to the prior experience programmatically; keep the one-tap goal visible.
+   Approve the proposed no-next-dose empty state separately; manual launch with
+   a next dose now has the defined minimal screen, not a blank/auto-close policy.
 5. Approve a separate provisioning/recovery route without a normal patient dashboard.
 6. Decide immediate current catch-up versus next cadence slot after late startup,
    and first enrollment's prospective protection boundary (no invented old failure).
