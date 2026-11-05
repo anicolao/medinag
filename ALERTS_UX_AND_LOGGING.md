@@ -23,6 +23,11 @@ durable responses, synchronization, cancellation, retries, and fault reporting.
 Administrators and developers receive operational information outside this
 patient response surface.
 
+Patient alerts are local OS alerts scheduled on the iPhone and Watch. They are
+not remote push notifications: APNs and remote notification providers are not
+part of this design. Synchronizing schedules and responses is separate from
+delivering those local alerts.
+
 This document focuses only on that experience and its proof. It is not another
 general application inventory. Where earlier design proposals conflict with it,
 this is the proposed replacement for patient alert behavior after review.
@@ -249,7 +254,7 @@ Intervals use elapsed duration, not wall-clock string subtraction.
 - C: next newer medication occurrence time, or an explicit valid coverage boundary.
 
 The origin is the intended scheduled deadline, not the time the app happens to
-run, the time a push was accepted, the time of a repeated notification, or the
+run, the time a schedule was synchronized, the time of a repeated notification, or the
 first time we obtained delivery evidence. A late alert must not reset history.
 
 ### 4.3 Before a response
@@ -441,7 +446,7 @@ no duplicate alert is saved or published. Distinct times remain valid.
 ### J10 - Delivery late, missing, or not observable
 
 Induce a real scheduling rejection, queue exhaustion, revoked permission, device
-power-off, app termination, network outage, late remote arrival, and absent
+power-off, app termination, network outage, late schedule synchronization, and absent
 delivery observation as separate cases. Keep the patient's interface minimal.
 Logs/admin reports distinguish proven failure from unavailable evidence.
 Verify administrator incident and SMS paths, recovery, no backfill storm, and
@@ -518,7 +523,11 @@ Specific proof obligations:
 These are architecture acceptance gates, not permission to add status to the
 patient interface or quietly relax the two-button/one-tap requirement.
 
-## 7. What logging must prove, and what it cannot
+## 7. Local alert logging: what it must prove, and what it cannot
+
+This section concerns only what happens on the phone and Watch: local scheduling,
+OS presentation evidence, patient taps, and local cancellation/snooze behavior.
+It does not specify server-side processing, push delivery, or SMS-provider logs.
 
 ### 7.1 Separate the evidence levels
 
@@ -526,11 +535,10 @@ For each expected attempt, record the strongest actual evidence and retain gaps:
 
 | Evidence | It establishes | It does not establish |
 | --- | --- | --- |
-| Expected deadline in the independent ledger | A reminder was required | Anything was sent |
-| Scheduling/send attempted | Code tried | OS/provider accepted it |
+| Expected local alert deadline | A reminder was required | The OS received a request |
+| Local scheduling attempted | App tried to register an alert | OS accepted it |
 | Local OS registration accepted | OS accepted a request | It presented or sounded at deadline |
 | Pending request inventory | Request existed when queried | It fired or will necessarily fire |
-| Remote provider accepted | Provider accepted submission | Device delivery or attention |
 | Foreground presentation callback | That device reported a presentation opportunity | Audible output or background delivery |
 | Delivered-notification observation | OS reports an item present in Notification Center | Complete delivery history or human attention |
 | System UI captured on hardware | That presentation was visible in the capture | All alerts on every installation were visible |
@@ -553,28 +561,28 @@ demonstrated or the requirement is explicitly revised.
 
 ### 7.2 Correlation and fields
 
-Use structured, versioned, append-only audit events. They must correlate across
-administrator write -> backend occurrence -> each device request -> OS evidence
--> tap -> local effects -> backend commit -> other-device reconciliation.
+Use structured, versioned, append-only local audit events. They must correlate
+the schedule received by the device -> expected local deadline -> OS request ->
+actual OS evidence -> patient tap -> local save -> cancellation or snooze.
 No developer console session should be necessary to reconstruct a patient's day.
 
 Required fields, where applicable:
 
 - unique audit event ID; type; schema version; source/build/OS version;
 - pseudonymous patient/administrator IDs, installation and device role;
-- schedule revision, episode ID, cycle ID, attempt ID, native request/provider ID;
+- schedule revision, episode ID, cycle ID, attempt ID, native OS request ID;
 - patient zone, T, A, R, S, D, successor/retirement boundary C;
-- intended deadline; registration/send start and acknowledgement timestamps;
+- intended deadline; local registration start and OS acceptance/rejection timestamps;
 - observation type, source timestamp, collection timestamp and evidence reference;
 - response command ID, exact action, presented episode/cycle/attempt ID, P;
 - local durable-save and surface-dismiss timestamps, cancellation/replacement
-  acknowledgement, server receipt/commit, and peer-device application time;
+  acknowledgement, and locally observed application of a response from the other device;
 - effective result, duplicate/stale/rejected reason, failure code, retry identity;
-- incident ID, SMS request/provider state and recovery linkage;
+- local fault/report ID and recovery linkage;
 - clock source, measured offset/uncertainty, logical test clock mapping, sequence
   number and device monotonic timing where available.
 
-Do not record access tokens, credentials, SMS secrets, or unnecessary medication
+Do not record access tokens, credentials, or unnecessary medication
 details in diagnostic logs. Restrict log access. Proposed retention/export policy
 must be reviewed; this document does not authorize publicly readable health logs.
 
@@ -582,21 +590,18 @@ must be reviewed; this document does not authorize publicly readable health logs
 
 At minimum distinguish:
 
-1. occurrence materialized / episode current / episode superseded or completed;
+1. schedule received on this device / episode current / superseded or completed;
 2. alert expected / registration attempted / accepted or rejected / coverage verified;
-3. send attempted / provider accepted, rejected, or outcome unknown;
-4. presentation observed / delivered item observed / evidence unavailable;
-5. notification opened or dismissed, where actually observable;
-6. response tapped / intent durable / local presentation dismissed;
-7. local repeat cancelled / snooze scheduled / reconciliation failed;
-8. response sent / server accepted, rejected, duplicate, or outcome unknown;
-9. peer response applied / obsolete requests removed;
-10. deadline audit passed, failed, or unverified / incident raised / SMS submitted
-    and subsequent provider status / recovery observed.
+3. presentation observed / delivered item observed / evidence unavailable;
+4. notification opened or dismissed, where actually observable;
+5. response tapped / saved locally / local presentation dismissed;
+6. local repeat cancelled / snooze scheduled / reconciliation failed;
+7. response from the other device applied locally / obsolete requests removed;
+8. local deadline audit passed, failed, or unverified / fault recorded / recovery observed.
 
-An accepted schedule is not a presentation; a submitted SMS is not a delivered SMS;
-an uncertain acknowledgement is not a rejected response. Retries retain causal
-IDs and do not erase earlier failed attempts.
+OS acceptance of a local request is not proof of presentation. Retries retain
+causal IDs and do not erase earlier failed attempts. No log may claim delivery
+merely because the registration API succeeded.
 
 ### 7.4 Latency and missing-evidence reports
 
@@ -609,21 +614,21 @@ For every episode and attempt, administrators/developers need a trace showing:
 - response latency from medication time: P - T;
 - response latency from a specific observed presentation, only if that
   presentation and response can actually be correlated;
-- tap-to-durable-save, tap-to-surface-dismiss, tap-to-server-commit, and
-  tap-to-other-device-cancellation;
+- tap-to-local-durable-save, tap-to-surface-dismiss, and tap-to-local cancellation
+  or snooze registration; receipt-to-local-cancellation for a response from the other device;
 - all expected attempts, their evidence category, overdue unknowns/failures,
   suppressions due to snooze/completion/supersession, and coverage end.
 
 If the exact presentation time is unavailable, do not call P - scheduledDeadline
 "time since the user saw it". If the tapped notification's attempt is unknown,
 report that, not a guess based on the latest pending ID. Retain device tap time
-separately from delayed server receipt. Offline and skewed clocks require explicit
+separately from later log collection/upload time. Offline and skewed clocks require explicit
 uncertainty; a negative or hours-long apparent duration is investigated, not hidden.
 
 The report must let us investigate the observed hours-late/missing alerts: was
-the occurrence created late, synchronized late, registered late, provider-held,
+the schedule received late, the alert registered late or rejected by the OS,
 presented late, suppressed by settings, superseded, or simply not observable?
-"Everything succeeded" based only on a Firestore write is unacceptable.
+"Everything succeeded" based only on local OS registration is unacceptable.
 
 ## 8. E2E evidence and acceptance
 
@@ -773,9 +778,6 @@ These constrain claims; they do not certify our current code:
 - [Notification forwarding](https://developer.apple.com/documentation/watchos-apps/taking-advantage-of-notification-forwarding):
   normal phone-targeted notifications route to phone or Watch; Watch-local ones
   stay on Watch. Both-device delivery requires explicit architectural proof.
-- [Background updates](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app):
-  silent pushes are subject to OS delays/throttling and are not a reliable
-  per-repeat wake guarantee.
 - [Critical Alerts entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.usernotifications.critical-alerts):
   special sound behavior requires entitlement approval and authorization, not
   merely a TestFlight build or an urgency setting in our own database.
