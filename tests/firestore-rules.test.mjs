@@ -65,6 +65,16 @@ const medicationEvent = {
   updatedAt: now
 };
 
+test('repeat timing is administrator-wide, validated, and not patient-editable', async () => {
+  const lori = environment.authenticatedContext('lori').firestore();
+  const steve = environment.authenticatedContext('steve').firestore();
+  const path = ['administrators', 'lori'];
+  await assertSucceeds(updateDoc(doc(lori, ...path), { repeatIntervalMinutes: 2, updatedAt: now }));
+  await assertFails(updateDoc(doc(lori, ...path), { repeatIntervalMinutes: 0, updatedAt: now }));
+  await assertFails(updateDoc(doc(lori, ...path), { repeatIntervalMinutes: 10, updatedAt: now }));
+  await assertFails(updateDoc(doc(steve, ...path), { repeatIntervalMinutes: 1, updatedAt: now }));
+});
+
 before(async () => {
   environment = await initializeTestEnvironment({
     projectId,
