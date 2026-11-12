@@ -25,14 +25,75 @@ final class ReminderPlanTests: XCTestCase {
       scheduledTime: now.addingTimeInterval(after), status: .pending, snoozeCount: 0)
   }
 
-  func testFarFutureDosesCannotStarveCurrentFollowUps() throws {
+  func testIgnoredCurrentDoseCannotStarveNextDoseWindow() throws {
     let first = event("first")
     let later = event("later", after: 86400)
-    let plan = ReminderPlan(events: [first, later], now: now, snoozeInterval: 600, capacity: 4)
-    XCTAssertEqual(plan.occurrences.count, 4)
-    XCTAssertFalse(plan.occurrences.contains { $0.event.id == "later" })
-    XCTAssertEqual(plan.coveredThrough, now.addingTimeInterval(779))
-    XCTAssertLessThan(try XCTUnwrap(plan.coveredThrough), later.scheduledTime)
+    let plan = ReminderPlan(events: [first, later], now: now, snoozeInterval: 600)
+    XCTAssertEqual(plan.occurrences.count, 22)
+    XCTAssertTrue(plan.requiredPairCovered)
+    for dose in [first, later] {
+      XCTAssertEqual(plan.occurrences.filter { $0.event.id == dose.id }.map(\.date),
+        (0...10).map { dose.scheduledTime.addingTimeInterval(Double($0 * 180)) })
+    }
+    XCTAssertEqual(plan.coveredThrough, later.scheduledTime.addingTimeInterval(1800))
+  }
+
+  func testTwoFullWindowsAreProtectedBeforeFurtherDosesAndNoPartialFutureWindowIsPromised() {
+    let doses = (0..<8).map { event("dose-\($0)", after: Double($0 * 14400 + 60)) }
+    let plan = ReminderPlan(events: doses, now: now, snoozeInterval: 600)
+    XCTAssertEqual(plan.occurrences.count, 55)
+    XCTAssertEqual(plan.protectedEventIDs.count, 5)
+    XCTAssertTrue(plan.requiredPairCovered)
+    XCTAssertEqual(plan.coveredThrough, doses[5].scheduledTime.addingTimeInterval(-1))
+  }
+
+  func testOneMinuteConfigurationCannotClaimTwoThirtyMinuteWindowsFit() {
+    let first = event("first")
+    let later = event("later", after: 14400)
+    let plan = ReminderPlan(events: [first, later], now: now, snoozeInterval: 600, repeatInterval: 60)
+    XCTAssertFalse(plan.requiredPairCovered)
+    XCTAssertEqual(plan.requiredPairRequestCount, 62)
+    XCTAssertEqual(plan.occurrences.count, 60)
+    XCTAssertTrue(plan.occurrences.contains { $0.event.id == first.id && $0.attempt == 0 })
+    XCTAssertTrue(plan.occurrences.contains { $0.event.id == later.id && $0.attempt == 0 })
+  }
+
+  func testExpiredWindowIsNotExtendedOnRefreshButNextDoseRemainsProtected() {
+    let first = event("first", after: 0)
+    let later = event("later", after: 14400)
+    let plan = ReminderPlan(events: [first, later], now: now.addingTimeInterval(1801), snoozeInterval: 600)
+    XCTAssertFalse(plan.occurrences.contains { $0.event.id == first.id })
+    XCTAssertEqual(plan.occurrences.filter { $0.event.id == later.id }.count, 11)
+  }
+
+  func testNewDoseCutsOffEveryOlderRequestEvenInsideThirtyMinutes() {
+    let first = event("first", after: 0)
+    let later = event("later", after: 600)
+    let plan = ReminderPlan(events: [first, later], now: now, snoozeInterval: 600)
+    XCTAssertEqual(plan.occurrences.filter { $0.event.id == first.id }.map(\.date),
+      [0, 180, 360, 540].map { now.addingTimeInterval(Double($0)) })
+    XCTAssertEqual(plan.occurrences.filter { $0.event.id == later.id }.count, 11)
+    XCTAssertTrue(plan.requiredPairCovered)
+  }
+
+  func testSnoozeRetainsAnchoredExpiryAndDoesNotRestartThirtyMinuteWindow() {
+    var dose = event("dose", after: 0)
+    dose.status = .snoozed
+    dose.lastSnoozedAt = now.addingTimeInterval(720)
+    dose.snoozedUntil = now.addingTimeInterval(1200)
+    dose.snoozeCount = 1
+    let plan = ReminderPlan(events: [dose], now: now.addingTimeInterval(720), snoozeInterval: 600)
+    XCTAssertEqual(plan.occurrences.map(\.date), [1200, 1380, 1560, 1740].map { now.addingTimeInterval(Double($0)) })
+    dose.snoozedUntil = now.addingTimeInterval(2400)
+    let late = ReminderPlan(events: [dose], now: now.addingTimeInterval(1801), snoozeInterval: 600)
+    XCTAssertEqual(late.occurrences.map(\.date), [now.addingTimeInterval(2400)], "Keep an explicitly requested expiry, without an unbounded new repeat window")
+  }
+
+  func testPreferredRefreshIsEarlyAndRespondsToDoseAndCoverageBoundaries() {
+    XCTAssertEqual(ReminderRefreshPolicy.preferredDate(now: now, events: []), now.addingTimeInterval(900))
+    XCTAssertEqual(ReminderRefreshPolicy.preferredDate(now: now, events: [event("soon", after: 600)]), now.addingTimeInterval(300))
+    XCTAssertEqual(ReminderRefreshPolicy.preferredDate(now: now, events: [], coveredThrough: now.addingTimeInterval(1000)), now.addingTimeInterval(100))
+    XCTAssertEqual(ReminderRefreshPolicy.preferredDate(now: now, events: [event("imminent", after: 60)]), now.addingTimeInterval(1))
   }
 
   func testMoreInitialDosesThanCapacityDoesNotOverpromiseCoverage() {

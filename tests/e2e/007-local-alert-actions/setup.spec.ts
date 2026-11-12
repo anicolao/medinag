@@ -9,7 +9,12 @@ test('Administrator publishes the real schedule used by local alert actions', as
   await expect(page.getByText('No doses in this plan yet')).toBeVisible();
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Snooze interval').selectOption('15');
+  await page.getByLabel('Repeat interval').selectOption('1');
+  await expect(page.getByTestId('coverage-warning')).toContainText('62');
+  await expect(page.getByTestId('coverage-warning')).toContainText('60');
   await page.getByLabel('Repeat interval').selectOption('10');
+  await expect(page.getByTestId('coverage-warning')).toHaveCount(0);
+  await expect(page.getByTestId('coverage-summary')).toContainText('8 of 60');
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('status')).toHaveText('Settings saved.');
   await page.getByRole('link', { name: 'Schedule', exact: true }).click();

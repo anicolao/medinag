@@ -27,6 +27,7 @@
     "ios:e2e:failure": "MEDINAG_E2E_STORY=notification-failure apps/ios/scripts/run-connected-e2e.sh",
     "ios:e2e:watch": "MEDINAG_E2E_STORY=watch apps/ios/scripts/run-connected-e2e.sh",
     "test:rules": "node --test tests/firestore-rules.test.mjs",
+    "test:coverage": "node --experimental-strip-types --test tests/reminder-coverage.test.ts",
     "test:e2e:audit": "node scripts/audit-e2e-truthfulness.mjs",
     "test:e2e": "npm run test:e2e:connected",
     "test:e2e:connected": "scripts/run-connected-web-e2e.sh tests/e2e/002-manage-schedules/002-manage-schedules.spec.ts && MEDINAG_E2E_AUTH_MODE=signed-out scripts/run-connected-web-e2e.sh tests/e2e/003-link-lori-google-account/003-link-lori-google-account.spec.ts",

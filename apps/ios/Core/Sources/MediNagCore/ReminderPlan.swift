@@ -1,12 +1,11 @@
 import Foundation
 
-/// A bounded, OS-owned queue. Dismissal never changes a dose or this plan.
-/// Register the earliest alerts first, without letting far-future initial doses
-/// crowd out current follow-ups. The coverage deadline is the earliest omitted alert,
-/// NOT the last (possibly much later) initial dose in the queue.
+/// Protect complete 30-minute dose windows before considering farther doses.
+/// No response or background wake is needed to move between preloaded windows.
 public struct ReminderPlan: Sendable {
   public static let nagInterval: TimeInterval = 3 * 60
-  public static let capacity = 60 // Leave headroom below the system queue limit.
+  public static let capacity = 60
+  public static let protectionWindow: TimeInterval = 30 * 60
 
   public struct Occurrence: Sendable {
     public let event: MedicationEvent
@@ -18,39 +17,87 @@ public struct ReminderPlan: Sendable {
   }
 
   public let occurrences: [Occurrence]
+  /// Earliest omitted critical request minus one second, or the end of the
+  /// last fully protected window. Deliberate gaps between windows are not faults.
   public let coveredThrough: Date?
+  public let protectedEventIDs: Set<String>
+  public let requiredPairCovered: Bool
+  public let requiredPairRequestCount: Int
 
   public init(events: [MedicationEvent], now: Date, snoozeInterval: TimeInterval,
               repeatInterval: TimeInterval = Self.nagInterval, capacity: Int = Self.capacity) {
     let limit = max(0, capacity)
-    func cadence(_ event: MedicationEvent) -> TimeInterval { max(1, event.repeatIntervalSeconds ?? repeatInterval) }
     let active = events.filter { DoseWindow.isActive($0, among: events, at: now) }
-    func anchor(_ event: MedicationEvent) -> Date {
-      AlertTiming.reminder(for: event, snoozeInterval: snoozeInterval)
+      .sorted { $0.scheduledTime == $1.scheduledTime ? $0.id < $1.id : $0.scheduledTime < $1.scheduledTime }
+    func ordered(_ a: Occurrence, _ b: Occurrence) -> Bool {
+      a.date == b.date ? a.identifier < b.identifier : a.date < b.date
     }
-    func ordered(_ lhs: Occurrence, _ rhs: Occurrence) -> Bool {
-      if lhs.date == rhs.date { return lhs.identifier < rhs.identifier }
-      return lhs.date < rhs.date
+    func block(_ event: MedicationEvent) -> [Occurrence] {
+      let cadence = max(1, event.repeatIntervalSeconds ?? repeatInterval)
+      let start = AlertTiming.reminder(for: event, snoozeInterval: snoozeInterval)
+      // An explicit snooze still gets its expiry alert even if the patient
+      // snoozed beyond the normal protection window. It cannot outlive a successor.
+      let end = max(event.scheduledTime.addingTimeInterval(Self.protectionWindow), start)
+      let cutoff = DoseWindow.end(for: event, among: events)
+      var attempt = start >= now ? 0 : max(1, Int(floor(now.timeIntervalSince(start) / cadence)) + 1)
+      var result: [Occurrence] = []
+      while result.count <= limit {
+        let date = start.addingTimeInterval(Double(attempt) * cadence)
+        guard date <= end, cutoff.map({ date < $0 }) ?? true else { break }
+        result.append(Occurrence(event: event, date: date, attempt: attempt))
+        attempt += 1
+      }
+      return result
     }
+    let blocks = active.map { ($0, block($0)) }
+    let pair = Array(blocks.prefix(2))
+    requiredPairRequestCount = pair.reduce(0) { $0 + $1.1.count }
+    requiredPairCovered = requiredPairRequestCount <= limit
     var selected: [Occurrence] = []
-    var next: [Occurrence] = active.compactMap { event in
-      let start = anchor(event)
-      let attempt = start >= now ? 0 : max(1, Int(floor(now.timeIntervalSince(start) / cadence(event))) + 1)
-      let date = start.addingTimeInterval(Double(attempt) * cadence(event))
-      guard DoseWindow.end(for: event, among: events).map({ date < $0 }) ?? true else { return nil }
-      return Occurrence(event: event, date: date, attempt: attempt)
-    }
-    while selected.count < limit && !next.isEmpty {
-      next.sort(by: ordered)
-      let item = next.removeFirst()
-      selected.append(item)
-      let date = item.date.addingTimeInterval(cadence(item.event))
-      if DoseWindow.end(for: item.event, among: events).map({ date < $0 }) ?? true {
-        next.append(Occurrence(event: item.event, date: date, attempt: item.attempt + 1))
+    var protected: Set<String> = []
+    if requiredPairCovered {
+      for (event, requests) in pair {
+        selected += requests
+        protected.insert(event.id)
+      }
+    } else {
+      // Unsafe settings must not silently starve the next initial alert.
+      // Best effort alternates between both windows and reports insufficient
+      // protection explicitly; it does NOT claim two complete windows.
+      let longest = pair.map { $0.1.count }.max() ?? 0
+      for index in 0..<longest {
+        for (_, requests) in pair where index < requests.count && selected.count < limit {
+          selected.append(requests[index])
+        }
       }
     }
+    // Fit only complete further windows; never spend all slots on one dose.
+    for (event, requests) in blocks.dropFirst(2) {
+      if selected.count + requests.count <= limit {
+        selected += requests
+        protected.insert(event.id)
+      } else { break }
+    }
     occurrences = selected.sorted(by: ordered)
-    coveredThrough = next.map(\.date).min().map { $0.addingTimeInterval(-1) }
-      ?? occurrences.last?.date
+    protectedEventIDs = protected
+    let selectedIDs = Set(selected.map(\.identifier))
+    let firstOmitted = blocks.flatMap { $0.1 }.filter { !selectedIDs.contains($0.identifier) }.map(\.date).min()
+    coveredThrough = firstOmitted.map { $0.addingTimeInterval(-1) }
+      ?? blocks.filter { protected.contains($0.0.id) && !$0.1.isEmpty }
+        .map { max($0.0.scheduledTime.addingTimeInterval(Self.protectionWindow),
+                   AlertTiming.reminder(for: $0.0, snoozeInterval: snoozeInterval)) }.max()
+  }
+}
+
+/// Preferred times are requests, never wake-up guarantees. Re-request from
+/// actual execution opportunities without pushing an already-earlier request out.
+public enum ReminderRefreshPolicy {
+  public static func preferredDate(now: Date, events: [MedicationEvent], coveredThrough: Date? = nil) -> Date {
+    var candidates = [now.addingTimeInterval(15 * 60)]
+    if let next = events.map(\.scheduledTime).filter({ $0 > now }).min() {
+      candidates.append(next.addingTimeInterval(-5 * 60))
+    }
+    if let coveredThrough { candidates.append(coveredThrough.addingTimeInterval(-15 * 60)) }
+    return max(now.addingTimeInterval(1), candidates.min()!)
   }
 }

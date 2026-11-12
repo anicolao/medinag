@@ -48,7 +48,10 @@ actor DeviceReminderNotifications {
     LocalAlertJournal.record("queue_plan", deadline: plan.coveredThrough,
       details: ["logicalNow": String(logicalNow.timeIntervalSince1970),
         "repeatSeconds": String(repeatInterval), "snoozeSeconds": String(snoozeInterval),
-        "count": String(plan.occurrences.count), "clockScale": String(clockScale)])
+        "count": String(plan.occurrences.count), "clockScale": String(clockScale),
+        "requiredPairRequests": String(plan.requiredPairRequestCount),
+        "requiredPairCovered": String(plan.requiredPairCovered),
+        "protectedDoseWindows": String(plan.protectedEventIDs.count)])
     let desired = Set(plan.occurrences.map(\.identifier))
     // Calendar triggers have second precision. Never round a deadline down
     // into the past, especially when registering a near-due follow-up.
@@ -137,6 +140,12 @@ actor DeviceReminderNotifications {
     guard inventory.complete else {
       throw NSError(domain: "MediNag.NotificationQueue", code: 1,
         userInfo: [NSLocalizedDescriptionKey: "Only \(count) of \(inventory.expected.count) future medication alerts were registered (\(plan.occurrences.count - future.count) became due during reconciliation)."])
+    }
+    guard plan.requiredPairCovered else {
+      LocalAlertJournal.record("insufficient_two_dose_capacity", deadline: plan.coveredThrough,
+        details: ["required": String(plan.requiredPairRequestCount), "capacity": String(ReminderPlan.capacity)])
+      throw NSError(domain: "MediNag.NotificationQueue", code: 2,
+        userInfo: [NSLocalizedDescriptionKey: "The current and next dose require \(plan.requiredPairRequestCount) requests for full 30-minute coverage, exceeding the \(ReminderPlan.capacity)-request queue. Best-effort alerts are registered; full coverage is NOT established."])
     }
     return Result(count: count, coveredThrough: plan.coveredThrough,
                   nextReminder: future.first?.date,

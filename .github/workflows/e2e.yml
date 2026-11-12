@@ -43,6 +43,9 @@ jobs:
       - name: Check types
         run: npm run check
 
+      - name: Check notification-capacity warnings
+        run: npm run test:coverage
+
       - name: Audit E2E truthfulness
         run: npm run test:e2e:audit
 
