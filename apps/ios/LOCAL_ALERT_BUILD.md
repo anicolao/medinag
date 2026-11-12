@@ -38,6 +38,13 @@ notification/in-app responses, web completion). The repeat-setting rules were
 deployed to medinag. These results do not make the full existing CI/visual suite
 or the separate grouped-notification custom-action story green.
 
+Subsequent 30-minute-window revision: 38 native tests, 8 core checks, 4 capacity
+warning checks, 10 backend checks, TypeScript, dashboard build and truthfulness
+audit passed. The three-part connected diagnostic passed again, including the
+real settings UI warning at R=1 and its removal at R=10. The diagnostic still uses
+in-app responses and is not a physical unattended-delivery or background-wake test.
+See [ALERT_COVERAGE.md](ALERT_COVERAGE.md) for allocation and refresh limitations.
+
 - Native unit/integration checks cover anchored snoozes, configurable cadence,
   exact early-completion boundaries, real durable-file reload, retirement and
   real OS notification-category configuration. These are not delivery E2E proof.
@@ -52,11 +59,10 @@ or the separate grouped-notification custom-action story green.
   diagnostic screenshots are not approved zero-pixel evidence.
 - Physical phone/Watch routing, sound/haptics and background notification actions
   still require device evidence. There is no universal background delivery receipt.
-- The current OS-owned queue remains bounded to 60 requests. With R = 3 minutes,
-  a densely filled queue covers roughly three hours, not seven days of repeats.
-  It cannot promise indefinite unattended repeats, guaranteed background renewal,
-  or that every future initial alert beyond that queue is already registered.
-  Do not describe this build as fixing that architectural coverage limit.
+- Build 15 used an earliest-first 60-request queue that could starve a later
+  dose. The subsequent source revision replaces this with complete 30-minute
+  windows, reserving current/next first; see [ALERT_COVERAGE.md](ALERT_COVERAGE.md).
+  That change still cannot guarantee background renewal or OS presentation.
 - Server-enforced uniqueness of scheduled times is not implemented by this client
   checkpoint. Legacy duplicate schedules must not be represented as an approved
   simultaneous-medication UX.
