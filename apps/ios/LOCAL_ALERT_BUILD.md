@@ -31,6 +31,13 @@ automatically closing a foreground iPhone application or waive the final UX goal
 
 ## Evidence and remaining work
 
+2026-11-11 checkpoint: 32 native tests, 8 core checks, 14 Firestore rule tests,
+9 backend checks, TypeScript checking and the truthfulness audit passed. The
+three-part connected in-app diagnostic passed (web creation, native real OS
+notification/in-app responses, web completion). The repeat-setting rules were
+deployed to medinag. These results do not make the full existing CI/visual suite
+or the separate grouped-notification custom-action story green.
+
 - Native unit/integration checks cover anchored snoozes, configurable cadence,
   exact early-completion boundaries, real durable-file reload, retirement and
   real OS notification-category configuration. These are not delivery E2E proof.
