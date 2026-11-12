@@ -375,7 +375,7 @@ final class AppViewModel: ObservableObject {
         : event.scheduledTime <= tap && AlertTiming.reminder(for: event, snoozeInterval: Double(snoozeMinutes * 60)) <= tap)
     else { activeReminder = nil; return false }
     let recorded = LocalDoseResponse(id: commandID ?? UUID().uuidString, patientID: patientID,
-      administratorID: plan.id, event: event, response: response, respondedAt: tap,
+      administratorID: plan.id, event: current, response: response, respondedAt: tap,
       snoozeInterval: Double(snoozeMinutes * 60))
     LocalAlertJournal.record("response_tapped", eventID: event.id,
       details: ["action": response.rawValue, "tappedAt": String(tap.timeIntervalSince1970)])
