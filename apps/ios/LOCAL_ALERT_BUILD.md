@@ -1,5 +1,12 @@
 # Local-alert test build
 
+2026-11-12: TestFlight candidate **18** adds background-launch response handlers,
+durable protection against answered-alert resurrection, and retention of valid
+OS-owned due requests across refresh. See [the incident report](INCIDENT_2026-11-12.md)
+for evidence and limitations. The final system-action walkthrough is **not green**;
+a prior phone run passed, but later runs failed to expose grouped notification
+buttons. Cold Watch notification actions still require hardware verification.
+
 This is an implementation/test-build checkpoint for the requirements reviewed
 in PR #8, not a claim that every journey or notification-delivery guarantee is
 validated.

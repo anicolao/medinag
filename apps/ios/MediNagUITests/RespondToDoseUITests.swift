@@ -258,11 +258,15 @@ extension RespondToDoseUITests {
     // Long-press the actual front platter button, not the ScrollView that
     // contains a group. The OS exposes that same button for grouped and single
     // notifications; this is a real user gesture, not simulated delivery.
-    let card = springboard.buttons.matching(NSPredicate(
+    let cards = springboard.buttons.matching(NSPredicate(
       format: "identifier == %@ AND label CONTAINS %@",
-      "ShortLook.Platter.Content.Seamless", "Medication reminder")).firstMatch
-    XCTAssertTrue(card.waitForExistence(timeout: 2))
-    card.press(forDuration: 0.6)
+      "ShortLook.Platter.Content.Seamless", "Medication reminder"))
+    XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 2))
+    guard let card = cards.allElementsBoundByIndex.first(where: { $0.isHittable }) else {
+      XCTFail("The system notification has no hittable front platter")
+      return
+    }
+    card.press(forDuration: 1)
   }
 
   private func medicationNotification(in springboard: XCUIApplication, name: String) -> XCUIElement {
