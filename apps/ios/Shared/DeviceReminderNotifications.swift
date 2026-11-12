@@ -166,7 +166,9 @@ actor DeviceReminderNotifications {
       // A rounded calendar deadline can still be in the future even though
       // its logical deadline has passed. Verify it too, without inventing a
       // delivery receipt if nextTriggerDate is already nil.
-      if let date = request.trigger?.nextTriggerDate() { deadlines[request.identifier] = date }
+      if let date = (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() {
+        deadlines[request.identifier] = date
+      }
     }
     let inventory = ReminderInventory(
       deadlines: deadlines,
