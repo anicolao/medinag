@@ -45,6 +45,11 @@ real settings UI warning at R=1 and its removal at R=10. The diagnostic still us
 in-app responses and is not a physical unattended-delivery or background-wake test.
 See [ALERT_COVERAGE.md](ALERT_COVERAGE.md) for allocation and refresh limitations.
 
+The dashboard CI initially could not start because its macOS 14 runner was
+[retired by GitHub on November 2](https://github.blog/changelog/2026-10-01-github-actions-macos-14-runner-image-retirement/).
+It now uses macOS 26, matching native CI. This infrastructure repair does not
+waive screenshot checks or approve replacement baselines.
+
 - Native unit/integration checks cover anchored snoozes, configurable cadence,
   exact early-completion boundaries, real durable-file reload, retirement and
   real OS notification-category configuration. These are not delivery E2E proof.
