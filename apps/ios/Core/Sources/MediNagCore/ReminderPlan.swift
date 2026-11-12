@@ -24,6 +24,16 @@ public struct ReminderPlan: Sendable {
   public let requiredPairCovered: Bool
   public let requiredPairRequestCount: Int
 
+  /// A request already handed to the OS must not be deleted just because its
+  /// logical deadline passed before the OS consumed it. This retains an actual
+  /// pending request only; it never creates/replays a past notification.
+  public static func retainsInFlight(_ queued: MedicationEvent, deadline: Date,
+    among events: [MedicationEvent], now: Date, snoozeInterval: TimeInterval) -> Bool {
+    guard deadline <= now, let current = events.first(where: { $0.hasSameResponseVersion(as: queued) }),
+      DoseWindow.isActive(current, among: events, at: now) else { return false }
+    return deadline >= AlertTiming.reminder(for: current, snoozeInterval: snoozeInterval)
+  }
+
   public init(events: [MedicationEvent], now: Date, snoozeInterval: TimeInterval,
               repeatInterval: TimeInterval = Self.nagInterval, capacity: Int = Self.capacity) {
     let limit = max(0, capacity)

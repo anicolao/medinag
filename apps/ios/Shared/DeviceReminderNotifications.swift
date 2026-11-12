@@ -47,24 +47,39 @@ actor DeviceReminderNotifications {
     // Final serialized boundary: even an older refresh that starts after a tap
     // cannot undo cancellation. Persist before touching OS requests.
     let events = try responseProgress.protecting(incomingEvents)
-    let plan = ReminderPlan(events: events, now: logicalNow, snoozeInterval: snoozeInterval,
+    let pending = await center.pendingNotificationRequests()
+    guard revision == version else { throw CancellationError() }
+    let projected = ReminderPlan(events: events, now: logicalNow, snoozeInterval: snoozeInterval,
       repeatInterval: repeatInterval)
+    let projectedIDs = Set(projected.occurrences.map(\.identifier))
+    let inFlight = pending.filter { request in
+      guard request.identifier.hasPrefix("medinag.dose."), !projectedIDs.contains(request.identifier),
+        let data = request.content.userInfo[MediNagNotification.eventData] as? Data,
+        let queued = try? JSONDecoder().decode(MedicationEvent.self, from: data),
+        let deadline = request.content.userInfo[MediNagNotification.reminderTime] as? Double else { return false }
+      return ReminderPlan.retainsInFlight(queued, deadline: Date(timeIntervalSince1970: deadline),
+        among: events, now: logicalNow, snoozeInterval: snoozeInterval)
+    }
+    for request in inFlight {
+      LocalAlertJournal.record("due_request_retained", requestID: request.identifier)
+    }
+    let plan = ReminderPlan(events: events, now: logicalNow, snoozeInterval: snoozeInterval,
+      repeatInterval: repeatInterval, capacity: max(0, ReminderPlan.capacity - inFlight.count))
     LocalAlertJournal.record("queue_plan", deadline: plan.coveredThrough,
       details: ["logicalNow": String(logicalNow.timeIntervalSince1970),
         "repeatSeconds": String(repeatInterval), "snoozeSeconds": String(snoozeInterval),
         "count": String(plan.occurrences.count), "clockScale": String(clockScale),
+        "inFlightRetained": String(inFlight.count),
         "requiredPairRequests": String(plan.requiredPairRequestCount),
         "requiredPairCovered": String(plan.requiredPairCovered),
         "protectedDoseWindows": String(plan.protectedEventIDs.count)])
-    let desired = Set(plan.occurrences.map(\.identifier))
+    let desired = Set(plan.occurrences.map(\.identifier) + inFlight.map(\.identifier))
     // Calendar triggers have second precision. Never round a deadline down
     // into the past, especially when registering a near-due follow-up.
     func deliveryDate(_ occurrence: ReminderPlan.Occurrence) -> Date {
       let raw = realNow.addingTimeInterval(occurrence.date.timeIntervalSince(logicalNow) * clockScale)
       return Date(timeIntervalSince1970: ceil(raw.timeIntervalSince1970))
     }
-    let pending = await center.pendingNotificationRequests()
-    guard revision == version else { throw CancellationError() }
     let obsolete = pending.map(\.identifier).filter {
       $0.hasPrefix("medinag.dose.") && !desired.contains($0)
     }
@@ -146,8 +161,15 @@ actor DeviceReminderNotifications {
     // pending or claim they were delivered; verify FUTURE requests only.
     let verifiedAt = Date()
     let future = plan.occurrences.filter { deliveryDate($0) > verifiedAt }
+    var deadlines = Dictionary(uniqueKeysWithValues: plan.occurrences.map { ($0.identifier, deliveryDate($0)) })
+    for request in inFlight {
+      // A rounded calendar deadline can still be in the future even though
+      // its logical deadline has passed. Verify it too, without inventing a
+      // delivery receipt if nextTriggerDate is already nil.
+      if let date = request.trigger?.nextTriggerDate() { deadlines[request.identifier] = date }
+    }
     let inventory = ReminderInventory(
-      deadlines: Dictionary(uniqueKeysWithValues: plan.occurrences.map { ($0.identifier, deliveryDate($0)) }),
+      deadlines: deadlines,
       pending: Set(confirmed.map(\.identifier)), at: verifiedAt)
     let count = inventory.actual.count
     LocalAlertJournal.record("future_inventory_observed", deadline: plan.coveredThrough,
@@ -158,13 +180,14 @@ actor DeviceReminderNotifications {
     }
     guard plan.requiredPairCovered else {
       LocalAlertJournal.record("insufficient_two_dose_capacity", deadline: plan.coveredThrough,
-        details: ["required": String(plan.requiredPairRequestCount), "capacity": String(ReminderPlan.capacity)])
+        details: ["required": String(plan.requiredPairRequestCount + inFlight.count), "capacity": String(ReminderPlan.capacity)])
       throw NSError(domain: "MediNag.NotificationQueue", code: 2,
-        userInfo: [NSLocalizedDescriptionKey: "The current and next dose require \(plan.requiredPairRequestCount) requests for full 30-minute coverage, exceeding the \(ReminderPlan.capacity)-request queue. Best-effort alerts are registered; full coverage is NOT established."])
+        userInfo: [NSLocalizedDescriptionKey: "The current and next dose plus \(inFlight.count) valid in-flight alerts require \(plan.requiredPairRequestCount + inFlight.count) requests, exceeding the \(ReminderPlan.capacity)-request queue. Best-effort alerts are registered; full coverage is NOT established."])
     }
     return Result(count: count, coveredThrough: plan.coveredThrough,
                   nextReminder: future.first?.date,
-                  registeredEventIDs: Set(plan.occurrences.map { $0.event.id }))
+                  registeredEventIDs: Set(plan.occurrences.map { $0.event.id }
+                    + inFlight.compactMap { $0.content.userInfo[MediNagNotification.eventID] as? String }))
   }
 
   func cancel(eventID: String) async {

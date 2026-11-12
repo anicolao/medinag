@@ -25,6 +25,30 @@ final class ReminderPlanTests: XCTestCase {
       scheduledTime: now.addingTimeInterval(after), status: .pending, snoozeCount: 0)
   }
 
+  func testDueRequestStillPendingInOSIsNotCancelledByRefreshAcrossDeadline() {
+    let dose = event("initial", after: 0)
+    XCTAssertTrue(ReminderPlan.retainsInFlight(dose, deadline: now, among: [dose],
+      now: now.addingTimeInterval(0.2), snoozeInterval: 600))
+    XCTAssertTrue(ReminderPlan.retainsInFlight(dose, deadline: now.addingTimeInterval(180), among: [dose],
+      now: now.addingTimeInterval(180), snoozeInterval: 600), "Keep the actual OS request at an exact repeat boundary too")
+    XCTAssertFalse(ReminderPlan.retainsInFlight(dose, deadline: now.addingTimeInterval(180), among: [dose],
+      now: now.addingTimeInterval(0.2), snoozeInterval: 600), "Future obsolete requests are not in flight")
+    var completed = dose; completed.status = .completed
+    XCTAssertFalse(ReminderPlan.retainsInFlight(dose, deadline: now, among: [completed],
+      now: now.addingTimeInterval(0.2), snoozeInterval: 600), "An answer must still cancel an in-flight request")
+  }
+
+  func testInFlightRetentionDoesNotSurviveSnoozeOrNewerDose() {
+    let dose = event("initial", after: 0)
+    var snoozed = dose; snoozed.status = .snoozed; snoozed.snoozeCount = 1
+    snoozed.snoozedUntil = now.addingTimeInterval(600)
+    XCTAssertFalse(ReminderPlan.retainsInFlight(dose, deadline: now, among: [snoozed],
+      now: now.addingTimeInterval(180), snoozeInterval: 600))
+    let next = event("next", after: 60)
+    XCTAssertFalse(ReminderPlan.retainsInFlight(dose, deadline: now, among: [dose, next],
+      now: now.addingTimeInterval(60), snoozeInterval: 600))
+  }
+
   func testIgnoredCurrentDoseCannotStarveNextDoseWindow() throws {
     let first = event("first")
     let later = event("later", after: 86400)
