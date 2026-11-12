@@ -496,6 +496,7 @@ actor LocalNotificationScheduler: NotificationScheduling {
       repeatInterval: repeatInterval,
       logicalNow: now, realNow: timeline.deliveryDate(for: now),
       clockScale: timeline.realSecondsPerLogicalSecond)
+    await AppDelegate.scheduleReminderRefresh()
     let registered = events.filter { result.registeredEventIDs.contains($0.id) || known[$0.id] == $0.snoozeCount }
     UserDefaults.standard.set(Dictionary(uniqueKeysWithValues: registered.map { ($0.id, $0.snoozeCount) }), forKey: ledgerKey)
     return NotificationReconciliation(expectedPendingCount: result.count,

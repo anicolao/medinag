@@ -23,6 +23,7 @@
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>org.boardgamescafe.medinag.reminder-refresh</string>
+        <string>org.boardgamescafe.medinag.reminder-maintenance</string>
     </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
@@ -40,6 +41,7 @@
     <key>UIBackgroundModes</key>
     <array>
         <string>fetch</string>
+        <string>processing</string>
     </array>
 </dict>
 </plist>

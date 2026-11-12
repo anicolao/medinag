@@ -72,4 +72,5 @@ enum PhoneNotificationResponse {
 
 extension Notification.Name {
   static let localDoseResponseSaved = Notification.Name("medinag.local-response-saved")
+  static let localScheduleRefreshed = Notification.Name("medinag.local-schedule-refreshed")
 }

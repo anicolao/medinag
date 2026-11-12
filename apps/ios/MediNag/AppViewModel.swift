@@ -130,7 +130,20 @@ final class AppViewModel: ObservableObject {
     }
     networkMonitor.pathUpdateHandler = { [weak self] path in
       guard path.status == .satisfied else { return }
-      Task { @MainActor [weak self] in await self?.flushResponses() }
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        await BackgroundReminderRefresh.refreshCachedQueue(reason: "network_restored")
+        await flushResponses()
+      }
+    }
+    NotificationCenter.default.addObserver(forName: .localScheduleRefreshed, object: nil, queue: .main) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        guard let self, let patientID = Auth.auth().currentUser?.uid,
+          let cache = try? DurableAlertStorage.load(PatientAlertCache.self, name: "phone-plan.json"),
+          cache.patientID == patientID, cache.plan.id == currentPlan?.id else { return }
+        currentPlan = cache.plan
+        events = responseOutbox.applying(to: cache.events, patientID: patientID, administratorID: cache.plan.id)
+      }
     }
     networkMonitor.start(queue: DispatchQueue(label: "medinag.response-connectivity"))
     companionSession.handleCommand = { [unowned self] command in await handleWatchCommand(command) }
@@ -343,6 +356,9 @@ final class AppViewModel: ObservableObject {
     patientViewDidOpen()
     Task { await flushResponses() }
     do {
+      // Ready local data must be repaired before a timezone/database write can
+      // block on connectivity, including while the response screen is open.
+      try await reconcileNotifications()
       await claimAlarmInteractionFromActivation(events: events)
       try await directory.updateTimeZone(
         userID: userID,
@@ -697,7 +713,6 @@ final class AppViewModel: ObservableObject {
   private func scheduleUnfinishedEventsIfReady() async {
     guard
       !isWorking,
-      activeReminder == nil,
       notificationReadiness == .ready
         || notificationReadiness == .noScheduledReminders
         || notificationReadiness == .failed

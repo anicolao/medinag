@@ -2,10 +2,12 @@ import BackgroundTasks
 import GoogleSignIn
 import OSLog
 import UIKit
+import MediNagCore
 @preconcurrency import UserNotifications
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
   static let reminderRefreshIdentifier = "org.boardgamescafe.medinag.reminder-refresh"
+  static let reminderMaintenanceIdentifier = "org.boardgamescafe.medinag.reminder-maintenance"
   static let reminderRefreshQueue = DispatchQueue.main
   static private(set) var reminderRefreshRegistrationSucceeded: Bool?
   private static let logger = Logger(
@@ -24,16 +26,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       forTaskWithIdentifier: Self.reminderRefreshIdentifier,
       using: Self.reminderRefreshQueue
     ) { task in
-      guard let refreshTask = task as? BGAppRefreshTask else {
-        task.setTaskCompleted(success: false)
-        return
-      }
-      Self.handleReminderRefresh(refreshTask)
+      Self.handleReminderRefresh(task)
     }
-    Self.reminderRefreshRegistrationSucceeded = registered
-    if !registered {
+    let maintenanceRegistered = BGTaskScheduler.shared.register(
+      forTaskWithIdentifier: Self.reminderMaintenanceIdentifier,
+      using: Self.reminderRefreshQueue
+    ) { task in Self.handleReminderRefresh(task) }
+    Self.reminderRefreshRegistrationSucceeded = registered && maintenanceRegistered
+    if !registered || !maintenanceRegistered {
       Self.logger.fault(
-        "Could not register the daily reminder refresh task."
+        "Could not register reminder maintenance background handlers."
       )
     }
     Self.scheduleReminderRefresh()
@@ -45,29 +47,63 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
   }
 
   static func scheduleReminderRefresh() {
-    let request = BGAppRefreshTaskRequest(
-      identifier: reminderRefreshIdentifier
-    )
-    request.earliestBeginDate = Date(timeIntervalSinceNow: 24 * 60 * 60)
-    do {
-      try BGTaskScheduler.shared.submit(request)
-    } catch {
-      // A foreground refresh still maintains coverage. The next lifecycle
-      // transition retries this opportunistic request.
+    var preferred = Date(timeIntervalSinceNow: 15 * 60)
+    if let cache = try? DurableAlertStorage.load(PatientAlertCache.self, name: "phone-plan.json") {
+      #if E2E
+        let timeline = E2ERuntime.notificationTimeline()
+      #else
+        let timeline = SystemNotificationTimeline()
+      #endif
+      let plan = ReminderPlan(events: cache.events, now: timeline.now,
+        snoozeInterval: Double(cache.plan.snoozeIntervalMinutes * 60),
+        repeatInterval: Double(cache.plan.repeatIntervalMinutes * 60))
+      preferred = timeline.deliveryDate(for: ReminderRefreshPolicy.preferredDate(
+        now: timeline.now, events: cache.events, coveredThrough: plan.coveredThrough))
+    }
+    let preferredDate = preferred
+    let identifiers = [reminderRefreshIdentifier, reminderMaintenanceIdentifier]
+    BGTaskScheduler.shared.getPendingTaskRequests { pending in
+      for identifier in identifiers {
+        if pending.contains(where: { $0.identifier == identifier
+          && ($0.earliestBeginDate ?? .distantPast) <= preferredDate }) { continue }
+        let candidate: BGTaskRequest
+        if identifier == identifiers[0] {
+          candidate = BGAppRefreshTaskRequest(identifier: identifier)
+        } else {
+          let maintenance = BGProcessingTaskRequest(identifier: identifier)
+          maintenance.requiresNetworkConnectivity = false // Cached repair works offline.
+          maintenance.requiresExternalPower = false
+          candidate = maintenance
+        }
+        candidate.earliestBeginDate = preferredDate
+        do {
+          try BGTaskScheduler.shared.submit(candidate)
+          LocalAlertJournal.record("background_refresh_requested", deadline: preferredDate,
+            details: ["identifier": candidate.identifier])
+        } catch {
+          LocalAlertJournal.record("background_refresh_request_failed",
+            details: ["identifier": candidate.identifier, "error": error.localizedDescription])
+        }
+      }
     }
   }
 
-  private static func handleReminderRefresh(_ task: BGAppRefreshTask) {
+  private static func handleReminderRefresh(_ task: BGTask) {
+    LocalAlertJournal.record("background_refresh_started", details: ["identifier": task.identifier])
     scheduleReminderRefresh()
     let work = Task {
       do {
         try await BackgroundReminderRefresh.run()
+        LocalAlertJournal.record("background_refresh_finished", details: ["identifier": task.identifier])
+        scheduleReminderRefresh()
         task.setTaskCompleted(success: true)
       } catch {
+        LocalAlertJournal.record("background_refresh_failed", details: ["error": error.localizedDescription])
         task.setTaskCompleted(success: false)
       }
     }
     task.expirationHandler = {
+      LocalAlertJournal.record("background_refresh_expired", details: ["identifier": task.identifier])
       work.cancel()
     }
   }
@@ -92,6 +128,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     LocalAlertJournal.record("foreground_presentation_callback", requestID: notification.request.identifier,
       details: ["systemDate": String(notification.date.timeIntervalSince1970)])
     completionHandler([.banner, .list, .sound])
+    Task { await BackgroundReminderRefresh.refreshCachedQueue(reason: "foreground_notification") }
   }
 
   nonisolated func userNotificationCenter(
@@ -111,6 +148,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       LocalAlertJournal.record("notification_action_callback", requestID: identifier,
         details: ["action": actionIdentifier])
       if await PhoneNotificationResponse.handle(response) { return }
+      await BackgroundReminderRefresh.refreshCachedQueue(reason: "notification_open_or_dismiss")
       let newlyClaimed = NotificationDeliveryLedger.claim(identifier: identifier)
       if
         let interaction,

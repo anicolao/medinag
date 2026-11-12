@@ -99,7 +99,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
-  func refresh() async {
+  func refresh(timeout: TimeInterval = 5) async {
     let command = CompanionCommand()
     #if os(watchOS)
       if let session, session.activationState == .activated, !session.isReachable {
@@ -113,7 +113,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         }
       }
     #endif
-    await exchange(command)
+    await exchange(command, timeout: timeout)
   }
 
   func refreshOnActivation() async {
@@ -179,7 +179,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     #endif
   }
 
-  private func exchange(_ command: CompanionCommand) async {
+  private func exchange(_ command: CompanionCommand, timeout: TimeInterval = 5) async {
     guard !busy else { return }
     guard let session, session.activationState == .activated, session.isReachable else {
       reachable = false
@@ -200,7 +200,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         // Sendable closures must not inherit the view model's MainActor, or
         // Swift 6 traps when the real reply/error arrives off the main queue.
         let reply = CompanionMessageReply(continuation)
-        reply.armTimeout(after: 5)
+        reply.armTimeout(after: timeout)
         session.sendMessageData(data,
           replyHandler: { @Sendable data in reply.finish(.success(data)) },
           errorHandler: { @Sendable error in reply.finish(.failure(error)) })
@@ -309,6 +309,52 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   #if os(watchOS)
+    private static let maintenanceDateKey = "medinag.watch.requested-maintenance"
+
+    func requestBackgroundMaintenance() {
+      guard let snapshot = presentationSnapshot, snapshot.ready else { return }
+      let now = snapshot.logicalDate.addingTimeInterval(Date().timeIntervalSince(snapshot.realDate) / snapshot.clockScale)
+      let plan = ReminderPlan(events: snapshot.events, now: now,
+        snoozeInterval: Double(snapshot.snoozeMinutes * 60), repeatInterval: Double((snapshot.repeatMinutes ?? 3) * 60))
+      let logical = ReminderRefreshPolicy.preferredDate(now: now, events: snapshot.events, coveredThrough: plan.coveredThrough)
+      let preferred = Date().addingTimeInterval(logical.timeIntervalSince(now) * snapshot.clockScale)
+      if let pending = UserDefaults.standard.object(forKey: Self.maintenanceDateKey) as? Date,
+        pending > Date(), pending <= preferred { return }
+      UserDefaults.standard.set(preferred, forKey: Self.maintenanceDateKey)
+      WKApplication.shared().scheduleBackgroundRefresh(withPreferredDate: preferred,
+        userInfo: "medinag.queue-refresh" as NSString) { error in
+        if let error {
+          LocalAlertJournal.record("background_refresh_request_failed", details: ["error": error.localizedDescription])
+          if UserDefaults.standard.object(forKey: Self.maintenanceDateKey) as? Date == preferred {
+            UserDefaults.standard.removeObject(forKey: Self.maintenanceDateKey)
+          }
+        } else {
+          LocalAlertJournal.record("background_refresh_requested", deadline: preferred,
+            details: ["identifier": "medinag.queue-refresh"])
+        }
+      }
+    }
+
+    func refreshInBackground() async {
+      UserDefaults.standard.removeObject(forKey: Self.maintenanceDateKey)
+      LocalAlertJournal.record("background_refresh_started")
+      await reconcileWatchNotifications() // Repair the independent Watch queue first.
+      // A real background transfer also requests fresh data when immediate
+      // messaging cannot finish inside the Watch's short execution allowance.
+      let command = CompanionCommand()
+      if let session, session.activationState == .activated,
+        !session.outstandingUserInfoTransfers.contains(where: {
+          guard let data = $0.userInfo["command"] as? Data,
+            let pending = try? JSONDecoder().decode(CompanionCommand.self, from: data) else { return false }
+          return pending.response == nil
+        }), let data = try? JSONEncoder().encode(command) {
+        session.transferUserInfo(["command": data])
+      }
+      await refresh(timeout: 2)
+      requestBackgroundMaintenance()
+      LocalAlertJournal.record("background_refresh_finished")
+    }
+
     func doseWindowDidChange() async {
       discardSupersededResponse()
       await reconcileWatchNotifications()
@@ -396,6 +442,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
           snoozeInterval: Double(snapshot.snoozeMinutes * 60),
           repeatInterval: Double((snapshot.repeatMinutes ?? 3) * 60), logicalNow: now,
           clockScale: snapshot.clockScale, snapshot: snapshot)
+        requestBackgroundMaintenance()
         if notice == "Allow MediNag notifications in Watch Settings."
           || notice == "Watch reminders failed. Open MediNag on iPhone." {
           notice = ""

@@ -12,10 +12,14 @@ struct MediNagWatchApp: App {
         .tint(.teal)
         .onChange(of: scenePhase, initial: true) { _, phase in
           if phase == .active { Task { await connection.refreshOnActivation() } }
+          else if phase == .background { connection.requestBackgroundMaintenance() }
         }
     }
     .backgroundTask(.watchConnectivity) {
       await connection.finishBackgroundTransfers()
+    }
+    .backgroundTask(.appRefresh("medinag.queue-refresh")) {
+      await connection.refreshInBackground()
     }
   }
 }
