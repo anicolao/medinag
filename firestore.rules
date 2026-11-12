@@ -85,6 +85,7 @@ service cloud.firestore {
           'timeZone',
           'smsNumber',
           'publishedAt',
+          'repeatIntervalMinutes',
           'createdAt',
           'updatedAt'
         ])
@@ -107,6 +108,9 @@ service cloud.firestore {
         && request.resource.data.snoozeIntervalMinutes is int
         && request.resource.data.snoozeIntervalMinutes >= 1
         && request.resource.data.snoozeIntervalMinutes <= 60
+        && request.resource.data.get('repeatIntervalMinutes', 3) is int
+        && request.resource.data.get('repeatIntervalMinutes', 3) >= 1
+        && request.resource.data.get('repeatIntervalMinutes', 3) < request.resource.data.snoozeIntervalMinutes
         && request.resource.data.escalationDeadlineMinutes is int
         && request.resource.data.escalationDeadlineMinutes >= 5
         && request.resource.data.escalationDeadlineMinutes <= 240

@@ -157,6 +157,7 @@ async function ensureAdministrator(
       patientUid: null,
       patientDisplayName: '',
       snoozeIntervalMinutes: 10,
+      repeatIntervalMinutes: 3,
       escalationDeadlineMinutes: 30,
       maxReminders: 3,
       timeZone: 'patient-local',

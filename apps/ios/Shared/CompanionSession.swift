@@ -23,8 +23,25 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
   private var latestSnapshot: CompanionSnapshot?
   private var transportFailures = CompanionTransportFailures()
   private static let logger = Logger(subsystem: "org.boardgamescafe.medinag", category: "WatchConnectivity")
+
+  var presentationSnapshot: CompanionSnapshot? {
+    #if os(watchOS)
+      guard let snapshot, let command = pendingResponse, let event = command.event,
+        let response = command.response, let tap = command.respondedAt,
+        command.patientID == snapshot.patientID, command.administratorID == snapshot.administratorID,
+        let index = snapshot.events.firstIndex(where: { $0.hasSameResponseVersion(as: event) })
+      else { return snapshot }
+      var events = snapshot.events
+      events[index] = LocalDoseResponse(patientID: command.patientID ?? "",
+        administratorID: command.administratorID ?? "", event: event, response: response,
+        respondedAt: tap, snoozeInterval: Double(snapshot.snoozeMinutes * 60)).updatedEvent
+      return snapshot.replacingEvents(events)
+    #else
+      return snapshot
+    #endif
+  }
   #if os(watchOS)
-    private let notifications = DeviceReminderNotifications()
+    private let notifications = DeviceReminderNotifications.shared
     private var notificationWork: Task<Void, Never>?
     private var contentObservation: NSKeyValueObservation?
     private var backgroundWaiters: [CheckedContinuation<Void, Never>] = []
@@ -33,6 +50,8 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         hasPendingResponse = pendingResponse != nil
         UserDefaults.standard.set(try? pendingResponse.map { try JSONEncoder().encode($0) },
                                   forKey: "medinag.watch.pending-response")
+        do { try DurableAlertStorage.save(pendingResponse, name: "watch-response.json") }
+        catch { LocalAlertJournal.record("response_save_failed", details: ["error": error.localizedDescription]) }
       }
     }
   #endif
@@ -45,7 +64,10 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
       UNUserNotificationCenter.current().delegate = self
       if let data = UserDefaults.standard.data(forKey: "medinag.watch.snapshot"),
          let value = try? JSONDecoder().decode(CompanionSnapshot.self, from: data) { snapshot = value }
-      if let data = UserDefaults.standard.data(forKey: "medinag.watch.pending-response") {
+      if let saved = try? DurableAlertStorage.load(CompanionCommand.self, name: "watch-response.json") {
+        pendingResponse = saved
+        hasPendingResponse = true
+      } else if let data = UserDefaults.standard.data(forKey: "medinag.watch.pending-response") {
         pendingResponse = try? JSONDecoder().decode(CompanionCommand.self, from: data)
         hasPendingResponse = pendingResponse != nil
       }
@@ -129,12 +151,32 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         await exchange(pending)
         return
       }
+      do { try DurableAlertStorage.save(command, name: "watch-response.json") }
+      catch {
+        LocalAlertJournal.record("response_save_failed", eventID: event.id,
+          details: ["error": error.localizedDescription])
+        session?.transferUserInfo(["watchNotificationFailure": "Watch could not save the medication response."])
+        return
+      }
       pendingResponse = command
+      LocalAlertJournal.record("response_saved_locally", eventID: event.id,
+        deadline: response == .yesIWill ? AlertTiming.snoozeDeadline(for: event,
+          respondedAt: command.respondedAt ?? Date(), interval: Double(snapshot.snoozeMinutes * 60)) : nil,
+        details: ["action": response.rawValue, "commandID": command.identifier,
+          "tappedAt": String((command.respondedAt ?? Date()).timeIntervalSince1970),
+          "latencyFromDose": String((command.respondedAt ?? Date()).timeIntervalSince(event.scheduledTime))])
+      // Apply and register the locally saved choice before waiting on phone or
+      // Firebase. The raw received snapshot stays separate for reconciliation.
+      await reconcileWatchNotifications()
       // OS-managed background transfer complements interactive delivery. The
       // Firestore response-version transaction makes duplicate delivery safe.
       queueResponse(command)
     #endif
-    await exchange(command)
+    #if os(watchOS)
+      Task { await exchange(command) }
+    #else
+      await exchange(command)
+    #endif
   }
 
   private func exchange(_ command: CompanionCommand) async {
@@ -330,7 +372,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
 
     private func reconcileWatchNotifications(requestPermission: Bool = false) async {
       do {
-        guard let snapshot else { return }
+        guard let snapshot = presentationSnapshot else { return }
         if !snapshot.ready {
           _ = try await notifications.reconcile(events: [], snoozeInterval: 600, logicalNow: Date())
           return
@@ -351,7 +393,8 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
         }
         let now = snapshot.logicalDate.addingTimeInterval(Date().timeIntervalSince(snapshot.realDate) / snapshot.clockScale)
         _ = try await notifications.reconcile(events: snapshot.events,
-          snoozeInterval: Double(snapshot.snoozeMinutes * 60), logicalNow: now,
+          snoozeInterval: Double(snapshot.snoozeMinutes * 60),
+          repeatInterval: Double((snapshot.repeatMinutes ?? 3) * 60), logicalNow: now,
           clockScale: snapshot.clockScale, snapshot: snapshot)
         if notice == "Allow MediNag notifications in Watch Settings."
           || notice == "Watch reminders failed. Open MediNag on iPhone." {
@@ -396,6 +439,7 @@ extension CompanionSession: UNUserNotificationCenterDelegate {
   nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    LocalAlertJournal.record("foreground_presentation_callback", requestID: notification.request.identifier)
     completionHandler([.banner, .list, .sound])
   }
 
@@ -403,13 +447,16 @@ extension CompanionSession: UNUserNotificationCenterDelegate {
     didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
     let action = response.actionIdentifier
     let data = response.notification.request.content.userInfo[MediNagNotification.command] as? Data
-    completionHandler()
+    let completion = WatchNotificationCompletion(finish: completionHandler)
+    LocalAlertJournal.record("notification_action_callback", requestID: response.notification.request.identifier,
+      details: ["action": action])
     // A dismiss/default tap does not answer the dose or cancel its queue.
     guard let choice: DoseResponse = action == MediNagNotification.yesIDid ? .yesIDid
       : action == MediNagNotification.yesIWill ? .yesIWill : nil,
       let data, let command = try? JSONDecoder().decode(CompanionCommand.self, from: data),
-      let event = command.event else { return }
+      let event = command.event else { completion.finish(); return }
     Task { @MainActor in
+      defer { completion.finish() }
       guard let snapshot, command.patientID == snapshot.patientID,
         command.administratorID == snapshot.administratorID,
         snapshot.events.contains(where: { $0.hasSameResponseVersion(as: event) }) else {
@@ -420,4 +467,5 @@ extension CompanionSession: UNUserNotificationCenterDelegate {
     }
   }
 }
+private struct WatchNotificationCompletion: @unchecked Sendable { let finish: () -> Void }
 #endif

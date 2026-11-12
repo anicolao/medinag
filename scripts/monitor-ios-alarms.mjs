@@ -9,8 +9,8 @@ if (!simulatorID) {
   throw new Error('MEDINAG_SIMULATOR_ID is required.');
 }
 
-const counts = { alert: 0 };
-const waiters = { alert: [] };
+const counts = { alert: 0, response_saved: 0, response_synced: 0, response_reconciled: 0 };
+const waiters = { alert: [], response_saved: [], response_synced: [], response_reconciled: [] };
 const seenAlertIDs = new Set();
 
 function release(name) {
@@ -27,6 +27,15 @@ function release(name) {
 }
 
 function observe(line) {
+  for (const [milestone, event] of Object.entries({
+    response_saved_locally: 'response_saved', response_synchronized: 'response_synced',
+    response_locally_reconciled: 'response_reconciled'
+  })) {
+    if (line.includes(`Local alert evidence: ${milestone}`)) {
+      counts[event] += 1;
+      release(event);
+    }
+  }
   const alertID = line.match(/([0-9A-F-]{36}): Requesting alarm alert/)?.[1];
   if (alertID && !seenAlertIDs.has(alertID)) {
     seenAlertIDs.add(alertID);
@@ -43,7 +52,7 @@ const logStream = spawn('/usr/bin/xcrun', [
   '--style', 'compact',
   '--level', 'debug',
   '--predicate',
-  'process == "mobiletimerd"'
+  'process == "mobiletimerd" OR process == "MediNag"'
 ], {
   env: { ...process.env, DEVELOPER_DIR: developerDirectory },
   stdio: ['ignore', 'pipe', 'inherit']
@@ -65,7 +74,7 @@ const server = http.createServer((request, response) => {
     response.end(JSON.stringify(counts));
     return;
   }
-  const match = url.pathname.match(/^\/wait\/(alert)$/);
+  const match = url.pathname.match(/^\/wait\/(alert|response_saved|response_synced|response_reconciled)$/);
   if (!match) {
     response.writeHead(404);
     response.end();

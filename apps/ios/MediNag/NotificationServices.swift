@@ -421,9 +421,12 @@ final class NotificationResponseRouter {
 actor LocalNotificationScheduler: NotificationScheduling {
   private let center: UNUserNotificationCenter
   private let timeline: any NotificationTimeline
-  private let deviceQueue = DeviceReminderNotifications()
+  private let deviceQueue = DeviceReminderNotifications.shared
   private var registeredEvents: [String: MedicationEvent] = [:]
   private var snoozeInterval: TimeInterval = DoseCoordinator.defaultSnoozeInterval
+  var repeatInterval: TimeInterval = ReminderPlan.nagInterval
+
+  func setRepeatInterval(_ interval: TimeInterval) { repeatInterval = interval }
 
   init(center: UNUserNotificationCenter = .current(),
        timeline: any NotificationTimeline = SystemNotificationTimeline()) {
@@ -451,7 +454,6 @@ actor LocalNotificationScheduler: NotificationScheduling {
 
   func scheduleRepeat(for event: MedicationEvent, at date: Date) async throws {
     registeredEvents[event.id] = event
-    if let snoozed = event.lastSnoozedAt { snoozeInterval = date.timeIntervalSince(snoozed) }
     _ = try await reconcile(events: Array(registeredEvents.values),
                             snoozeInterval: snoozeInterval, maximumReminderCount: Int.max)
   }
@@ -486,13 +488,12 @@ actor LocalNotificationScheduler: NotificationScheduling {
     let ledgerKey = "medinag.actionable.registered-versions"
     let known = UserDefaults.standard.dictionary(forKey: ledgerKey) as? [String: Int] ?? [:]
     let missed = events.filter { event in
-      let anchor = event.status == .snoozed
-        ? (event.lastSnoozedAt ?? event.scheduledTime).addingTimeInterval(snoozeInterval)
-        : event.scheduledTime
+      let anchor = AlertTiming.reminder(for: event, snoozeInterval: snoozeInterval)
       return DoseWindow.isActive(event, among: events, at: now)
         && anchor <= now && known[event.id] != event.snoozeCount
     }.map(\.id)
     let result = try await deviceQueue.reconcile(events: events, snoozeInterval: snoozeInterval,
+      repeatInterval: repeatInterval,
       logicalNow: now, realNow: timeline.deliveryDate(for: now),
       clockScale: timeline.realSecondsPerLogicalSecond)
     let registered = events.filter { result.registeredEventIDs.contains($0.id) || known[$0.id] == $0.snoozeCount }

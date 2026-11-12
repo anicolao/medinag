@@ -49,6 +49,7 @@ implements AdministratorRepository {
           patientUid: typeof data.patientUid === 'string' ? data.patientUid : null,
           patientDisplayName: String(data.patientDisplayName ?? ''),
           snoozeIntervalMinutes: Number(data.snoozeIntervalMinutes),
+          repeatIntervalMinutes: Number(data.repeatIntervalMinutes ?? 3),
           escalationDeadlineMinutes: Number(data.escalationDeadlineMinutes),
           maxReminders: Number(data.maxReminders),
           smsNumber: String(data.smsNumber)
@@ -59,6 +60,9 @@ implements AdministratorRepository {
   }
 
   async updateSettings(input: AdministratorSettingsInput): Promise<void> {
+    if (input.repeatIntervalMinutes < 1 || input.repeatIntervalMinutes >= input.snoozeIntervalMinutes) {
+      throw new Error('Repeat interval must be positive and shorter than the snooze interval.');
+    }
     await updateDoc(doc(this.database, 'administrators', this.administratorId), {
       ...input,
       updatedAt: serverTimestamp()

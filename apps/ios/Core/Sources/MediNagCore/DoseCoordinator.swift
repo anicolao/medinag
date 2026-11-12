@@ -65,10 +65,9 @@ public actor DoseCoordinator {
 
     for event in events where DoseWindow.isActive(event, among: events, at: clock.now) {
       if event.status == .snoozed {
-        let snoozedAt = event.lastSnoozedAt ?? event.scheduledTime
         try await notifications.scheduleRepeat(
           for: event,
-          at: snoozedAt.addingTimeInterval(snoozeInterval)
+          at: AlertTiming.reminder(for: event, snoozeInterval: snoozeInterval)
         )
       } else {
         try await notifications.schedule(event: event)
@@ -87,7 +86,7 @@ public actor DoseCoordinator {
       let updated = try await eventStore.respond(response, to: event, at: clock.now)
       try await notifications.scheduleRepeat(
           for: updated,
-          at: clock.now.addingTimeInterval(snoozeInterval)
+          at: AlertTiming.snoozeDeadline(for: event, respondedAt: clock.now, interval: snoozeInterval)
         )
       return updated
 

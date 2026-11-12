@@ -40,6 +40,11 @@ public struct MedicationEvent: Identifiable, Codable, Equatable, Sendable {
   public var snoozeCount: Int
   public var lastSnoozedAt: Date?
   public var completedAt: Date?
+  // Local policy travels with the real occurrence/cache/Watch payload, not as
+  // a fake event. Optional fields preserve decoding of previously saved data.
+  public var snoozeIntervalSeconds: TimeInterval?
+  public var repeatIntervalSeconds: TimeInterval?
+  public var snoozedUntil: Date?
 
   public init(
     id: String,

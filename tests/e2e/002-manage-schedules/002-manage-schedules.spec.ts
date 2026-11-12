@@ -70,7 +70,7 @@ test('US-002: an administrator publishes one medication plan', async ({ page }, 
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Snooze interval').selectOption('15');
   await page.getByLabel('Escalate after').selectOption('45');
-  await page.getByLabel('Maximum reminders').selectOption('4');
+  await page.getByLabel('Repeat interval').selectOption('3');
   await page.getByLabel('Administrator name').fill('Lori');
   await page.getByLabel('Plan name').fill("Lori's morning medication");
   await page.getByLabel('SMS number').fill('+1 226 747 5188');

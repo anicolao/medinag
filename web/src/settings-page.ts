@@ -29,7 +29,7 @@ function template(profile: AdministratorProfile, account: AdministratorAccount, 
           <section class="settings-card" aria-labelledby="reminder-defaults-title">
             <div class="settings-card-heading">
               <h2 id="reminder-defaults-title">Reminder defaults</h2>
-              <p>These values apply to every active dose in this plan.</p>
+              <p>Repeat and snooze intervals apply to all your schedules.</p>
             </div>
             <div class="settings-grid">
               <label class="field">
@@ -45,9 +45,9 @@ function template(profile: AdministratorProfile, account: AdministratorAccount, 
                 </select>
               </label>
               <label class="field">
-                <span>Maximum reminders</span>
-                <select name="maxReminders">
-                  ${selectOptions([1, 2, 3, 4, 5], profile.maxReminders, '')}
+                <span>Repeat interval</span>
+                <select name="repeatIntervalMinutes">
+                  ${selectOptions([1, 2, 3, 5, 10, 15], profile.repeatIntervalMinutes, 'minutes')}
                 </select>
               </label>
               <div class="patient-time-zone-note settings-wide-field">
@@ -117,8 +117,9 @@ export function mountSettingsPage(
           displayName: String(values.get('displayName')).trim(),
           planName: String(values.get('planName')).trim(),
           snoozeIntervalMinutes: Number(values.get('snoozeIntervalMinutes')),
+          repeatIntervalMinutes: Number(values.get('repeatIntervalMinutes')),
           escalationDeadlineMinutes: Number(values.get('escalationDeadlineMinutes')),
-          maxReminders: Number(values.get('maxReminders')),
+          maxReminders: current!.maxReminders,
           smsNumber: String(values.get('smsNumber')).trim()
         });
         notice = 'Settings saved.';

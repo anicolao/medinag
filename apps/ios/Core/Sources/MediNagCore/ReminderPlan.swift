@@ -21,13 +21,12 @@ public struct ReminderPlan: Sendable {
   public let coveredThrough: Date?
 
   public init(events: [MedicationEvent], now: Date, snoozeInterval: TimeInterval,
-              capacity: Int = Self.capacity) {
+              repeatInterval: TimeInterval = Self.nagInterval, capacity: Int = Self.capacity) {
     let limit = max(0, capacity)
+    func cadence(_ event: MedicationEvent) -> TimeInterval { max(1, event.repeatIntervalSeconds ?? repeatInterval) }
     let active = events.filter { DoseWindow.isActive($0, among: events, at: now) }
     func anchor(_ event: MedicationEvent) -> Date {
-      event.status == .snoozed
-        ? (event.lastSnoozedAt ?? event.scheduledTime).addingTimeInterval(snoozeInterval)
-        : event.scheduledTime
+      AlertTiming.reminder(for: event, snoozeInterval: snoozeInterval)
     }
     func ordered(_ lhs: Occurrence, _ rhs: Occurrence) -> Bool {
       if lhs.date == rhs.date { return lhs.identifier < rhs.identifier }
@@ -36,8 +35,8 @@ public struct ReminderPlan: Sendable {
     var selected: [Occurrence] = []
     var next: [Occurrence] = active.compactMap { event in
       let start = anchor(event)
-      let attempt = start > now ? 0 : max(1, Int(floor(now.timeIntervalSince(start) / Self.nagInterval)) + 1)
-      let date = start.addingTimeInterval(Double(attempt) * Self.nagInterval)
+      let attempt = start >= now ? 0 : max(1, Int(floor(now.timeIntervalSince(start) / cadence(event))) + 1)
+      let date = start.addingTimeInterval(Double(attempt) * cadence(event))
       guard DoseWindow.end(for: event, among: events).map({ date < $0 }) ?? true else { return nil }
       return Occurrence(event: event, date: date, attempt: attempt)
     }
@@ -45,7 +44,7 @@ public struct ReminderPlan: Sendable {
       next.sort(by: ordered)
       let item = next.removeFirst()
       selected.append(item)
-      let date = item.date.addingTimeInterval(Self.nagInterval)
+      let date = item.date.addingTimeInterval(cadence(item.event))
       if DoseWindow.end(for: item.event, among: events).map({ date < $0 }) ?? true {
         next.append(Occurrence(event: item.event, date: date, attempt: item.attempt + 1))
       }

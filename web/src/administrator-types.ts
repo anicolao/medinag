@@ -8,6 +8,7 @@ export interface AdministratorProfile {
   patientUid: string | null;
   patientDisplayName: string;
   snoozeIntervalMinutes: number;
+  repeatIntervalMinutes: number;
   escalationDeadlineMinutes: number;
   maxReminders: number;
   smsNumber: string;
@@ -17,6 +18,7 @@ export interface AdministratorSettingsInput {
   displayName: string;
   planName: string;
   snoozeIntervalMinutes: number;
+  repeatIntervalMinutes: number;
   escalationDeadlineMinutes: number;
   maxReminders: number;
   smsNumber: string;

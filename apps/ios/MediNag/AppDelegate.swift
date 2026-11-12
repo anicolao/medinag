@@ -89,6 +89,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
   ) {
     // Keep the explicit callback delegate overloads. The async protocol bridge
     // aborted inside UIKit after notification taps on iOS 18.1.
+    LocalAlertJournal.record("foreground_presentation_callback", requestID: notification.request.identifier,
+      details: ["systemDate": String(notification.date.timeIntervalSince1970)])
     completionHandler([.banner, .list, .sound])
   }
 
@@ -103,10 +105,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       actionIdentifier: response.actionIdentifier,
       userInfo: response.notification.request.content.userInfo
     )
-    // Release the system response immediately, then perform app routing on the
-    // main actor. This avoids holding UIKit's completion callback across a hop.
-    completionHandler()
+    let completion = NotificationCompletion(finish: completionHandler)
     Task { @MainActor in
+      defer { completion.finish() }
+      LocalAlertJournal.record("notification_action_callback", requestID: identifier,
+        details: ["action": actionIdentifier])
+      if await PhoneNotificationResponse.handle(response) { return }
       let newlyClaimed = NotificationDeliveryLedger.claim(identifier: identifier)
       if
         let interaction,
@@ -118,3 +122,5 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
   }
 }
+
+private struct NotificationCompletion: @unchecked Sendable { let finish: () -> Void }

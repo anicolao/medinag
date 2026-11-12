@@ -9,6 +9,7 @@ public struct CompanionSnapshot: Codable, Sendable {
   public let planName: String
   public let events: [MedicationEvent]
   public let snoozeMinutes: Int
+  public let repeatMinutes: Int?
   public let maximumReminderCount: Int
   public let ready: Bool
   public let readinessMessage: String
@@ -23,13 +24,14 @@ public struct CompanionSnapshot: Codable, Sendable {
               planName: String, events: [MedicationEvent], snoozeMinutes: Int,
               maximumReminderCount: Int, ready: Bool, readinessMessage: String,
               logicalDate: Date, realDate: Date, clockScale: Double = 1,
-              scheduleCleared: Bool = false) {
+              scheduleCleared: Bool = false, repeatMinutes: Int = 3) {
     self.patientID = patientID
     self.administratorID = administratorID
     self.administratorName = administratorName
     self.planName = planName
     self.events = events
     self.snoozeMinutes = snoozeMinutes
+    self.repeatMinutes = repeatMinutes
     self.maximumReminderCount = maximumReminderCount
     self.ready = ready
     self.readinessMessage = readinessMessage
@@ -40,15 +42,13 @@ public struct CompanionSnapshot: Codable, Sendable {
   }
 
   public func nextReminder(for event: MedicationEvent) -> Date {
-    event.status == .snoozed
-      ? (event.lastSnoozedAt ?? event.scheduledTime).addingTimeInterval(Double(snoozeMinutes * 60))
-      : event.scheduledTime
+    AlertTiming.reminder(for: event, snoozeInterval: Double(snoozeMinutes * 60))
   }
 
   public func canRespond(to event: MedicationEvent, at date: Date = Date()) -> Bool {
     let now = logicalDate.addingTimeInterval(date.timeIntervalSince(realDate) / clockScale)
-    return ready && DoseWindow.isActive(event, among: events, at: now)
-      && nextReminder(for: event).timeIntervalSince(now) < 15 * 60
+    return ready && AlertTiming.canComplete(event, among: events, at: now,
+      snoozeInterval: Double(snoozeMinutes * 60))
   }
 
   public var nextEvent: MedicationEvent? {
@@ -65,6 +65,15 @@ public struct CompanionSnapshot: Codable, Sendable {
     guard realDate >= cached.realDate else { return false }
     return ready || scheduleCleared == true || !cached.ready
   }
+
+  public func replacingEvents(_ events: [MedicationEvent]) -> CompanionSnapshot {
+    CompanionSnapshot(patientID: patientID, administratorID: administratorID,
+      administratorName: administratorName, planName: planName, events: events,
+      snoozeMinutes: snoozeMinutes, maximumReminderCount: maximumReminderCount,
+      ready: ready, readinessMessage: readinessMessage, logicalDate: logicalDate,
+      realDate: realDate, clockScale: clockScale, scheduleCleared: scheduleCleared == true,
+      repeatMinutes: repeatMinutes ?? 3)
+  }
 }
 
 public struct CompanionCommand: Codable, Sendable {
@@ -73,6 +82,7 @@ public struct CompanionCommand: Codable, Sendable {
   public let administratorID: String?
   public let event: MedicationEvent?
   public let response: DoseResponse?
+  public let respondedAt: Date?
 
   public init(snapshot: CompanionSnapshot? = nil, event: MedicationEvent? = nil,
               response: DoseResponse? = nil) {
@@ -81,6 +91,9 @@ public struct CompanionCommand: Codable, Sendable {
     administratorID = snapshot?.administratorID
     self.event = event
     self.response = response
+    respondedAt = response == nil ? nil : snapshot.map {
+      $0.logicalDate.addingTimeInterval(Date().timeIntervalSince($0.realDate) / $0.clockScale)
+    }
   }
 
   public var identifier: String {

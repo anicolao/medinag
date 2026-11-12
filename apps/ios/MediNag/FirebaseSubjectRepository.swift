@@ -2,13 +2,14 @@ import FirebaseFirestore
 import Foundation
 import MediNagCore
 
-struct PublishedPlan: Identifiable, Equatable {
+struct PublishedPlan: Identifiable, Equatable, Codable {
   let id: String
   let administratorName: String
   let planName: String
   let planCode: String
   let patientUID: String?
-  let snoozeIntervalMinutes: Int
+  var snoozeIntervalMinutes: Int
+  var repeatIntervalMinutes: Int = 3
   let maxReminders: Int
   let nextDoseName: String
   let nextDoseTime: String
@@ -77,6 +78,7 @@ final class FirebasePatientDirectory: @unchecked Sendable {
         planCode: data["planCode"] as? String ?? "",
         patientUID: patientUID,
         snoozeIntervalMinutes: data["snoozeIntervalMinutes"] as? Int ?? 10,
+        repeatIntervalMinutes: data["repeatIntervalMinutes"] as? Int ?? 3,
         maxReminders: data["maxReminders"] as? Int ?? 3,
         nextDoseName: firstDose?["medicationName"] as? String ?? "No active doses",
         nextDoseTime: firstDose?["scheduledTime"] as? String ?? ""
@@ -183,7 +185,8 @@ final class FirebasePatientDirectory: @unchecked Sendable {
       administratorID: administratorID,
       patientID: userID,
       snoozeIntervalMinutes: data["snoozeIntervalMinutes"] as? Int ?? 10,
-      maximumReminderCount: data["maxReminders"] as? Int ?? 3
+      maximumReminderCount: data["maxReminders"] as? Int ?? 3,
+      repeatIntervalMinutes: data["repeatIntervalMinutes"] as? Int ?? 3
     )
   }
 
@@ -209,6 +212,14 @@ final class FirebasePatientDirectory: @unchecked Sendable {
         }
         handler(.success(hasAccess))
       }
+  }
+
+  func observeReminderSettings(administratorID: String,
+    _ handler: @escaping @Sendable (Int, Int) -> Void) -> ListenerRegistration {
+    database.document("administrators/\(administratorID)").addSnapshotListener { snapshot, _ in
+      guard let data = snapshot?.data() else { return }
+      handler(data["snoozeIntervalMinutes"] as? Int ?? 10, data["repeatIntervalMinutes"] as? Int ?? 3)
+    }
   }
 }
 
@@ -317,7 +328,17 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       do {
         let document = try transaction.getDocument(reference)
         guard var event = Self.event(document) else { throw PatientRepositoryError.missingEvent }
-        guard event.status != .completed, event.hasSameResponseVersion(as: expected)
+        // A lost acknowledgement must resolve the original tap, not increment
+        // snooze again or move its timestamp. Completion is terminal.
+        func sameTap(_ stored: Date?) -> Bool { stored.map { abs($0.timeIntervalSince(date)) < 0.001 } ?? false }
+        if (response == .yesIDid && sameTap(event.completedAt))
+          || (response == .yesIWill && sameTap(event.lastSnoozedAt)
+              && event.snoozeCount == expected.snoozeCount + 1) {
+          return try JSONEncoder().encode(event)
+        }
+        guard event.status != .completed,
+          event.scheduledTime == expected.scheduledTime, event.scheduleID == expected.scheduleID,
+          event.hasSameResponseVersion(as: expected) || response == .yesIDid
         else { throw DoseMutationError.staleEvent }
         switch response {
         case .yesIWill:
@@ -394,6 +415,7 @@ struct BackgroundRefreshContext: Sendable {
   let patientID: String
   let snoozeIntervalMinutes: Int
   let maximumReminderCount: Int
+  var repeatIntervalMinutes: Int = 3
 }
 
 enum PatientRepositoryError: LocalizedError {

@@ -3,7 +3,16 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 import MediNagCore
+import Network
+import UIKit
 import UserNotifications
+
+struct PatientAlertCache: Codable {
+  let patientID: String
+  let plan: PublishedPlan
+  let events: [MedicationEvent]
+  var protectionStart: Date? = nil
+}
 
 @MainActor
 final class AppViewModel: ObservableObject {
@@ -82,6 +91,10 @@ final class AppViewModel: ObservableObject {
   )?
   private var authenticationDestination: AuthenticationDestination?
   private var authenticationContinuationRequested = false
+  private let responseOutbox = LocalResponseOutbox()
+  private let networkMonitor = NWPathMonitor()
+  private var flushingResponses = false
+  private var protectionStart: Date?
 
   private enum AuthenticationDestination {
     case choosingSchedule([PublishedPlan])
@@ -107,6 +120,19 @@ final class AppViewModel: ObservableObject {
       healthReporter: healthReporter
     )
     installNotificationRouter()
+    NotificationCenter.default.addObserver(forName: .localDoseResponseSaved, object: nil, queue: .main) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        guard let self, let patientID = Auth.auth().currentUser?.uid, let plan = currentPlan else { return }
+        events = responseOutbox.applying(to: events, patientID: patientID, administratorID: plan.id)
+        activeReminder = nil
+        await flushResponses()
+      }
+    }
+    networkMonitor.pathUpdateHandler = { [weak self] path in
+      guard path.status == .satisfied else { return }
+      Task { @MainActor [weak self] in await self?.flushResponses() }
+    }
+    networkMonitor.start(queue: DispatchQueue(label: "medinag.response-connectivity"))
     companionSession.handleCommand = { [unowned self] command in await handleWatchCommand(command) }
     companionSession.reportFailure = { [weak self] error in
       await self?.reportIncident(code: "watch_sync_failed",
@@ -130,8 +156,11 @@ final class AppViewModel: ObservableObject {
   }
 
   func retireSupersededReminder() {
-    guard let reminder = activeReminder,
-      let event = events.first(where: { $0.id == reminder.eventID }) else { return }
+    guard let reminder = activeReminder else { return }
+    guard let event = events.first(where: { $0.id == reminder.eventID }) else {
+      activeReminder = nil
+      return
+    }
     if !DoseWindow.isActive(event, among: events, at: timeline.now) { activeReminder = nil }
   }
 
@@ -141,6 +170,24 @@ final class AppViewModel: ObservableObject {
 
   var maximumReminderCount: Int {
     currentPlan?.maxReminders ?? 3
+  }
+
+  var repeatMinutes: Int { currentPlan?.repeatIntervalMinutes ?? 3 }
+
+  func patientViewDidOpen() {
+    retireSupersededReminder()
+    if let event = nextEvent, event.scheduledTime <= timeline.now,
+      AlertTiming.reminder(for: event, snoozeInterval: Double(snoozeMinutes * 60)) <= timeline.now {
+      let presentation = ReminderPresentation(eventID: event.id, medicationName: event.medicationName,
+        scheduledTime: event.scheduledTime, reminderNumber: event.snoozeCount + 1,
+        timeZoneIdentifier: event.timeZone)
+      if activeReminder != presentation { activeReminder = presentation }
+    }
+  }
+
+  func canCompleteEarly(_ event: MedicationEvent) -> Bool {
+    event.scheduledTime > timeline.now && event.scheduledTime.timeIntervalSince(timeline.now) <= 900
+      && event.status != .completed
   }
 
   func signInWithGoogle() async {
@@ -207,6 +254,7 @@ final class AppViewModel: ObservableObject {
   func continueAfterFollowing() {
     guard state == .connectingSchedule else { return }
     state = .ready
+    Task { await requestNotifications() }
   }
 
   func changeSchedule() async {
@@ -292,6 +340,8 @@ final class AppViewModel: ObservableObject {
     // otherwise reopens the app).
     await captureAlertingAlarmsAtActivation()
     guard state == .ready, let userID = Auth.auth().currentUser?.uid else { return }
+    patientViewDidOpen()
+    Task { await flushResponses() }
     do {
       await claimAlarmInteractionFromActivation(events: events)
       try await directory.updateTimeZone(
@@ -312,48 +362,74 @@ final class AppViewModel: ObservableObject {
   }
 
   @discardableResult
-  func respond(_ response: DoseResponse, to event: MedicationEvent) async -> Bool {
-    guard let coordinator else { return false }
-    guard DoseWindow.isActive(event, among: events, at: timeline.now) else {
-      actionNotice = "A later dose has replaced this reminder. Its history has not been changed."
-      activeReminder = nil
-      return false
-    }
-    isWorking = true
-    activeReminder = nil
-    defer { isWorking = false }
+  func respond(_ response: DoseResponse, to event: MedicationEvent,
+               at date: Date? = nil, commandID: String? = nil) async -> Bool {
+    let tap = date ?? timeline.now
+    guard let patientID = Auth.auth().currentUser?.uid, let plan = currentPlan else { return false }
+    if let commandID, responseOutbox.responses.contains(where: { $0.id == commandID }) { return true }
+    guard let current = events.first(where: { $0.id == event.id }), current.status != .completed,
+      current.hasSameResponseVersion(as: event),
+      DoseWindow.isActive(event, among: events, at: timeline.now),
+      (response == .yesIDid
+        ? AlertTiming.canComplete(event, among: events, at: tap, snoozeInterval: Double(snoozeMinutes * 60))
+        : event.scheduledTime <= tap && AlertTiming.reminder(for: event, snoozeInterval: Double(snoozeMinutes * 60)) <= tap)
+    else { activeReminder = nil; return false }
+    let recorded = LocalDoseResponse(id: commandID ?? UUID().uuidString, patientID: patientID,
+      administratorID: plan.id, event: event, response: response, respondedAt: tap,
+      snoozeInterval: Double(snoozeMinutes * 60))
+    LocalAlertJournal.record("response_tapped", eventID: event.id,
+      details: ["action": response.rawValue, "tappedAt": String(tap.timeIntervalSince1970)])
     do {
-      let updated = try await coordinator.respond(response, to: event)
-      if let index = events.firstIndex(where: { $0.id == updated.id }) {
-        events[index] = updated
-      }
-      if response == .yesIWill {
-        do {
-          // The coordinator has registered the replacement notification queue.
-          // Reconcile immediately so the patient sees confirmation even when
-          // the Firestore listener delivered the snooze while `isWorking` was
-          // suppressing its normal reconciliation pass.
-          try await reconcileNotifications()
-        } catch {
-          notificationReadiness = .failed
-          actionNotice = "Response recorded, but iOS could not confirm the repeat reminder. Your administrator has been alerted."
-          await reportIncident(
-            code: "repeat_notification_reconciliation_failed",
-            message: "The patient response was recorded, but the iPhone could not confirm its repeat medication alarm: \(error.localizedDescription)",
-            severity: "critical",
-            context: ["error": error.localizedDescription]
-          )
-          return false
-        }
-        actionNotice = "Okay. We will remind you again in \(snoozeMinutes) minutes."
-      } else {
+      try responseOutbox.append(recorded)
+      if let index = events.firstIndex(where: { $0.id == event.id }) { events[index] = recorded.updatedEvent }
+      activeReminder = nil
+      LocalAlertJournal.record("response_view_state_cleared", eventID: event.id)
+      // Network synchronization runs independently; keep the OS response task
+      // alive only for the local queue update, never a server round trip.
+      Task { await flushResponses() }
+      do {
         try await reconcileNotifications()
-        actionNotice = "Dose complete. Further reminders are cancelled."
+        LocalAlertJournal.record("response_locally_reconciled", eventID: event.id)
+      }
+      catch {
+        await reportIncident(code: "response_local_scheduling_failed",
+          message: "A saved patient response could not update local notifications.", severity: "critical",
+          context: ["error": error.localizedDescription])
       }
       return true
     } catch {
-      actionNotice = "Could not record that response: \(error.localizedDescription)"
+      LocalAlertJournal.record("response_save_failed", eventID: event.id, details: ["error": error.localizedDescription])
+      await reportIncident(code: "response_local_save_failed", message: "The iPhone could not save a patient response.",
+        severity: "critical", context: ["error": error.localizedDescription])
       return false
+    }
+  }
+
+  private func flushResponses() async {
+    guard !flushingResponses, let patientID = Auth.auth().currentUser?.uid,
+      let administratorID = currentPlan?.id else { return }
+    flushingResponses = true
+    defer { flushingResponses = false }
+    let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Synchronize medication response")
+    defer { if backgroundTask != .invalid { UIApplication.shared.endBackgroundTask(backgroundTask) } }
+    responseOutbox.reload()
+    let repository = FirebaseFollowedPlanRepository(administratorID: administratorID)
+    for response in responseOutbox.responses where response.patientID == patientID && response.administratorID == administratorID {
+      do {
+        _ = try await repository.respond(response.response, to: response.event, at: response.respondedAt)
+        try responseOutbox.remove(response.id)
+        LocalAlertJournal.record("response_synchronized", eventID: response.event.id, details: ["commandID": response.id])
+      } catch is DoseMutationError {
+        // A definitive conflicting/newer server version must not revive old
+        // notifications. Keep its failure in the audit trail and report it.
+        try? responseOutbox.remove(response.id)
+        await reportIncident(code: "response_conflict", message: "A saved patient response conflicted with a newer response.",
+          severity: "critical", context: ["eventID": response.event.id])
+      } catch {
+        LocalAlertJournal.record("response_sync_deferred", eventID: response.event.id,
+          details: ["error": error.localizedDescription])
+        return
+      }
     }
   }
 
@@ -385,6 +461,15 @@ final class AppViewModel: ObservableObject {
       state = .signedOut
       return
     }
+    if let cached = try? DurableAlertStorage.load(PatientAlertCache.self, name: "phone-plan.json"),
+      cached.patientID == user.uid {
+      protectionStart = cached.protectionStart
+      try? await connect(plan: cached.plan)
+      eventsReceived = true
+      events = responseOutbox.applying(to: cached.events, patientID: user.uid, administratorID: cached.plan.id)
+      consumePendingNotificationInteractionIfPossible()
+      Task { await flushResponses() }
+    }
     do {
       let destination = try await prepareAuthentication(
         userID: user.uid,
@@ -393,7 +478,14 @@ final class AppViewModel: ObservableObject {
       )
       try await apply(destination)
     } catch {
-      state = .failed(error.localizedDescription)
+      if currentPlan != nil && eventsReceived {
+        // A network failure must not replace a usable local alert screen with
+        // technical setup/error UI or discard its queued patient responses.
+        LocalAlertJournal.record("cached_plan_refresh_deferred", details: ["error": error.localizedDescription])
+        await scheduleUnfinishedEventsIfReady()
+      } else {
+        state = .failed(error.localizedDescription)
+      }
     }
   }
 
@@ -464,6 +556,12 @@ final class AppViewModel: ObservableObject {
   ) async throws {
     disconnectListeners()
     currentPlan = plan
+    if protectionStart == nil {
+      // A first enrollment starts prospectively. An upgrade with already
+      // registered reminders must preserve its current alert instead.
+      let registered = UserDefaults.standard.dictionary(forKey: "medinag.actionable.registered-versions") ?? [:]
+      protectionStart = registered.isEmpty ? timeline.now : .distantPast
+    }
     confirmedAccessAdministratorID = nil
     let repository = FirebaseFollowedPlanRepository(administratorID: plan.id)
     coordinator = DoseCoordinator(
@@ -510,12 +608,31 @@ final class AppViewModel: ObservableObject {
         switch result {
         case .success(let events):
           self?.eventsReceived = true
-          self?.events = events
+          if let self, let patientID = Auth.auth().currentUser?.uid {
+            let eligible = events.filter { $0.scheduledTime >= (protectionStart ?? .distantPast) }
+            let prepared = AlertTiming.applyingPolicy(to: eligible, previous: self.events,
+              at: timeline.now, snoozeInterval: Double(snoozeMinutes * 60), repeatInterval: Double(repeatMinutes * 60))
+            self.events = responseOutbox.applying(to: prepared, patientID: patientID, administratorID: plan.id)
+            try? DurableAlertStorage.save(PatientAlertCache(patientID: patientID,
+              plan: currentPlan ?? plan, events: self.events, protectionStart: protectionStart), name: "phone-plan.json")
+            Task { await self.flushResponses() }
+          }
           await self?.claimAlarmInteractionFromActivation(events: events)
           self?.consumePendingNotificationInteractionIfPossible()
           await self?.scheduleUnfinishedEventsIfReady()
         case .failure(let error): self?.actionNotice = error.localizedDescription
         }
+      }
+    })
+    listeners.append(directory.observeReminderSettings(administratorID: plan.id) { [weak self] snooze, repeatMinutes in
+      Task { @MainActor [weak self] in
+        self?.currentPlan?.repeatIntervalMinutes = repeatMinutes
+        self?.currentPlan?.snoozeIntervalMinutes = snooze
+        if let self {
+          events = AlertTiming.applyingPolicy(to: events, previous: events, at: timeline.now,
+            snoozeInterval: Double(snooze * 60), repeatInterval: Double(repeatMinutes * 60))
+        }
+        await self?.scheduleUnfinishedEventsIfReady()
       }
     })
     if AppDelegate.reminderRefreshRegistrationSucceeded == false {
@@ -633,7 +750,8 @@ final class AppViewModel: ObservableObject {
         patientID: patientID,
         timeZone: patientTimeZone.identifier,
         snoozeIntervalMinutes: capturedSnoozeMinutes,
-        maximumReminderCount: capturedMaximumReminderCount
+        maximumReminderCount: capturedMaximumReminderCount,
+        repeatIntervalMinutes: repeatMinutes
       )
     }
     activeReconciliation = (
@@ -723,6 +841,16 @@ final class AppViewModel: ObservableObject {
   private func handleNotificationInteraction(_ interaction: NotificationInteraction) {
     switch interaction.kind {
     case .opened:
+      guard let event = events.first(where: { $0.id == interaction.eventID }) else {
+        if !eventsReceived { pendingNotificationInteraction = interaction }
+        return
+      }
+      guard DoseWindow.isActive(event, among: events, at: timeline.now),
+        AlertTiming.reminder(for: event, snoozeInterval: Double(snoozeMinutes * 60)) <= timeline.now
+      else {
+        LocalAlertJournal.record("obsolete_notification_opened", eventID: event.id)
+        return
+      }
       timeline.didReceiveNotification(at: interaction.reminderTime)
       activeReminder = ReminderPresentation(
         eventID: interaction.eventID,
@@ -760,7 +888,7 @@ final class AppViewModel: ObservableObject {
   }
 
   private func watchSnapshot() -> CompanionSnapshot {
-    let connected = state == .ready && currentPlan != nil
+    let connected = (state == .ready || state == .connectingSchedule) && currentPlan != nil
     // Bound the WatchConnectivity payload without letting old completion
     // history crowd out the upcoming doses.
     let latestDue = events.filter { $0.scheduledTime <= timeline.now }.map(\.scheduledTime).max()
@@ -785,7 +913,8 @@ final class AppViewModel: ObservableObject {
                 ? "Allow notifications on iPhone" : "Independent notifications on both devices"))
         : "Sign in and choose your schedule in MediNag on iPhone.",
       logicalDate: timeline.now, realDate: Date(), clockScale: timeline.realSecondsPerLogicalSecond,
-      scheduleCleared: state == .signedOut || state == .choosingSchedule
+      scheduleCleared: state == .signedOut || state == .choosingSchedule,
+      repeatMinutes: repeatMinutes
     )
   }
 
@@ -836,7 +965,7 @@ final class AppViewModel: ObservableObject {
       return CompanionReply(snapshot: watchSnapshot(), accepted: false,
                             message: "Dose or connection changed. Refresh and check your schedule.")
     }
-    let accepted = await respond(response, to: event)
+    let accepted = await respond(response, to: event, at: command.respondedAt, commandID: command.identifier)
     if !accepted {
       await reportIncident(code: "watch_response_failed",
                            message: "The paired Apple Watch could not confirm a medication response.",

@@ -16,11 +16,12 @@ if [[ "${MEDINAG_E2E_WEB_SERVER_READY:-false}" != "true" ]]; then
 fi
 
 export MEDINAG_E2E_ALARM_MONITOR_PORT="${MEDINAG_E2E_ALARM_MONITOR_PORT:-18181}"
-node scripts/monitor-ios-alarms.mjs &
-alarm_monitor_pid=$!
+alarm_monitor_pid=""
 cleanup_alarm_monitor() {
-  kill "$alarm_monitor_pid" 2>/dev/null || true
-  wait "$alarm_monitor_pid" 2>/dev/null || true
+  if [[ -n "$alarm_monitor_pid" ]]; then
+    kill "$alarm_monitor_pid" 2>/dev/null || true
+    wait "$alarm_monitor_pid" 2>/dev/null || true
+  fi
 }
 trap cleanup_alarm_monitor EXIT INT TERM
 
@@ -36,6 +37,11 @@ elif [[ "$story" == "notification-failure" ]]; then
   recovery_spec="tests/e2e/005-notification-failure/recovery.spec.ts"
   native_test="MediNagUITests/NotificationFailureUITests/testDeniedPermissionAlertsAdministrator"
   result_name="NotificationFailure"
+elif [[ "$story" == "local-alerts" ]]; then
+  setup_spec="tests/e2e/007-local-alert-actions/setup.spec.ts"
+  completion_spec="tests/e2e/007-local-alert-actions/completion.spec.ts"
+  native_test="MediNagUITests/RespondToDoseUITests/testConnectedInAppDoseLoop"
+  result_name="LocalAlertActions"
 else
   setup_spec="tests/e2e/004-ios-respond-to-dose/web.spec.ts"
   completion_spec="tests/e2e/004-ios-respond-to-dose/completion.spec.ts"
@@ -134,9 +140,14 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_FIRESTORE_PORT="$MEDINAG_E2E_FIRESTORE_PORT" \
   MEDINAG_E2E_ALARM_MONITOR_PORT="$MEDINAG_E2E_ALARM_MONITOR_PORT"
 
-if [[ "$story" == "dose-response" ]]; then
+if [[ "$story" == "dose-response" || "$story" == "local-alerts" ]]; then
   run_native_test MediNagTests "$derived_data_directory/NativeUnitChecks.xcresult"
 fi
+
+# Observe only the connected UI run. Unit tests exercise the real durable
+# outbox too, and must never satisfy a patient-action evidence condition.
+node scripts/monitor-ios-alarms.mjs &
+alarm_monitor_pid=$!
 
 result_bundle="$derived_data_directory/$result_name.xcresult"
 if [[ -d "$result_bundle" ]]; then

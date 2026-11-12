@@ -115,6 +115,11 @@ if [[ "$(jq '.data | length' <<< "$app_response")" != "1" ]]; then
 fi
 app_id="$(jq -r '.data[0].id' <<< "$app_response")"
 
+if [[ "${1:-}" == "--preflight" ]]; then
+  echo "TestFlight preflight passed: signing configuration, Firebase configuration, and Apple API access."
+  exit 0
+fi
+
 group_response="$(asc_request GET "/v1/betaGroups?filter%5Bapp%5D=$app_id&filter%5BisInternalGroup%5D=true&limit=200")"
 group_id="$(jq -r --arg name "$testflight_group" '.data[] | select(.attributes.name == $name) | .id' <<< "$group_response" | head -n 1)"
 if [[ -z "$group_id" ]]; then

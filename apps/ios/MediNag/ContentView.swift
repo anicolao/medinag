@@ -145,71 +145,21 @@ private struct ReminderAlertView: View {
   @ObservedObject var viewModel: AppViewModel
 
   var body: some View {
-    VStack(spacing: 24) {
-      Spacer()
-
-      Image(systemName: "bell.and.waves.left.and.right.fill")
-        .font(.system(size: 58))
-        .foregroundStyle(MediNagColor.warning)
-
-      VStack(spacing: 8) {
-        Text(reminder.reminderNumber == 1 ? "FIRST REMINDER" : "REMINDER 2")
-          .font(.caption.bold())
-          .tracking(1.5)
-          .foregroundStyle(MediNagColor.teal)
-          .accessibilityIdentifier("reminder-sequence")
-        Text(
-          MediNagDateFormatting.reminderTime(
-            reminder.scheduledTime,
-            timeZoneIdentifier: reminder.timeZoneIdentifier
-          )
-        )
-          .font(.system(size: 52, weight: .bold, design: .rounded))
-          .foregroundStyle(MediNagColor.ink)
-          .accessibilityIdentifier("reminder-time")
-        Text(reminder.medicationName)
-          .font(.title2.bold())
-          .multilineTextAlignment(.center)
-          .foregroundStyle(MediNagColor.ink)
-          .accessibilityIdentifier("reminder-medication")
+    VStack(spacing: 16) {
+      Button("Yes, I did") {
+        Task { await viewModel.respond(.yesIDid, toEventID: reminder.eventID) }
       }
-
-      Text(
-        reminder.reminderNumber == 1
-          ? "It is time for this scheduled dose."
-          : "The \(viewModel.snoozeMinutes)-minute snooze has ended. Did you take this dose?"
-      )
-      .font(.body)
-      .multilineTextAlignment(.center)
-      .foregroundStyle(MediNagColor.muted)
-
-      VStack(spacing: 12) {
-        Button("Yes, I did") {
-          Task { await viewModel.respond(.yesIDid, toEventID: reminder.eventID) }
-        }
-        .buttonStyle(ResponseButtonStyle())
-        .disabled(viewModel.isWorking)
-        .accessibilityIdentifier("reminder-yes-i-did")
-
-        Button("Yes, I will") {
-          Task { await viewModel.respond(.yesIWill, toEventID: reminder.eventID) }
-        }
-        .buttonStyle(ResponseButtonStyle())
-        .disabled(viewModel.isWorking)
-        .accessibilityIdentifier("reminder-yes-i-will")
+      .buttonStyle(ResponseButtonStyle())
+      .accessibilityIdentifier("reminder-yes-i-did")
+      Button("Yes, I will") {
+        Task { await viewModel.respond(.yesIWill, toEventID: reminder.eventID) }
       }
-
-      Text("Neither response is selected by default.")
-        .font(.caption)
-        .foregroundStyle(MediNagColor.muted)
-        .accessibilityIdentifier("notification-readiness-detail")
-
-      Spacer()
+      .buttonStyle(ResponseButtonStyle())
+      .accessibilityIdentifier("reminder-yes-i-will")
     }
     .padding(28)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(MediNagColor.background)
-    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("dose-reminder-alert")
   }
 }
@@ -401,85 +351,31 @@ private extension PublishedPlan {
 
 private struct TodayView: View {
   @ObservedObject var viewModel: AppViewModel
-  @State private var confirmingScheduleChange = false
 
   var body: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 22) {
-          HStack(alignment: .top) {
-            BrandHeader(
-              eyebrow: "\(viewModel.currentPlan?.administratorName.uppercased() ?? "YOUR")'S SCHEDULE",
-              title: "Today",
-              detail: "One clear place for every medication response."
-            )
-            Spacer()
-            VStack(alignment: .trailing, spacing: 12) {
-              Button("Change") { confirmingScheduleChange = true }
-                .accessibilityIdentifier("change-schedule")
-              Button("Sign out") { viewModel.signOut() }
-                .accessibilityIdentifier("sign-out")
-            }
-            .font(.caption.weight(.semibold))
+    TimelineView(.periodic(from: .now, by: 1)) { context in
+      VStack(spacing: 20) {
+        if let next = viewModel.nextEvent {
+          Text(next.medicationName).font(.title2)
+            .accessibilityIdentifier("next-dose-name")
+          Text(next.scheduledTime, format: .dateTime.month().day().hour().minute())
+            .font(.title.monospacedDigit())
+            .accessibilityIdentifier("next-dose-time")
+          if viewModel.canCompleteEarly(next) {
+            Button("Yes, I did") { Task { await viewModel.respond(.yesIDid, to: next) } }
+              .buttonStyle(ResponseButtonStyle())
+              .accessibilityIdentifier("next-dose-yes-i-did")
           }
-
-          NotificationReadinessCard(viewModel: viewModel)
-          ReminderDiagnosticsCard(diagnostics: viewModel.reminderDiagnostics)
-
-          TimelineView(.periodic(from: .now, by: 1)) { _ in
-            Group {
-              if let next = viewModel.nextEvent {
-                NextDoseCard(event: next,
-                  administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator")
-              } else if let schedule = viewModel.schedules.first {
-                ScheduleWaitingCard(schedule: schedule,
-                  administratorName: viewModel.currentPlan?.administratorName ?? "Your administrator")
-              } else {
-                EmptyPlanCard()
-              }
-            }
-            .task(id: viewModel.nextEvent?.id) { viewModel.retireSupersededReminder() }
-          }
-
-          if !viewModel.events.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-              Text("Today's activity")
-                .font(.title3.bold())
-                .foregroundStyle(MediNagColor.ink)
-              ForEach(viewModel.events) { event in
-                EventRow(event: event)
-              }
-            }
-          }
-
-          if !viewModel.actionNotice.isEmpty {
-            Text(viewModel.actionNotice)
-              .font(.subheadline.weight(.semibold))
-              .foregroundStyle(MediNagColor.teal)
-              .padding(16)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .background(MediNagColor.teal.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
-              .accessibilityIdentifier("action-notice")
-          }
+        } else {
+          Text("No upcoming dose").accessibilityIdentifier("no-upcoming-dose")
         }
-        .padding(22)
       }
+      .padding(28)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(MediNagColor.background)
-      .navigationBarHidden(true)
+      .task(id: context.date) { viewModel.patientViewDidOpen() }
     }
-    .accessibilityIdentifier("today-screen")
-    .confirmationDialog(
-      "Change medication schedule?",
-      isPresented: $confirmingScheduleChange,
-      titleVisibility: .visible
-    ) {
-      Button("Stop following and choose another", role: .destructive) {
-        Task { await viewModel.changeSchedule() }
-      }
-      Button("Cancel", role: .cancel) {}
-    } message: {
-      Text("Future reminders from this schedule will be cancelled.")
-    }
+    .accessibilityIdentifier("next-dose-screen")
   }
 }
 

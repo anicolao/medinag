@@ -21,8 +21,10 @@ final class ReminderRefreshCoordinator: @unchecked Sendable {
     patientID: String,
     timeZone: String,
     snoozeIntervalMinutes: Int,
-    maximumReminderCount: Int
+    maximumReminderCount: Int,
+    repeatIntervalMinutes: Int = 3
   ) async throws -> NotificationReconciliation {
+    await notifications.setRepeatInterval(Double(repeatIntervalMinutes * 60))
     let result = try await notifications.reconcile(
       events: events,
       snoozeInterval: TimeInterval(snoozeIntervalMinutes * 60),
@@ -89,9 +91,20 @@ enum BackgroundReminderRefresh {
         )
         return
       }
-      let events = try await FirebaseFollowedPlanRepository(
+      let fetched = try await FirebaseFollowedPlanRepository(
         administratorID: context.administratorID
       ).fetchEvents()
+      // Background refresh must not reinstall reminders for an offline tap.
+      let events = await MainActor.run {
+        let cache = try? DurableAlertStorage.load(PatientAlertCache.self, name: "phone-plan.json")
+        let eligible = fetched.filter { event in
+          guard let cache, cache.patientID == user.uid, cache.plan.id == context.administratorID,
+            let start = cache.protectionStart else { return true }
+          return event.scheduledTime >= start
+        }
+        return LocalResponseOutbox().applying(to: eligible, patientID: user.uid,
+          administratorID: context.administratorID)
+      }
       try Task.checkCancellation()
       _ = try await ReminderRefreshCoordinator(
         notifications: notifications,
@@ -102,7 +115,8 @@ enum BackgroundReminderRefresh {
         patientID: context.patientID,
         timeZone: timeZone,
         snoozeIntervalMinutes: context.snoozeIntervalMinutes,
-        maximumReminderCount: context.maximumReminderCount
+        maximumReminderCount: context.maximumReminderCount,
+        repeatIntervalMinutes: context.repeatIntervalMinutes
       )
     } catch {
       await health.reportIncident(
