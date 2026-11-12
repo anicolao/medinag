@@ -42,6 +42,11 @@ elif [[ "$story" == "local-alerts" ]]; then
   completion_spec="tests/e2e/007-local-alert-actions/completion.spec.ts"
   native_test="MediNagUITests/RespondToDoseUITests/testConnectedInAppDoseLoop"
   result_name="LocalAlertActions"
+elif [[ "$story" == "local-notification-actions" ]]; then
+  setup_spec="tests/e2e/007-local-alert-actions/setup.spec.ts"
+  completion_spec="tests/e2e/007-local-alert-actions/completion.spec.ts"
+  native_test="MediNagUITests/RespondToDoseUITests/testConnectedSystemNotificationDoseLoop"
+  result_name="BackgroundNotificationActions"
 else
   setup_spec="tests/e2e/004-ios-respond-to-dose/web.spec.ts"
   completion_spec="tests/e2e/004-ios-respond-to-dose/completion.spec.ts"
@@ -140,7 +145,7 @@ run_xcodebuild -quiet build-for-testing \
   MEDINAG_E2E_FIRESTORE_PORT="$MEDINAG_E2E_FIRESTORE_PORT" \
   MEDINAG_E2E_ALARM_MONITOR_PORT="$MEDINAG_E2E_ALARM_MONITOR_PORT"
 
-if [[ "$story" == "dose-response" || "$story" == "local-alerts" ]]; then
+if [[ "$story" == "dose-response" || "$story" == "local-alerts" || "$story" == "local-notification-actions" ]]; then
   run_native_test MediNagTests "$derived_data_directory/NativeUnitChecks.xcresult"
 fi
 

@@ -29,6 +29,7 @@ actor DeviceReminderNotifications {
   static let shared = DeviceReminderNotifications()
   private let center = UNUserNotificationCenter.current()
   private var revision = 0
+  private let responseProgress = NotificationResponseProgress()
 
   struct Result: Sendable {
     let count: Int
@@ -37,12 +38,15 @@ actor DeviceReminderNotifications {
     let registeredEventIDs: Set<String>
   }
 
-  func reconcile(events: [MedicationEvent], snoozeInterval: TimeInterval,
+  func reconcile(events incomingEvents: [MedicationEvent], snoozeInterval: TimeInterval,
                  repeatInterval: TimeInterval = ReminderPlan.nagInterval,
                  logicalNow: Date, realNow: Date = Date(), clockScale: Double = 1,
                  snapshot: CompanionSnapshot? = nil) async throws -> Result {
     revision += 1
     let version = revision
+    // Final serialized boundary: even an older refresh that starts after a tap
+    // cannot undo cancellation. Persist before touching OS requests.
+    let events = try responseProgress.protecting(incomingEvents)
     let plan = ReminderPlan(events: events, now: logicalNow, snoozeInterval: snoozeInterval,
       repeatInterval: repeatInterval)
     LocalAlertJournal.record("queue_plan", deadline: plan.coveredThrough,
@@ -61,9 +65,14 @@ actor DeviceReminderNotifications {
     }
     let pending = await center.pendingNotificationRequests()
     guard revision == version else { throw CancellationError() }
-    center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter {
+    let obsolete = pending.map(\.identifier).filter {
       $0.hasPrefix("medinag.dose.") && !desired.contains($0)
-    })
+    }
+    center.removePendingNotificationRequests(withIdentifiers: obsolete)
+    for identifier in obsolete {
+      LocalAlertJournal.record("local_cancellation_requested", requestID: identifier,
+        details: ["reason": "queue_reconciliation"])
+    }
     let delivered = await center.deliveredNotifications()
     for item in delivered {
       LocalAlertJournal.record("delivered_item_observed", requestID: item.request.identifier,
@@ -126,6 +135,12 @@ actor DeviceReminderNotifications {
     }
     let confirmed = await center.pendingNotificationRequests()
     guard revision == version else { throw CancellationError() }
+    let obsoleteRemaining = confirmed.filter { $0.identifier.hasPrefix("medinag.dose.") && !desired.contains($0.identifier) }
+    LocalAlertJournal.record("obsolete_inventory_observed", details: ["actual": String(obsoleteRemaining.count)])
+    guard obsoleteRemaining.isEmpty else {
+      throw NSError(domain: "MediNag.NotificationQueue", code: 3,
+        userInfo: [NSLocalizedDescriptionKey: "The OS still lists \(obsoleteRemaining.count) cancelled medication requests."])
+    }
     // Already-due requests can legitimately have left the pending inventory
     // while the async registration calls were in progress. Do not call them
     // pending or claim they were delivered; verify FUTURE requests only.

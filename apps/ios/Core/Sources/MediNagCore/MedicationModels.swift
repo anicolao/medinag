@@ -79,12 +79,33 @@ public enum DoseResponse: String, Codable, Sendable {
 }
 
 public extension MedicationEvent {
+  func hasSameOccurrence(as other: MedicationEvent) -> Bool {
+    id == other.id && scheduleID == other.scheduleID
+      && medicationName == other.medicationName && scheduledTime == other.scheduledTime
+      && timeZone == other.timeZone
+  }
+
+  /// A later transport timestamp is not evidence of a later patient response.
+  /// Preserve terminal completion and monotonic snooze progress for the same
+  /// occurrence, including after an acknowledgement removed an outbox entry.
+  func preservingResponseProgress(from previous: MedicationEvent) -> MedicationEvent {
+    guard hasSameOccurrence(as: previous), status != .completed,
+      previous.status == .completed || previous.snoozeCount > snoozeCount
+        || (previous.status == .snoozed && status == .pending && previous.snoozeCount == snoozeCount)
+    else { return self }
+    var merged = self
+    merged.status = previous.status
+    merged.snoozeCount = previous.snoozeCount
+    merged.lastSnoozedAt = previous.lastSnoozedAt
+    merged.completedAt = previous.completedAt
+    merged.snoozedUntil = previous.snoozedUntil
+    return merged
+  }
+
   /// Status plus the monotonic snooze count identify a patient-response
   /// version. Do not compare fractional Date values after JSON/Firestore
   /// round-trips: their sub-microsecond representations can differ.
   func hasSameResponseVersion(as other: MedicationEvent) -> Bool {
-    id == other.id && scheduleID == other.scheduleID
-      && medicationName == other.medicationName && scheduledTime == other.scheduledTime
-      && timeZone == other.timeZone && status == other.status && snoozeCount == other.snoozeCount
+    hasSameOccurrence(as: other) && status == other.status && snoozeCount == other.snoozeCount
   }
 }

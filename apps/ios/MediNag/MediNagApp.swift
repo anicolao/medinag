@@ -4,8 +4,9 @@ import UIKit
 @main
 struct MediNagApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-  @StateObject private var viewModel = AppViewModel.make()
   @Environment(\.scenePhase) private var scenePhase
+
+  private var viewModel: AppViewModel { appDelegate.viewModel }
 
   init() {
     #if E2E

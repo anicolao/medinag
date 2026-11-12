@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('The real in-app completion returns to the administrator', async ({ page }, info) => {
+test('The real patient completion returns to the administrator', async ({ page }, info) => {
   const name = process.env.MEDINAG_E2E_MEDICATION_NAME;
   if (!name) throw new Error('Connected environment is required.');
   await page.goto('/#/today', { waitUntil: 'domcontentloaded' });

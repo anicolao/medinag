@@ -32,7 +32,7 @@ enum PhoneNotificationResponse {
       #endif
       let tap = timeline.now
       guard let current = events.first(where: { $0.id == presented.id }),
-        current.hasSameResponseVersion(as: presented),
+        (current.hasSameResponseVersion(as: presented) || response == .yesIDid && current.hasSameOccurrence(as: presented)),
         AlertTiming.canComplete(current, among: events, at: tap,
           snoozeInterval: Double(cache.plan.snoozeIntervalMinutes * 60)),
         response == .yesIDid || current.scheduledTime <= tap else {
@@ -52,6 +52,8 @@ enum PhoneNotificationResponse {
       await scheduler.setRepeatInterval(Double(cache.plan.repeatIntervalMinutes * 60))
       _ = try await scheduler.reconcile(events: updated,
         snoozeInterval: Double(cache.plan.snoozeIntervalMinutes * 60), maximumReminderCount: Int.max)
+      LocalAlertJournal.record("response_locally_reconciled", eventID: current.id,
+        details: ["source": "notification_action"])
       return true
     } catch {
       LocalAlertJournal.record("background_response_failed", details: ["error": error.localizedDescription])

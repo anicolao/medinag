@@ -6,6 +6,12 @@ import MediNagCore
 @preconcurrency import UserNotifications
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+  // One owner shared by background notification/WCSession launches and the UI.
+  // Construct only after Firebase configuration, but before launch completes.
+  lazy var viewModel: AppViewModel = {
+    _ = FirebaseBootstrap.configure()
+    return AppViewModel.make()
+  }()
   static let reminderRefreshIdentifier = "org.boardgamescafe.medinag.reminder-refresh"
   static let reminderMaintenanceIdentifier = "org.boardgamescafe.medinag.reminder-maintenance"
   static let reminderRefreshQueue = DispatchQueue.main
@@ -19,9 +25,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    FirebaseBootstrap.configure()
+    let configured = FirebaseBootstrap.configure()
     LocalNotificationScheduler.registerCategories()
     UNUserNotificationCenter.current().delegate = self
+    if configured {
+      _ = viewModel
+      LocalAlertJournal.record("phone_response_handler_ready")
+    }
     let registered = BGTaskScheduler.shared.register(
       forTaskWithIdentifier: Self.reminderRefreshIdentifier,
       using: Self.reminderRefreshQueue
@@ -147,6 +157,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       defer { completion.finish() }
       LocalAlertJournal.record("notification_action_callback", requestID: identifier,
         details: ["action": actionIdentifier])
+      await viewModel.waitForLocalBoot()
       if await PhoneNotificationResponse.handle(response) { return }
       await BackgroundReminderRefresh.refreshCachedQueue(reason: "notification_open_or_dismiss")
       let newlyClaimed = NotificationDeliveryLedger.claim(identifier: identifier)

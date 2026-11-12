@@ -19,8 +19,8 @@ public enum AlertTiming {
   public static func applyingPolicy(to events: [MedicationEvent], previous: [MedicationEvent],
     at now: Date, snoozeInterval: TimeInterval, repeatInterval: TimeInterval) -> [MedicationEvent] {
     events.map { raw in
-      var event = raw
-      let prior = previous.first { $0.id == event.id }
+      let prior = previous.first { $0.id == raw.id }
+      var event = prior.map { raw.preservingResponseProgress(from: $0) } ?? raw
       if let prior, event.scheduledTime <= now {
         event.snoozeIntervalSeconds = prior.snoozeIntervalSeconds ?? snoozeInterval
         event.repeatIntervalSeconds = prior.repeatIntervalSeconds ?? repeatInterval

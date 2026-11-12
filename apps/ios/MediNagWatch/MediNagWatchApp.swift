@@ -1,10 +1,24 @@
 import MediNagCore
 import SwiftUI
+import WatchKit
+
+/// Notification-only launches need their delegate and durable response handler
+/// before a SwiftUI scene exists, not when the patient opens the Watch UI.
+@MainActor
+final class WatchAppDelegate: NSObject, WKApplicationDelegate {
+  let connection = CompanionSession()
+
+  func applicationDidFinishLaunching() {
+    LocalAlertJournal.record("watch_response_handler_ready")
+  }
+}
 
 @main
 struct MediNagWatchApp: App {
-  @StateObject private var connection = CompanionSession()
+  @WKApplicationDelegateAdaptor(WatchAppDelegate.self) private var appDelegate
   @Environment(\.scenePhase) private var scenePhase
+
+  private var connection: CompanionSession { appDelegate.connection }
 
   var body: some Scene {
     WindowGroup {

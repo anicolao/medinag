@@ -71,6 +71,28 @@ enum DurableAlertStorage {
   }
 }
 
+/// Independent of the delivery outbox: an acknowledged tap must still protect
+/// the OS queue from a refresh captured before that tap, including after restart.
+/// Access is serialized by DeviceReminderNotifications (or by an isolated test).
+struct NotificationResponseProgress {
+  let storageName: String
+  init(storageName: String = "notification-response-progress.json") { self.storageName = storageName }
+
+  func protecting(_ incoming: [MedicationEvent]) throws -> [MedicationEvent] {
+    let saved = try DurableAlertStorage.load([MedicationEvent].self, name: storageName) ?? []
+    let protected = incoming.map { event in
+      saved.first(where: { $0.hasSameOccurrence(as: event) }).map { event.preservingResponseProgress(from: $0) } ?? event
+    }
+    var records = Dictionary(uniqueKeysWithValues: saved.map { ($0.id, $0) })
+    for event in protected where event.status != .pending { records[event.id] = event }
+    let retained = Array(records.values.sorted {
+      $0.scheduledTime == $1.scheduledTime ? $0.id < $1.id : $0.scheduledTime > $1.scheduledTime
+    }.prefix(512))
+    if retained != saved { try DurableAlertStorage.save(retained, name: storageName) }
+    return protected
+  }
+}
+
 @MainActor
 final class LocalResponseOutbox {
   private(set) var responses: [LocalDoseResponse] = []

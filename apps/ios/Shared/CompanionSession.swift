@@ -29,12 +29,13 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
       guard let snapshot, let command = pendingResponse, let event = command.event,
         let response = command.response, let tap = command.respondedAt,
         command.patientID == snapshot.patientID, command.administratorID == snapshot.administratorID,
-        let index = snapshot.events.firstIndex(where: { $0.hasSameResponseVersion(as: event) })
+        let index = snapshot.events.firstIndex(where: { $0.hasSameOccurrence(as: event) })
       else { return snapshot }
       var events = snapshot.events
-      events[index] = LocalDoseResponse(patientID: command.patientID ?? "",
+      let local = LocalDoseResponse(patientID: command.patientID ?? "",
         administratorID: command.administratorID ?? "", event: event, response: response,
         respondedAt: tap, snoozeInterval: Double(snapshot.snoozeMinutes * 60)).updatedEvent
+      events[index] = events[index].preservingResponseProgress(from: local)
       return snapshot.replacingEvents(events)
     #else
       return snapshot
@@ -45,6 +46,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     private var notificationWork: Task<Void, Never>?
     private var contentObservation: NSKeyValueObservation?
     private var backgroundWaiters: [CheckedContinuation<Void, Never>] = []
+    private var activationWaiters: [UUID: CompanionMessageReply] = [:]
     private var pendingResponse: CompanionCommand? {
       didSet {
         hasPendingResponse = pendingResponse != nil
@@ -134,8 +136,13 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   func respond(_ response: DoseResponse, to event: MedicationEvent) async {
-    guard let snapshot else { return }
+    guard let snapshot = presentationSnapshot else {
+      LocalAlertJournal.record("response_rejected", eventID: event.id, details: ["reason": "missing_snapshot"])
+      return
+    }
     guard snapshot.canRespond(to: event) else {
+      LocalAlertJournal.record("response_rejected", eventID: event.id,
+        details: ["reason": "not_actionable", "status": event.status.rawValue, "snoozeCount": String(event.snoozeCount)])
       notice = "This reminder has been replaced or is not ready for a response."
       return
     }
@@ -143,13 +150,14 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     #if os(watchOS)
       discardSupersededResponse()
       if let pending = pendingResponse {
-        guard pending.event?.id == event.id, pending.response == response else {
-          notice = "Your earlier response is still queued. Retry that choice or open MediNag on iPhone."
+        if pending.event?.hasSameResponseVersion(as: event) == true, pending.response == response {
+          queueResponse(pending)
+          await exchange(pending)
           return
         }
+        // A later real choice (especially completion after a snooze) replaces
+        // the local overlay. The earlier command is already OS-queued.
         queueResponse(pending)
-        await exchange(pending)
-        return
       }
       do { try DurableAlertStorage.save(command, name: "watch-response.json") }
       catch {
@@ -170,6 +178,7 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
       await reconcileWatchNotifications()
       // OS-managed background transfer complements interactive delivery. The
       // Firestore response-version transaction makes duplicate delivery safe.
+      await waitForActivationIfNeeded()
       queueResponse(command)
     #endif
     #if os(watchOS)
@@ -206,6 +215,9 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
           errorHandler: { @Sendable error in reply.finish(.failure(error)) })
       }
       let reply = try JSONDecoder().decode(CompanionReply.self, from: response)
+      LocalAlertJournal.record("phone_reply_received", eventID: command.event?.id,
+        details: ["commandID": command.identifier, "accepted": String(reply.accepted),
+          "retryable": String(reply.retryable == true), "message": reply.message])
       apply(reply.snapshot)
       #if os(watchOS)
         if command.response != nil {
@@ -239,10 +251,19 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
       if let error { notice = error.localizedDescription }
       if let value = latestSnapshot { publish(value) }
       #if os(watchOS)
+        let waiting = activationWaiters.values
+        activationWaiters.removeAll()
+        for waiter in waiting {
+          if let error { waiter.finish(.failure(error)) }
+          else { waiter.finish(.success(Data())) }
+        }
         completeDrainedTransfers()
+        // Queue durable responses before a refresh round trip can consume
+        // the short background slot granted for a notification action.
+        if let pendingResponse { queueResponse(pendingResponse) }
         if connected || WKApplication.shared().applicationState == .active {
           await refreshOnActivation()
-        } else if let pendingResponse { queueResponse(pendingResponse) }
+        }
       #endif
     }
   }
@@ -273,11 +294,13 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
     if snapshot?.patientID != value.patientID || snapshot?.administratorID != value.administratorID {
       notice = ""
     }
-    snapshot = value
+    let merged = value.preservingResponseProgress(from: snapshot)
+    snapshot = merged
     if value.ready, notice == "Waiting for schedule from iPhone." { notice = "" }
     #if os(watchOS)
-      UserDefaults.standard.set(try? JSONEncoder().encode(value), forKey: "medinag.watch.snapshot")
+      UserDefaults.standard.set(try? JSONEncoder().encode(merged), forKey: "medinag.watch.snapshot")
       discardSupersededResponse()
+      if let pendingResponse { queueResponse(pendingResponse) }
       notificationWork = Task {
         await reconcileWatchNotifications(requestPermission: WKApplication.shared().applicationState == .active)
       }
@@ -309,6 +332,24 @@ final class CompanionSession: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   #if os(watchOS)
+    private func waitForActivationIfNeeded() async {
+      guard let session, session.activationState != .activated else { return }
+      let id = UUID()
+      defer { activationWaiters.removeValue(forKey: id) }
+      do {
+        let _: Data = try await withCheckedThrowingContinuation { continuation in
+          let waiter = CompanionMessageReply(continuation)
+          activationWaiters[id] = waiter
+          // Product execution-budget timeout, not a test delay. Completion
+          // normally follows the actual WCSession activation callback.
+          waiter.armTimeout(after: 2)
+          if session.activationState == .notActivated { session.activate() }
+        }
+      } catch {
+        LocalAlertJournal.record("response_transfer_activation_deferred", details: ["error": error.localizedDescription])
+      }
+    }
+
     private static let maintenanceDateKey = "medinag.watch.requested-maintenance"
 
     func requestBackgroundMaintenance() {
@@ -501,16 +542,27 @@ extension CompanionSession: UNUserNotificationCenterDelegate {
     guard let choice: DoseResponse = action == MediNagNotification.yesIDid ? .yesIDid
       : action == MediNagNotification.yesIWill ? .yesIWill : nil,
       let data, let command = try? JSONDecoder().decode(CompanionCommand.self, from: data),
-      let event = command.event else { completion.finish(); return }
+      let event = command.event else {
+      if action == MediNagNotification.yesIDid || action == MediNagNotification.yesIWill {
+        LocalAlertJournal.record("response_rejected", requestID: response.notification.request.identifier,
+          details: ["reason": "missing_or_invalid_notification_payload"])
+      }
+      completion.finish(); return
+    }
     Task { @MainActor in
       defer { completion.finish() }
       guard let snapshot, command.patientID == snapshot.patientID,
         command.administratorID == snapshot.administratorID,
-        snapshot.events.contains(where: { $0.hasSameResponseVersion(as: event) }) else {
+        snapshot.events.contains(where: {
+          choice == .yesIDid ? $0.hasSameOccurrence(as: event) : $0.hasSameResponseVersion(as: event)
+        }) else {
         notice = "This dose changed. Check the current dose."
+        LocalAlertJournal.record("response_rejected", eventID: event.id,
+          details: ["reason": "notification_snapshot_mismatch"])
         return
       }
-      await respond(choice, to: event)
+      let current = presentationSnapshot?.events.first(where: { $0.hasSameOccurrence(as: event) }) ?? event
+      await respond(choice, to: current)
     }
   }
 }

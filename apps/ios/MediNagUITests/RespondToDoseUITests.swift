@@ -255,15 +255,12 @@ extension RespondToDoseUITests {
   }
 
   private func expandNotificationActions(_ notification: XCUIElement, in springboard: XCUIApplication) {
-    // A collapsed notification group is not an individual actionable card.
-    // Expand the real OS group, then long-press a real ListCell, not its title.
-    let showLess = springboard.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Show less")).firstMatch
-    if !showLess.exists {
-      notification.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-    }
-    let card = springboard.descendants(matching: .any).matching(NSPredicate(
-      format: "identifier == %@ AND label CONTAINS %@ AND NOT label CONTAINS %@",
-      "ListCell", "Medication reminder", "Grouped")).firstMatch
+    // Long-press the actual front platter button, not the ScrollView that
+    // contains a group. The OS exposes that same button for grouped and single
+    // notifications; this is a real user gesture, not simulated delivery.
+    let card = springboard.buttons.matching(NSPredicate(
+      format: "identifier == %@ AND label CONTAINS %@",
+      "ShortLook.Platter.Content.Seamless", "Medication reminder")).firstMatch
     XCTAssertTrue(card.waitForExistence(timeout: 2))
     card.press(forDuration: 0.6)
   }

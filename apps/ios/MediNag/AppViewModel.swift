@@ -71,6 +71,8 @@ final class AppViewModel: ObservableObject {
   private var listeners: [ListenerRegistration] = []
   private let companionSession = CompanionSession()
   private var initialization: Task<Void, Never>?
+  private var localBootFinished = false
+  private var localBootWaiters: [CheckedContinuation<Void, Never>] = []
   private var eventsReceived = false
   private var coordinator: DoseCoordinator?
   private var confirmedAccessAdministratorID: String?
@@ -123,7 +125,11 @@ final class AppViewModel: ObservableObject {
     NotificationCenter.default.addObserver(forName: .localDoseResponseSaved, object: nil, queue: .main) { [weak self] _ in
       Task { @MainActor [weak self] in
         guard let self, let patientID = Auth.auth().currentUser?.uid, let plan = currentPlan else { return }
-        events = responseOutbox.applying(to: events, patientID: patientID, administratorID: plan.id)
+        // The notification handler already saved its updated cache. It must
+        // still win if its outbox entry synchronized before this observer ran.
+        let cached = try? DurableAlertStorage.load(PatientAlertCache.self, name: "phone-plan.json")
+        let source = cached.flatMap { $0.patientID == patientID && $0.plan.id == plan.id ? $0.events : nil } ?? events
+        events = responseOutbox.applying(to: source, patientID: patientID, administratorID: plan.id)
         activeReminder = nil
         await flushResponses()
       }
@@ -398,6 +404,8 @@ final class AppViewModel: ObservableObject {
     do {
       try responseOutbox.append(recorded)
       if let index = events.firstIndex(where: { $0.id == event.id }) { events[index] = recorded.updatedEvent }
+      try DurableAlertStorage.save(PatientAlertCache(patientID: patientID, plan: plan,
+        events: events, protectionStart: protectionStart), name: "phone-plan.json")
       activeReminder = nil
       LocalAlertJournal.record("response_view_state_cleared", eventID: event.id)
       // Network synchronization runs independently; keep the OS response task
@@ -432,7 +440,16 @@ final class AppViewModel: ObservableObject {
     let repository = FirebaseFollowedPlanRepository(administratorID: administratorID)
     for response in responseOutbox.responses where response.patientID == patientID && response.administratorID == administratorID {
       do {
-        _ = try await repository.respond(response.response, to: response.event, at: response.respondedAt)
+        let confirmed = try await repository.respond(response.response, to: response.event, at: response.respondedAt)
+        // Persist the confirmed result before removing the durable intent. A
+        // process exit between ACK and listener delivery must not revive it.
+        if let index = events.firstIndex(where: { $0.hasSameOccurrence(as: confirmed) }) {
+          events[index] = confirmed.preservingResponseProgress(from: events[index])
+        }
+        if let plan = currentPlan, plan.id == administratorID {
+          try DurableAlertStorage.save(PatientAlertCache(patientID: patientID, plan: plan,
+            events: events, protectionStart: protectionStart), name: "phone-plan.json")
+        }
         try responseOutbox.remove(response.id)
         LocalAlertJournal.record("response_synchronized", eventID: response.event.id, details: ["commandID": response.id])
       } catch is DoseMutationError {
@@ -468,6 +485,7 @@ final class AppViewModel: ObservableObject {
   }
 
   private func boot() async {
+    defer { finishLocalBoot() }
     guard FirebaseBootstrap.configure() else {
       state = .configurationMissing
       return
@@ -486,6 +504,7 @@ final class AppViewModel: ObservableObject {
       consumePendingNotificationInteractionIfPossible()
       Task { await flushResponses() }
     }
+    finishLocalBoot()
     do {
       let destination = try await prepareAuthentication(
         userID: user.uid,
@@ -503,6 +522,19 @@ final class AppViewModel: ObservableObject {
         state = .failed(error.localizedDescription)
       }
     }
+  }
+
+  func waitForLocalBoot() async {
+    guard !localBootFinished else { return }
+    await withCheckedContinuation { localBootWaiters.append($0) }
+  }
+
+  private func finishLocalBoot() {
+    guard !localBootFinished else { return }
+    localBootFinished = true
+    let waiters = localBootWaiters
+    localBootWaiters.removeAll()
+    waiters.forEach { $0.resume() }
   }
 
   private func prepareAuthentication(
@@ -945,7 +977,11 @@ final class AppViewModel: ObservableObject {
   }
 
   private func handleWatchCommand(_ command: CompanionCommand) async -> CompanionReply {
-    await initialization?.value
+    LocalAlertJournal.record("watch_command_received", eventID: command.event?.id,
+      details: ["commandID": command.identifier, "action": command.response?.rawValue ?? "refresh"])
+    // A background response needs the cached identity/plan, not completion of
+    // an Auth/Firestore round trip that might outlast the OS execution slot.
+    await waitForLocalBoot()
     guard let response = command.response else {
       guard state == .ready || state == .signedOut || state == .choosingSchedule else {
         return CompanionReply(snapshot: watchSnapshot(), accepted: false,
@@ -956,7 +992,13 @@ final class AppViewModel: ObservableObject {
           let refreshed = try await FirebaseFollowedPlanRepository(administratorID: plan.id)
             .fetchEvents(source: .server)
           eventsReceived = true
-          events = refreshed
+          let prepared = AlertTiming.applyingPolicy(to: refreshed, previous: events,
+            at: timeline.now, snoozeInterval: Double(snoozeMinutes * 60), repeatInterval: Double(repeatMinutes * 60))
+          if let patientID = Auth.auth().currentUser?.uid {
+            events = responseOutbox.applying(to: prepared, patientID: patientID, administratorID: plan.id)
+            try DurableAlertStorage.save(PatientAlertCache(patientID: patientID, plan: plan,
+              events: events, protectionStart: protectionStart), name: "phone-plan.json")
+          }
         } catch {
           await reportIncident(code: "watch_refresh_failed",
                                message: "The iPhone could not refresh the paired Watch's medication events.",
@@ -971,12 +1013,19 @@ final class AppViewModel: ObservableObject {
       return CompanionReply(snapshot: watchSnapshot(), accepted: false,
         message: "iPhone is reconnecting or saving another response. Retry your choice.", retryable: true)
     }
+    if command.patientID == Auth.auth().currentUser?.uid, command.administratorID == currentPlan?.id,
+      let expected = command.event, let current = events.first(where: { $0.hasSameOccurrence(as: expected) }),
+      current.status != .completed, response == .yesIWill, current.snoozeCount < expected.snoozeCount {
+      return CompanionReply(snapshot: watchSnapshot(), accepted: false,
+        message: "Waiting for the earlier queued response.", retryable: true)
+    }
     guard
           command.patientID == Auth.auth().currentUser?.uid,
           command.administratorID == currentPlan?.id,
           let expected = command.event,
           let event = events.first(where: { $0.id == expected.id }),
-          event.hasSameResponseVersion(as: expected), watchSnapshot().canRespond(to: event) else {
+          (event.hasSameResponseVersion(as: expected) || response == .yesIDid && event.hasSameOccurrence(as: expected)),
+          watchSnapshot().canRespond(to: event) else {
       return CompanionReply(snapshot: watchSnapshot(), accepted: false,
                             message: "Dose or connection changed. Refresh and check your schedule.")
     }

@@ -74,6 +74,14 @@ public struct CompanionSnapshot: Codable, Sendable {
       realDate: realDate, clockScale: clockScale, scheduleCleared: scheduleCleared == true,
       repeatMinutes: repeatMinutes ?? 3)
   }
+
+  public func preservingResponseProgress(from cached: CompanionSnapshot?) -> CompanionSnapshot {
+    guard let cached, patientID == cached.patientID, administratorID == cached.administratorID,
+      scheduleCleared != true else { return self }
+    return replacingEvents(events.map { event in
+      cached.events.first(where: { $0.id == event.id }).map { event.preservingResponseProgress(from: $0) } ?? event
+    })
+  }
 }
 
 public struct CompanionCommand: Codable, Sendable {
@@ -103,7 +111,10 @@ public struct CompanionCommand: Codable, Sendable {
   public func remainsPending(in snapshot: CompanionSnapshot, at date: Date) -> Bool {
     guard patientID == snapshot.patientID, administratorID == snapshot.administratorID,
       let expected = event, let current = snapshot.events.first(where: { $0.id == expected.id }) else { return false }
-    return current.hasSameResponseVersion(as: expected) && snapshot.canRespond(to: current, at: date)
+    let now = snapshot.logicalDate.addingTimeInterval(date.timeIntervalSince(snapshot.realDate) / snapshot.clockScale)
+    return current.hasSameOccurrence(as: expected)
+      && DoseWindow.isActive(current, among: snapshot.events, at: now)
+      && (response == .yesIDid || current.snoozeCount <= expected.snoozeCount)
   }
 }
 
@@ -129,7 +140,14 @@ public struct CompanionReply: Codable, Sendable {
   }
 
   public func resolves(_ command: CompanionCommand) -> Bool {
-    commandID == command.identifier && (accepted || retryable != true)
+    guard commandID == command.identifier else { return false }
+    guard accepted else { return retryable != true }
+    // An ACK for local receipt is not proof that the returned schedule reflects
+    // the tap. Keep the durable overlay until a matching/newer response arrives.
+    guard let expected = command.event, let response = command.response,
+      let current = snapshot.events.first(where: { $0.hasSameOccurrence(as: expected) }) else { return false }
+    return current.status == .completed
+      || (response == .yesIWill && current.status == .snoozed && current.snoozeCount > expected.snoozeCount)
   }
 }
 
