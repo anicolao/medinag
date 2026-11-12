@@ -1,5 +1,9 @@
 import { DateTime } from 'luxon';
 
+// A weekly schedule needs up to fourteen days to expose two future doses
+// after today's dose has passed. This is DATA, not the OS notification queue.
+export const ALERT_OCCURRENCE_HORIZON_DAYS = 15;
+
 export interface DoseDefinition {
   id: string;
   medicationName: string;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildOccurrences, type DoseDefinition } from './materialization.js';
+import { ALERT_OCCURRENCE_HORIZON_DAYS, buildOccurrences, type DoseDefinition } from './materialization.js';
 
 const dailyDose: DoseDefinition = {
   id: 'morning',
@@ -9,6 +9,14 @@ const dailyDose: DoseDefinition = {
   daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
   active: true
 };
+
+test('production horizon supplies two future occurrences even for a weekly dose after today passed', () => {
+  const occurrences = buildOccurrences({ ...dailyDose, daysOfWeek: [3] }, 'America/Toronto',
+    new Date('2026-09-23T13:00:00Z'), ALERT_OCCURRENCE_HORIZON_DAYS);
+  assert.equal(occurrences.length, 2);
+  assert.equal(occurrences[0]?.occurrenceDate, '2026-09-30');
+  assert.equal(occurrences[1]?.occurrenceDate, '2026-10-07');
+});
 
 test('materializes seven patient-local calendar days with stable identifiers', () => {
   const occurrences = buildOccurrences(

@@ -16,12 +16,12 @@ import {
   isMedicationEventOverdue,
   isMedicationEventSuperseded
 } from './escalation.js';
-import { buildOccurrences, type DoseDefinition } from './materialization.js';
+import { ALERT_OCCURRENCE_HORIZON_DAYS, buildOccurrences, type DoseDefinition } from './materialization.js';
 
 initializeApp();
 
 const database = getFirestore();
-const horizonDays = 7;
+const horizonDays = ALERT_OCCURRENCE_HORIZON_DAYS;
 const twilioAccountSid = defineSecret('TWILIO_ACCOUNT_SID');
 const twilioApiKeySid = defineSecret('TWILIO_API_KEY_SID');
 const twilioApiKeySecret = defineSecret('TWILIO_API_KEY_SECRET');
