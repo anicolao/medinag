@@ -53,6 +53,7 @@ struct WatchScheduleView: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .padding(.horizontal, 8)
+      .accessibilityElement(children: .contain)
       .accessibilityIdentifier("watch-content")
       .task(id: connection.presentationSnapshot?.nextEvent(at: context.date)?.id) {
         await connection.doseWindowDidChange()

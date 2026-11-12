@@ -37,6 +37,7 @@ struct ContentView: View {
           }
         }
       }
+      .accessibilityElement(children: .contain)
       .accessibilityHidden(viewModel.activeReminder != nil)
 
       if let reminder = viewModel.activeReminder {
@@ -160,6 +161,7 @@ private struct ReminderAlertView: View {
     .padding(28)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(MediNagColor.background)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("dose-reminder-alert")
   }
 }
@@ -375,6 +377,7 @@ private struct TodayView: View {
       .background(MediNagColor.background)
       .task(id: context.date) { viewModel.patientViewDidOpen() }
     }
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("next-dose-screen")
   }
 }
