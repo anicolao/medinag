@@ -1,0 +1,22 @@
+{
+  "id": "US-006",
+  "title": "Respond to a medication dose on Apple Watch",
+  "narrative": "As a patient, I want my paired Apple Watch responses to update the real medication event and administrator dashboard.",
+  "surfaces": {
+    "web": {
+      "status": "covered"
+    },
+    "ios": {
+      "status": "covered"
+    },
+    "watchos": {
+      "status": "covered"
+    }
+  },
+  "production_paths": [
+    "Firebase Auth and Firestore SDKs/security rules",
+    "WatchConnectivity on a real paired Simulator session",
+    "Transactional patient responses",
+    "Independent UserNotifications scheduling on iPhone and Watch; physical dual-device routing remains a manual device check"
+  ]
+}

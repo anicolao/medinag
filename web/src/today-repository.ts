@@ -36,16 +36,20 @@ export class BrowserTodayRepository implements TodayRepository {
     }
     try {
       const values = JSON.parse(stored) as Array<
-        Omit<MedicationEvent, 'scheduledTime' | 'completedAt'> & {
+        Omit<MedicationEvent, 'scheduledTime' | 'completedAt' | 'escalatedAt'> & {
           scheduledTime: string;
           completedAt: string | null;
+          escalatedAt?: string | null;
+          escalationIncidentId?: string | null;
         }
       >;
       listener(
         values.map((event) => ({
           ...event,
           scheduledTime: new Date(event.scheduledTime),
-          completedAt: event.completedAt ? new Date(event.completedAt) : null
+          completedAt: event.completedAt ? new Date(event.completedAt) : null,
+          escalatedAt: event.escalatedAt ? new Date(event.escalatedAt) : null,
+          escalationIncidentId: event.escalationIncidentId ?? null
         }))
       );
     } catch {
@@ -61,7 +65,7 @@ export class FirestoreTodayRepository implements TodayRepository {
 
   constructor(
     private readonly database: Firestore,
-    private readonly householdId: string
+    private readonly administratorId: string
   ) {}
 
   subscribe(
@@ -71,8 +75,8 @@ export class FirestoreTodayRepository implements TodayRepository {
     const events = query(
       collection(
         this.database,
-        'households',
-        this.householdId,
+        'administrators',
+        this.administratorId,
         'medicationEvents'
       ),
       orderBy('scheduledTime')
@@ -84,11 +88,20 @@ export class FirestoreTodayRepository implements TodayRepository {
           snapshot.docs.map((event) => ({
             id: event.id,
             medicationName: String(event.data().medicationName),
+            occurrenceDate: String(event.data().occurrenceDate),
+            scheduledLocalTime: String(event.data().scheduledLocalTime),
+            timeZone: String(event.data().timeZone),
             scheduledTime: parseDate(event.data().scheduledTime),
             status: String(event.data().status) as MedicationEventStatus,
             snoozeCount: Number(event.data().snoozeCount),
             completedAt: event.data().completedAt
               ? parseDate(event.data().completedAt)
+              : null,
+            escalatedAt: event.data().escalatedAt
+              ? parseDate(event.data().escalatedAt)
+              : null,
+            escalationIncidentId: typeof event.data().escalationIncidentId === 'string'
+              ? event.data().escalationIncidentId
               : null
           }))
         );
