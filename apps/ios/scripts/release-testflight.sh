@@ -12,6 +12,14 @@ app_name="MediNag"
 app_sku="medinag-ios"
 testflight_group="${MEDINAG_TESTFLIGHT_GROUP:-Internal}"
 marketing_version="${MEDINAG_MARKETING_VERSION:-0.1.0}"
+alarm_prototype="${MEDINAG_ALARM_PROTOTYPE:-0}"
+release_scheme="MediNag"
+if [[ "$alarm_prototype" == "1" ]]; then
+  release_scheme="MediNagAlarmPrototype"
+elif [[ "$alarm_prototype" != "0" ]]; then
+  printf 'Invalid MEDINAG_ALARM_PROTOTYPE (expected 0 or 1).\n' >&2
+  exit 1
+fi
 
 fail() {
   printf 'Error: %s\n' "$1" >&2
@@ -48,12 +56,14 @@ if [[ -f "$login_keychain" ]] && ! security show-keychain-info "$login_keychain"
   fail "The login keychain is locked; unlock it privately with: security unlock-keychain $login_keychain"
 fi
 
-[[ -f "$firebase_configuration" ]] || fail "Production GoogleService-Info.plist is missing"
-plutil -lint "$firebase_configuration" >/dev/null
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :PROJECT_ID' "$firebase_configuration")" == "medinag" ]] \
-  || fail "The Firebase plist is not for the medinag project"
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :BUNDLE_ID' "$firebase_configuration")" == "$bundle_identifier" ]] \
-  || fail "The Firebase plist does not match $bundle_identifier"
+if [[ "$alarm_prototype" != "1" ]]; then
+  [[ -f "$firebase_configuration" ]] || fail "Production GoogleService-Info.plist is missing"
+  plutil -lint "$firebase_configuration" >/dev/null
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :PROJECT_ID' "$firebase_configuration")" == "medinag" ]] \
+    || fail "The Firebase plist is not for the medinag project"
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :BUNDLE_ID' "$firebase_configuration")" == "$bundle_identifier" ]] \
+    || fail "The Firebase plist does not match $bundle_identifier"
+fi
 
 asc_token() {
   node -e '
@@ -116,7 +126,7 @@ fi
 app_id="$(jq -r '.data[0].id' <<< "$app_response")"
 
 if [[ "${1:-}" == "--preflight" ]]; then
-  echo "TestFlight preflight passed: signing configuration, Firebase configuration, and Apple API access."
+  echo "TestFlight preflight passed for $release_scheme: signing configuration and Apple API access."
   exit 0
 fi
 
@@ -146,7 +156,7 @@ npm run ios:generate
 echo "Archiving MediNag $marketing_version ($build_number)..."
 xcodebuild archive \
   -project apps/ios/MediNag.xcodeproj \
-  -scheme MediNag \
+  -scheme "$release_scheme" \
   -configuration Release \
   -destination 'generic/platform=iOS' \
   -archivePath "$archive_path" \
@@ -164,7 +174,9 @@ xcodebuild archive \
 application_path="$archive_path/Products/Applications/MediNag.app"
 info_plist="$application_path/Info.plist"
 [[ -d "$application_path" && -f "$info_plist" ]] || fail "The archive does not contain MediNag.app"
-[[ -f "$application_path/GoogleService-Info.plist" ]] || fail "The archive is missing production Firebase configuration"
+if [[ "$alarm_prototype" != "1" ]]; then
+  [[ -f "$application_path/GoogleService-Info.plist" ]] || fail "The archive is missing production Firebase configuration"
+fi
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$info_plist")" == "$bundle_identifier" ]] \
   || fail "The archive has the wrong bundle identifier"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info_plist")" == "$marketing_version" ]] \
@@ -174,6 +186,17 @@ info_plist="$application_path/Info.plist"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$info_plist")" == "false" ]] \
   || fail "The archive is missing its encryption declaration"
 codesign --verify --deep --strict "$application_path"
+if [[ "$alarm_prototype" == "1" ]]; then
+  [[ ! -d "$application_path/Watch" ]] || fail "The phone-only prototype unexpectedly embeds a Watch app"
+  activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
+  [[ -d "$activity_application" ]] || fail "The prototype is missing its AlarmKit Live Activity extension"
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :NSSupportsLiveActivities' "$info_plist")" == "true" ]] \
+    || fail "Live Activities are not declared in the prototype"
+  [[ -n "$(/usr/libexec/PlistBuddy -c 'Print :NSAlarmKitUsageDescription' "$info_plist")" ]] \
+    || fail "AlarmKit authorization usage description is missing"
+  [[ -f "$application_path/MediNagAlarm.caf" ]] || fail "The prototype alarm sound is missing"
+  codesign --verify --deep --strict "$activity_application"
+else
 watch_application="$application_path/Watch/MediNagWatch.app"
 watch_info="$watch_application/Info.plist"
 [[ -f "$watch_info" ]] || fail "The archive is missing the Watch companion"
@@ -184,6 +207,7 @@ watch_info="$watch_application/Info.plist"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$watch_info")" == "$build_number" ]] \
   || fail "The Watch and iPhone build numbers differ"
 codesign --verify --deep --strict "$watch_application"
+fi
 
 echo "Uploading MediNag $marketing_version ($build_number) to App Store Connect..."
 xcodebuild -exportArchive \

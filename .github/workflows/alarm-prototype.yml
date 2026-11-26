@@ -1,0 +1,48 @@
+name: Phone AlarmKit prototype smoke checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, agent/ios-mvp]
+    paths:
+      - apps/ios/AlarmPrototype/**
+      - apps/ios/AlarmPrototypeShared/**
+      - apps/ios/AlarmPrototypeLiveActivity/**
+      - apps/ios/AlarmPrototypeUITests/**
+      - apps/ios/project.yml
+      - .github/workflows/alarm-prototype.yml
+
+permissions:
+  contents: read
+
+jobs:
+  registration-smoke:
+    name: Real OS alarm registration, replacement, relaunch and cancellation
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.6.app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run ios:generate
+      - name: Run real AlarmKit smoke test
+        run: |
+          device_id=$(xcrun simctl create "MediNag AlarmKit PoC" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+          xcodebuild test -project apps/ios/MediNag.xcodeproj \
+            -scheme MediNagAlarmPrototype \
+            -destination "platform=iOS Simulator,id=$device_id" \
+            -derivedDataPath apps/ios/DerivedData/AlarmPrototype \
+            -resultBundlePath apps/ios/DerivedData/AlarmPrototypeSmoke.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Upload registration smoke evidence (not audible-delivery proof)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alarm-prototype-registration-smoke
+          path: apps/ios/DerivedData/AlarmPrototypeSmoke.xcresult
+          retention-days: 7

@@ -23,6 +23,7 @@
     "ios:generate": "apps/ios/scripts/generate-project.sh",
     "ios:device": "apps/ios/scripts/run-on-device.sh",
     "ios:testflight": "apps/ios/scripts/release-testflight.sh",
+    "ios:testflight:alarm-prototype": "MEDINAG_ALARM_PROTOTYPE=1 apps/ios/scripts/release-testflight.sh",
     "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
     "ios:e2e:failure": "MEDINAG_E2E_STORY=notification-failure apps/ios/scripts/run-connected-e2e.sh",
     "ios:e2e:watch": "MEDINAG_E2E_STORY=watch apps/ios/scripts/run-connected-e2e.sh",
