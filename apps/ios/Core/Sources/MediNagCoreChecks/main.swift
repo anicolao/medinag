@@ -14,7 +14,25 @@ struct MediNagCoreChecks {
     try await checkYesIDid()
     try await checkNotificationReadiness()
     try await checkReminderPlan()
-    print("MediNagCoreChecks: 8 passed")
+    try await checkAlarmKitPolicy()
+    print("MediNagCoreChecks: 9 passed")
+  }
+
+  private static func checkAlarmKitPolicy() async throws {
+    let origin = now
+    try await expect(AlarmKitPolicy.gridDeadline(origin: origin, now: origin.addingTimeInterval(12 * 60), interval: 10 * 60)
+      == origin.addingTimeInterval(20 * 60), "08:12 snooze for an 08:00 dose must target 08:20")
+    try await expect(AlarmKitPolicy.gridDeadline(origin: origin, now: origin.addingTimeInterval(3 * 60), interval: 10 * 60)
+      == origin.addingTimeInterval(10 * 60), "An ignored repeat does not buy a new snooze interval")
+    let event = pendingEvent()
+    try await expect(AlarmKitPolicy.canCompleteEarly(event, at: event.scheduledTime.addingTimeInterval(-900)),
+      "Early completion starts exactly fifteen minutes before the actual dose")
+    try await expect(!AlarmKitPolicy.canCompleteEarly(event, at: event.scheduledTime.addingTimeInterval(-901)),
+      "Earlier than fifteen minutes must offer no dose action")
+    var completed = event
+    completed.status = .completed
+    try await expect(AlarmKitPolicy.latestDue(in: [completed], at: event.scheduledTime) == nil,
+      "A completed latest occurrence must not become actionable")
   }
 
   private static func checkResponseIdentifiers() async throws {

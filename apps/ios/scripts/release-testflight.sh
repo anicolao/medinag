@@ -13,11 +13,17 @@ app_sku="medinag-ios"
 testflight_group="${MEDINAG_TESTFLIGHT_GROUP:-Internal}"
 marketing_version="${MEDINAG_MARKETING_VERSION:-0.1.0}"
 alarm_prototype="${MEDINAG_ALARM_PROTOTYPE:-0}"
+alarm_patient="${MEDINAG_ALARM_PATIENT:-0}"
+phone_only=0
 release_scheme="MediNag"
-if [[ "$alarm_prototype" == "1" ]]; then
+if [[ "$alarm_patient" == "1" && "$alarm_prototype" == "0" ]]; then
+  release_scheme="MediNagAlarmPatient"
+  phone_only=1
+elif [[ "$alarm_prototype" == "1" && "$alarm_patient" == "0" ]]; then
   release_scheme="MediNagAlarmPrototype"
-elif [[ "$alarm_prototype" != "0" ]]; then
-  printf 'Invalid MEDINAG_ALARM_PROTOTYPE (expected 0 or 1).\n' >&2
+  phone_only=1
+elif [[ "$alarm_prototype" != "0" || "$alarm_patient" != "0" ]]; then
+  printf 'Select exactly one valid AlarmKit variant (0 or 1).\n' >&2
   exit 1
 fi
 
@@ -186,7 +192,7 @@ fi
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$info_plist")" == "false" ]] \
   || fail "The archive is missing its encryption declaration"
 codesign --verify --deep --strict "$application_path"
-if [[ "$alarm_prototype" == "1" ]]; then
+if [[ "$phone_only" == "1" ]]; then
   [[ ! -d "$application_path/Watch" ]] || fail "The phone-only prototype unexpectedly embeds a Watch app"
   activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
   [[ -d "$activity_application" ]] || fail "The prototype is missing its AlarmKit Live Activity extension"

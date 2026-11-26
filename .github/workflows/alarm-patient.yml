@@ -1,0 +1,54 @@
+name: Connected phone AlarmKit trial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, agent/alarmkit-phone-poc]
+    paths:
+      - apps/ios/**
+      - functions/**
+      - scripts/**
+      - tests/**
+      - firestore.rules
+      - firestore.indexes.json
+      - package.json
+      - .github/workflows/alarm-patient.yml
+
+permissions:
+  contents: read
+
+jobs:
+  connected-phone:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select pinned Xcode and patient time zone
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.6.app
+          sudo systemsetup -settimezone America/Toronto
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci && npm ci --prefix functions
+      - run: npx playwright install chromium
+      - run: npm run check && npm run ios:core:check && npm run functions:test
+      - name: Validate production Firestore rules in isolation
+        run: npx firebase emulators:exec --project demo-medinag --only firestore 'npm run test:rules'
+      - name: Real dashboard to phone to Firestore completion
+        run: npm run ios:e2e:alarm-patient
+      - name: Upload functional evidence (not approved visual baselines)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connected-alarmkit-phone-evidence
+          retention-days: 7
+          path: |
+            apps/ios/DerivedData/AlarmPatientConnected-*.xcresult/
+            apps/ios/DerivedData/AlarmPatientLastState.json
+            test-results/
