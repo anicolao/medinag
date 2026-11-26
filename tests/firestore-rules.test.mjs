@@ -13,6 +13,7 @@ import {
   getDocs,
   query,
   setDoc,
+  serverTimestamp,
   updateDoc,
   where
 } from 'firebase/firestore';
@@ -64,6 +65,21 @@ const medicationEvent = {
   createdAt: now,
   updatedAt: now
 };
+
+test('native alarm evidence is linked-patient-only, append-only, and server received', async () => {
+  const patient = environment.authenticatedContext('steve').firestore();
+  const owner = environment.authenticatedContext('lori').firestore();
+  const outsider = environment.authenticatedContext('other').firestore();
+  const path = ['administrators', 'lori', 'deviceEvents', 'actual-response-id'];
+  const evidence = { patientUid: 'steve', kind: 'patient_response_saved', eventId: 'dose',
+    observedAt: now, detail: 'yesIDid', receivedAt: serverTimestamp(), build: '21' };
+  await assertFails(setDoc(doc(outsider, ...path), evidence));
+  await assertFails(setDoc(doc(patient, ...path), { ...evidence, receivedAt: now }));
+  await assertSucceeds(setDoc(doc(patient, ...path), evidence));
+  await assertSucceeds(getDoc(doc(owner, ...path)));
+  await assertFails(getDoc(doc(outsider, ...path)));
+  await assertFails(updateDoc(doc(patient, ...path), { detail: 'rewritten history' }));
+});
 
 test('repeat timing is administrator-wide, validated, and not patient-editable', async () => {
   const lori = environment.authenticatedContext('lori').firestore();

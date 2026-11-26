@@ -451,6 +451,31 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // Append-only on-device evidence. A server transaction creates each UUID
+      // once; receivedAt is the actual server timestamp, never a client claim
+      // that a sound was delivered or heard.
+      match /deviceEvents/{eventId} {
+        allow read: if ownsAdministrator(administratorId)
+          || followsAdministrator(administratorId);
+        allow create: if followsAdministrator(administratorId)
+          && request.resource.data.keys().hasOnly([
+            'patientUid', 'kind', 'eventId', 'observedAt', 'detail', 'receivedAt', 'build'
+          ])
+          && request.resource.data.patientUid == request.auth.uid
+          && request.resource.data.kind is string
+          && request.resource.data.kind.size() > 0
+          && request.resource.data.kind.size() <= 100
+          && request.resource.data.eventId is string
+          && request.resource.data.eventId.size() <= 200
+          && request.resource.data.observedAt is timestamp
+          && request.resource.data.detail is string
+          && request.resource.data.detail.size() <= 1000
+          && request.resource.data.receivedAt == request.time
+          && request.resource.data.build is string
+          && request.resource.data.build.size() <= 100;
+        allow update, delete: if false;
+      }
+
       match /deviceCoverage/{patientId} {
         allow read: if ownsAdministrator(administratorId)
           || (followsAdministrator(administratorId)
