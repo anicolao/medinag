@@ -22,6 +22,70 @@ packages:
     exactVersion: 9.2.0
 
 targets:
+  # Deliberately separate binary: no Firebase, Watch, legacy queues or app delegate.
+  # Same app identity allows the existing Internal TestFlight channel to evaluate it.
+  MediNagAlarmPrototype:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPrototype
+      - path: AlarmPrototypeShared
+      - path: MediNag/Assets.xcassets
+      - path: MediNag/Resources/MediNagAlarm.caf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPrototype/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+    dependencies:
+      - target: MediNagAlarmPrototypeLiveActivity
+        embed: true
+
+  MediNagAlarmPrototypeLiveActivity:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPrototypeLiveActivity
+      - path: AlarmPrototypeShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmactivity
+        PRODUCT_NAME: MediNagAlarmActivity
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPrototypeLiveActivity/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SKIP_INSTALL: true
+
+  MediNagAlarmPrototypeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPrototypeUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmprototype.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmPrototype
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmPrototype
+
   MediNag:
     type: application
     platform: iOS
@@ -159,6 +223,21 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagAlarmPrototype:
+    build:
+      targets:
+        MediNagAlarmPrototype: all
+        MediNagAlarmPrototypeUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - MediNagAlarmPrototypeUITests
+    archive:
+      config: Release
+
   MediNagWatch:
     build:
       targets:
