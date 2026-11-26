@@ -30,6 +30,7 @@
 		5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F2D0A0FBA33DECBAAAC014 /* README.md */; };
 		60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		644D14AB90C0CF06C2B25CFF /* AlertTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B5F5765D9EF59F18A9D548 /* AlertTimingTests.swift */; };
+		64565837CA61B72B53996E80 /* StopAndRespondIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86E4D427FA0B527D1B9FACC /* StopAndRespondIntent.swift */; };
 		64B9AF82FC68050FE18FA43C /* PrototypeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60807FF7A6DEB42A5574BE1 /* PrototypeApp.swift */; };
 		66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
 		6A5676D70BD088B62E4D9636 /* PhoneNotificationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532CC6107AE4964E739FB594 /* PhoneNotificationResponse.swift */; };
@@ -195,6 +196,7 @@
 		EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */ = {isa = PBXFileReference; path = MediNagAlarm.caf; sourceTree = "<group>"; };
 		F5A2177BBECC414D5B1B679A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F60807FF7A6DEB42A5574BE1 /* PrototypeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrototypeApp.swift; sourceTree = "<group>"; };
+		F86E4D427FA0B527D1B9FACC /* StopAndRespondIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopAndRespondIntent.swift; sourceTree = "<group>"; };
 		FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "005-notification-failure-claims.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -331,6 +333,7 @@
 			children = (
 				63734D75886CEEE7338E5324 /* Info.plist */,
 				F60807FF7A6DEB42A5574BE1 /* PrototypeApp.swift */,
+				F86E4D427FA0B527D1B9FACC /* StopAndRespondIntent.swift */,
 			);
 			path = AlarmPrototype;
 			sourceTree = "<group>";
@@ -765,6 +768,7 @@
 			files = (
 				64B9AF82FC68050FE18FA43C /* PrototypeApp.swift in Sources */,
 				FD1047BD45E118639C27508D /* PrototypeMetadata.swift in Sources */,
+				64565837CA61B72B53996E80 /* StopAndRespondIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
