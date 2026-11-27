@@ -29,6 +29,8 @@ const applicationAndTestFiles = [
   ...filesUnder('apps/ios/AlarmPatientUITests'),
   ...filesUnder('apps/ios/AlarmDiagnostic'),
   ...filesUnder('apps/ios/AlarmDiagnosticUITests'),
+  ...filesUnder('apps/ios/AlarmBaseline'),
+  ...filesUnder('apps/ios/AlarmBaselineUITests'),
   ...filesUnder('apps/ios/AlarmPrototype'),
   ...filesUnder('apps/ios/AlarmPrototypeUITests'),
   ...filesUnder('apps/ios/AlarmPrototypeShared'),
@@ -70,6 +72,7 @@ const rules = [
       ...filesUnder('apps/ios/MediNagWatchUITests'),
       ...filesUnder('apps/ios/AlarmPatientUITests'),
       ...filesUnder('apps/ios/AlarmDiagnosticUITests'),
+      ...filesUnder('apps/ios/AlarmBaselineUITests'),
       ...filesUnder('apps/ios/AlarmPrototypeUITests'),
       ...filesUnder('tests/e2e')
     ],

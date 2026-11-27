@@ -40,6 +40,8 @@ jobs:
       - run: npm run check && npm run ios:core:check && npm run functions:test
       - name: Alarm Lab registration smoke check (not audible-delivery proof)
         run: bash apps/ios/scripts/check-alarm-lab.sh
+      - name: Minimal baseline registration smoke check (not audible-delivery proof)
+        run: bash apps/ios/scripts/check-alarm-lab.sh MediNagAlarmBaseline
       - name: Validate production Firestore rules in isolation
         run: npx firebase emulators:exec --project demo-medinag --only firestore 'npm run test:rules'
       - name: Real dashboard to phone to Firestore completion

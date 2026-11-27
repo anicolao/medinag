@@ -22,6 +22,40 @@ packages:
     exactVersion: 9.2.0
 
 targets:
+  MediNagAlarmBaseline:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmBaseline
+      - path: MediNag/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmBaseline/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+  MediNagAlarmBaselineUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmBaselineUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmbaseline.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmBaseline
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmBaseline
   MediNagAlarmDiagnostic:
     type: application
     platform: iOS
@@ -342,6 +376,20 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagAlarmBaseline:
+    build:
+      targets:
+        MediNagAlarmBaseline: all
+        MediNagAlarmBaselineUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - MediNagAlarmBaselineUITests
+    archive:
+      config: Release
   MediNagAlarmDiagnostic:
     build:
       targets:

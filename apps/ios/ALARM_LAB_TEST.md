@@ -1,5 +1,49 @@
 # Physical Stop/retry comparison
 
+## Minimal TestFlight baseline — test this first
+
+The `MediNagAlarmBaseline` executable replaces the patient app through the
+existing Alex Phone Trial channel. It uses the patient bundle identity but does
+not compile the patient engine, Firebase, custom intents, shared widget metadata,
+Live Activity extension, custom sound, countdown, Snooze or retries. It registers
+exactly one `.fixed` AlarmKit alarm with `.default` sound and ordinary system
+Stop. The required `AlarmAttributes` use an empty metadata type, nil metadata,
+and only the system alert presentation. No app-created ActivityKit activity is
+requested. This does not claim Apple's public AlarmKit path is identical to
+Clock's internal implementation.
+
+Hypothesis: the richer configuration or its lifecycle interactions cause the
+missing presentation. This baseline isolates the public API's simplest path.
+It is not a medication scheduler and is not a proposed permanent simplification.
+
+1. Install the baseline TestFlight build; open **MediNag Baseline**.
+2. Finish/cancel any run in the separate Alarm Lab, and keep the Watch off for
+   a strictly phone-only comparison. In Baseline tap **Prepare baseline test**.
+   This explicitly clears existing MediNag phone alarms/notifications. It does
+   not alter Firebase medication records or cancel alarms in Clock or the Lab.
+3. Choose a future date/time and tap **Arm baseline alarm**. Verify the displayed
+   registration. Set a native Clock alarm two minutes later as a control.
+4. Lock the phone. Record the actual time of sound/UI for each alarm, and use
+   ordinary system Stop after observing it. If Baseline sounds only when the
+   Clock alarm or your interaction wakes the phone, it failed its deadline.
+5. Repeat after a long idle/overnight interval under the same conditions. A
+   successful one-minute test does not establish overnight reliability.
+
+Preserve the baseline report and USB system logs. A baseline failure requires
+examining this small executable/SDK/device state; success means add features one
+at a time until the failure returns, not declare the production app fixed. This
+diagnostic still needs physical presentation/sound observations. Its automated
+check only exercises actual permission, registration, persistence and cancellation.
+
+Release: `MEDINAG_TESTFLIGHT_GROUP='Alex Phone Trial' npm run ios:testflight:alarm-baseline`.
+Smoke check: `bash apps/ios/scripts/check-alarm-lab.sh MediNagAlarmBaseline`.
+After testing, reinstall the patient build and open it online to rebuild its
+schedule. Its durable patient records and server data are not erased by Baseline.
+The server's existing overdue/coverage SMS policies remain active during this
+diagnostic; no test mode has silently disabled them.
+
+## Separate local Alarm Lab
+
 MediNag Alarm Lab is a separate development-installed app:
 `org.boardgamescafe.medinag.alarmlab`. It does not replace MediNag, read Firebase,
 write medication responses, or cancel the patient app's alarms. These are
