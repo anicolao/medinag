@@ -14,6 +14,7 @@ struct PatientAlarmState: Codable, Sendable {
     let followup: Bool
     let snoozeSeconds: TimeInterval
     var verified = false
+    var configurationVersion: Int? = nil
   }
   struct Evidence: Codable, Sendable, Identifiable {
     let id: String

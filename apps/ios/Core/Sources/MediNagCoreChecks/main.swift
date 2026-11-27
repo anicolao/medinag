@@ -33,6 +33,31 @@ struct MediNagCoreChecks {
     completed.status = .completed
     try await expect(AlarmKitPolicy.latestDue(in: [completed], at: event.scheduledTime) == nil,
       "A completed latest occurrence must not become actionable")
+    let dose = event.scheduledTime
+    let block = AlarmKitPolicy.retryPlan(events: [event], at: dose.addingTimeInterval(-60), repeatInterval: 180)
+    try await expect(block.map(\.deadline) == (0...10).map { dose.addingTimeInterval(Double($0) * 180) },
+      "Without any tap, independent alarms cover T, T+3, T+6 through T+30")
+    let next = MedicationEvent(id: "next-dose", scheduleID: "next", medicationName: "Next",
+      scheduledTime: dose.addingTimeInterval(3600), status: .pending, snoozeCount: 0)
+    let two = AlarmKitPolicy.retryPlan(events: [event, next], at: dose.addingTimeInterval(-60), repeatInterval: 60)
+    try await expect(two.count == 62 && two.filter { $0.eventID == next.id }.count == 31,
+      "Even one-minute repeats must cover two complete 30-minute blocks")
+    var snoozed = event
+    snoozed.status = .snoozed
+    snoozed.snoozedUntil = dose.addingTimeInterval(20 * 60)
+    let snoozeBlock = AlarmKitPolicy.retryPlan(events: [snoozed, next],
+      at: dose.addingTimeInterval(12 * 60), repeatInterval: 180)
+    try await expect(snoozeBlock.first?.deadline == dose.addingTimeInterval(20 * 60),
+      "08:12 snooze suppresses earlier retries and independently arms 08:20")
+    let retired = AlarmKitPolicy.retryPlan(events: [event, next], at: next.scheduledTime, repeatInterval: 180)
+    try await expect(retired.allSatisfy { $0.eventID == next.id }, "Newer dose retires all old retries")
+    let done = AlarmKitPolicy.retryPlan(events: [completed, next], at: dose, repeatInterval: 180)
+    try await expect(done.allSatisfy { $0.eventID == next.id }, "Completion cancels the whole dose block")
+    let close = MedicationEvent(id: "close-dose", scheduleID: "close", medicationName: "Close",
+      scheduledTime: dose.addingTimeInterval(5 * 60), status: .pending, snoozeCount: 0)
+    let overlap = AlarmKitPolicy.retryPlan(events: [event, close], at: dose.addingTimeInterval(-60), repeatInterval: 180)
+    try await expect(overlap.filter { $0.eventID == event.id }.allSatisfy { $0.deadline < close.scheduledTime },
+      "No old-dose retries can be registered at or beyond the successor")
   }
 
   private static func checkResponseIdentifiers() async throws {

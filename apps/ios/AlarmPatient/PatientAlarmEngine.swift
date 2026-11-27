@@ -9,7 +9,6 @@ import UserNotifications
 /// ever allowed into this queue. The file is the sole schedule/response truth.
 actor PatientAlarmEngine {
   static let shared = PatientAlarmEngine()
-  static let initialAlarmBudget = 32
   private let manager = AlarmManager.shared
   private var state: PatientAlarmState
   private var tail: Task<Void, Never>?
@@ -115,30 +114,54 @@ actor PatientAlarmEngine {
     }
     let now = Date()
     let latest = state.latestDue(at: now)
-    let future = Array(state.eligibleEvents.filter { $0.scheduledTime > now && $0.status != .completed }
-      .sorted { $0.scheduledTime < $1.scheduledTime }.prefix(Self.initialAlarmBudget))
+    let slots = AlarmKitPolicy.retryPlan(events: state.eligibleEvents, at: now,
+      repeatInterval: Double(state.context!.plan.repeatIntervalMinutes * 60))
     var desired = Set<UUID>()
     var inventory = try manager.alarms
-    for event in future {
+    // Free obsolete/far-future capacity, but keep each selected deadline until
+    // its replacement is verified. Do not cancel a still-ringing latest dose
+    // just because its initial fixed deadline is now in the past.
+    let ringing = inventory.filter { $0.state == .alerting }.filter { alarm in
+      guard let latest, (latest.snoozedUntil ?? .distantPast) <= now else { return false }
+      return state.bindings.contains { $0.id == alarm.id && $0.eventID == latest.id }
+    }.max { left, right in
+      (state.bindings.first { $0.id == left.id }?.deadline ?? .distantPast)
+        < (state.bindings.first { $0.id == right.id }?.deadline ?? .distantPast)
+    }
+    if let ringing { desired.insert(ringing.id) }
+    // During Snooze keep the OS's existing countdown as a fallback until the
+    // new anchored block is installed, even though it is not in the final plan.
+    let fallback = ringing?.id ?? inventory.first { alarm in
+      guard let latest else { return false }
+      return state.bindings.contains { $0.id == alarm.id && $0.eventID == latest.id && $0.deadline <= now }
+    }?.id
+    for alarm in inventory where !desired.contains(alarm.id) && alarm.id != fallback {
+      let needed = state.bindings.first { $0.id == alarm.id }.map { binding in
+        slots.contains { $0.eventID == binding.eventID && $0.deadline == binding.deadline }
+      } ?? false
+      if !needed { try manager.cancel(id: alarm.id) }
+    }
+    inventory = try manager.alarms
+    for slot in slots {
+      guard let event = state.eligibleEvents.first(where: { $0.id == slot.eventID }) else { continue }
       let snooze = Double(state.context!.plan.snoozeIntervalMinutes * 60)
       if let binding = state.bindings.first(where: { $0.eventID == event.id
-        && $0.deadline == event.scheduledTime && $0.snoozeSeconds == snooze }),
+        && $0.deadline == slot.deadline && $0.snoozeSeconds == snooze && $0.configurationVersion == 2 }),
         inventory.contains(where: { $0.id == binding.id && $0.schedule == .fixed(binding.deadline) }) {
         desired.insert(binding.id)
         continue
       }
       let binding = PatientAlarmState.Binding(id: UUID(), eventID: event.id,
-        deadline: event.scheduledTime, followup: false, snoozeSeconds: snooze)
+        deadline: slot.deadline, followup: slot.deadline != event.scheduledTime,
+        snoozeSeconds: snooze, configurationVersion: 2)
       try await install(binding, event: event)
       desired.insert(binding.id)
-      inventory = try manager.alarms
-    }
-    // Keep actual already-due alarms for the latest dose. Never replay the past.
-    if let latest {
-      for binding in state.bindings where binding.eventID == latest.id
-        && inventory.contains(where: { $0.id == binding.id }) {
-        desired.insert(binding.id)
+      // An old configuration for this exact deadline is no longer needed.
+      for old in state.bindings where old.id != binding.id && old.eventID == event.id
+        && old.deadline == slot.deadline && !desired.contains(old.id) {
+        if try manager.alarms.contains(where: { $0.id == old.id }) { try manager.cancel(id: old.id) }
       }
+      inventory = try manager.alarms
     }
     if state.responseEventID != latest?.id { state.responseEventID = nil }
     for alarm in try manager.alarms where !desired.contains(alarm.id) {
@@ -156,11 +179,11 @@ actor PatientAlarmEngine {
       }
       state.migrated = true
     }
-    state.verifiedThrough = future.last?.scheduledTime
+    state.verifiedThrough = slots.last?.deadline
     state.verifiedAlarmIDs = final.map(\.id)
     state.verificationObservedAt = Date()
     state.lastFailure = nil
-    try trace("inventory_verified", detail: "\(final.count) actual alarms; first \(future.count) future doses")
+    try trace("inventory_verified", detail: "\(final.count) actual alarms; \(Set(slots.map(\.eventID)).count) independent 30-minute dose blocks")
   }
 
   private func install(_ binding: PatientAlarmState.Binding, event: MedicationEvent) async throws {
@@ -174,13 +197,10 @@ actor PatientAlarmEngine {
         secondaryButtonBehavior: .countdown),
       countdown: AlarmPresentation.Countdown(title: "Medication reminder")),
       metadata: PrototypeMetadata(requestedAt: Date(), deadline: binding.deadline, title: event.medicationName), tintColor: .teal)
-    let remaining = binding.deadline.timeIntervalSinceNow
-    let shortCountdown = binding.followup && remaining > 0 && remaining <= 3600 ? remaining : nil
     let configuration = AlarmManager.AlarmConfiguration(
-      // A scheduled medication is a fixed-date alarm, not a multi-day timer.
-      // Long preAlert countdowns are rejected by AlarmKit (next-day error 0).
-      // Live Activity/countdown support remains for the post-alert snooze.
-      countdownDuration: Alarm.CountdownDuration(preAlert: shortCountdown,
+      // Exactly one deadline: never combine a fixed future time with a second
+      // pre-alert countdown. Native Snooze is replaced by an anchored block.
+      countdownDuration: Alarm.CountdownDuration(preAlert: nil,
         postAlert: binding.snoozeSeconds), schedule: .fixed(binding.deadline), attributes: attributes,
       stopIntent: PatientStopIntent(alarmID: binding.id),
       secondaryIntent: PatientSnoozeIntent(alarmID: binding.id), sound: .named("MediNagAlarm.caf"))
@@ -203,11 +223,13 @@ actor PatientAlarmEngine {
     }
     state.responseEventID = event.id
     try trace("system_stop_received", eventID: event.id, detail: id.uuidString)
-    let repeatSeconds = Double(state.context!.plan.repeatIntervalMinutes * 60)
-    let origin = event.snoozedUntil ?? event.scheduledTime
-    let deadline = origin > Date() ? origin : PatientAlarmState.gridDeadline(origin: origin, now: Date(), interval: repeatSeconds)
-    try await replaceActive(event: event, deadline: deadline)
+    // The retry block already exists without this handler. Discard the stopped
+    // OS alarm/countdown; reconcile verifies the remaining independent alarms.
+    if try manager.alarms.contains(where: { $0.id == id }) { try manager.cancel(id: id) }
+    state.bindings.removeAll { $0.id == id }
     try await reconcile()
+    try trace("followup_verified_before_return", eventID: event.id,
+      detail: "Independent retry block verified; no tap-relative timer")
   }
 
   private func handleSnooze(_ id: UUID) async throws {
@@ -240,9 +262,7 @@ actor PatientAlarmEngine {
     state.responses.append(intent)
     state.events[index] = intent.updatedEvent
     try trace("patient_response_saved", eventID: event.id, detail: "\(intent.id) \(response.rawValue)")
-    if response == .yesIWill {
-      try await replaceActive(event: intent.updatedEvent, deadline: intent.snoozeDeadline)
-    } else {
+    if response == .yesIDid {
       try await cancel(eventID: event.id)
       if event.scheduledTime > now {
         state.retiredBefore = max(state.retiredBefore ?? .distantPast, event.scheduledTime)
@@ -253,26 +273,6 @@ actor PatientAlarmEngine {
     try await reconcile()
   }
 
-  private func replaceActive(event: MedicationEvent, deadline: Date) async throws {
-    if let successor = state.successor(of: event), deadline >= successor {
-      // The next initial dose is already registered. Never arm an old snooze
-      // or follow-up at/after that successor.
-      try await cancel(eventID: event.id)
-      try trace("followup_retired_at_successor", eventID: event.id)
-      return
-    }
-    let replacement = PatientAlarmState.Binding(id: UUID(), eventID: event.id, deadline: deadline,
-      followup: true, snoozeSeconds: Double(state.context!.plan.snoozeIntervalMinutes * 60))
-    let retired = state.bindings.filter { $0.eventID == event.id }.map(\.id)
-    try await install(replacement, event: event)
-    for id in retired where try manager.alarms.contains(where: { $0.id == id }) {
-      try manager.cancel(id: id)
-    }
-    state.bindings.removeAll { retired.contains($0.id) }
-    try trace("followup_verified_before_return", eventID: event.id,
-      detail: "\(replacement.id) deadline=\(deadline.ISO8601Format())")
-  }
-
   private func cancel(eventID: String) async throws {
     let ids = state.bindings.filter { $0.eventID == eventID }.map(\.id)
     for id in ids where try manager.alarms.contains(where: { $0.id == id }) { try manager.cancel(id: id) }
@@ -280,7 +280,7 @@ actor PatientAlarmEngine {
       throw Failure("The completed dose still has an OS alarm.")
     }
     state.bindings.removeAll { ids.contains($0.id) }
-    try trace("dose_cancellation_verified", eventID: eventID)
+    try trace("dose_cancellation_verified", eventID: eventID, detail: "\(ids.count) dose alarm identifiers absent from OS inventory")
   }
 
   private func trace(_ kind: String, eventID: String = "", detail: String = "") throws {

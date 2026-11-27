@@ -21,7 +21,7 @@ test('publish the medication and server timing settings through the real dashboa
   await page.getByLabel('Dose time').fill(time);
   await page.getByRole('button', { name: 'Save dose' }).click();
   await expect(page.getByRole('status')).toHaveText('Dose added.');
-  // Exercise the full 32-initial-alarm budget, not just a single friendly dose.
+  // Exercise two full 31-alarm blocks (one-minute retries through +30m).
   // These additional schedules also enter through the real visible web UI.
   for (const hours of [1, 2]) {
     const later = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Toronto',

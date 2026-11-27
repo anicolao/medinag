@@ -26,7 +26,7 @@ test('the early completion and actual alarm evidence return to the administrator
   const coverage = (await getDocs(collection(db, 'administrators', state.administratorId, 'deviceCoverage')))
     .docs.map(doc => doc.data());
   expect(coverage).toHaveLength(1);
-  expect(coverage[0].actualPendingCount).toBe(32);
+  expect(coverage[0].actualPendingCount).toBe(62);
   expect(coverage[0].reconciliationStatus).toBe('ready');
   expect((await getDocs(collection(db, 'administrators', state.administratorId, 'systemIncidents'))).size).toBe(0);
   const events = (await getDocs(collection(db, 'administrators', state.administratorId, 'medicationEvents')))
@@ -35,5 +35,13 @@ test('the early completion and actual alarm evidence return to the administrator
   expect(completed).toHaveLength(1);
   expect(completed[0].completedAt.toMillis()).toBeLessThan(completed[0].scheduledTime.toMillis());
   expect(completed[0].scheduledTime.toMillis() - completed[0].completedAt.toMillis()).toBeLessThanOrEqual(900_000);
+  // SDK-backed evidence is checked below using the actual event document ID.
+  const completedDocs = (await getDocs(collection(db, 'administrators', state.administratorId, 'medicationEvents')))
+    .docs.filter(doc => doc.data().status === 'completed');
+  const deadlines = evidence.filter(event => event.kind === 'registration_requested'
+    && event.eventId === completedDocs[0].id).map(event => Date.parse(event.detail.split('deadline=')[1]));
+  const origin = completed[0].scheduledTime.toMillis();
+  expect([...new Set(deadlines)].sort((a, b) => a - b))
+    .toEqual(Array.from({ length: 31 }, (_, index) => origin + index * 60_000));
   await info.attach('actual-returned-completion', { body: await page.screenshot(), contentType: 'image/png' });
 });
