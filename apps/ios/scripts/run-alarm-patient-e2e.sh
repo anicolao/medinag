@@ -22,7 +22,9 @@ cleanup() {
   fi
   xcrun simctl delete "$MEDINAG_SIMULATOR_ID" >/dev/null 2>&1 || true
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 xcrun simctl boot "$MEDINAG_SIMULATOR_ID"
 xcrun simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
 npm run ios:generate

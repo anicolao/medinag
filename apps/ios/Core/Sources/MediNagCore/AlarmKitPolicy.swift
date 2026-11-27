@@ -15,7 +15,7 @@ public enum AlarmKitPolicy {
 
   /// Reliability experiment: original future dose times only. No catch-up,
   /// snooze transformation, or dense retry blocks, even for pending old doses.
-  public static func singleDosePlan(events: [MedicationEvent], at now: Date, limit: Int = 18) -> [Slot] {
+  public static func singleDosePlan(events: [MedicationEvent], at now: Date, limit: Int = 1) -> [Slot] {
     Array(events.filter { $0.status != .completed && $0.scheduledTime > now }
       .sorted { $0.scheduledTime < $1.scheduledTime }.prefix(max(0, limit)))
       .map { Slot(eventID: $0.id, deadline: $0.scheduledTime) }

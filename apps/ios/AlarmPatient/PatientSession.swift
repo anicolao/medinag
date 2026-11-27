@@ -48,10 +48,17 @@ final class PatientSession: ObservableObject {
         for alarm in alarms where previous[alarm.id] != alarm.state {
           _ = await PatientAlarmEngine.shared.run(.observeOS(alarm.id, String(describing: alarm.state)))
         }
-        for id in previous.keys where !alarms.contains(where: { $0.id == id }) {
+        let removed = previous.keys.filter { id in !alarms.contains(where: { $0.id == id }) }
+        for id in removed {
           _ = await PatientAlarmEngine.shared.run(.observeOS(id, "absent from OS inventory; not proof of a medication response"))
         }
         previous = Dictionary(uniqueKeysWithValues: alarms.map { ($0.id, $0.state) })
+        #if ALARM_RELIABILITY_TRIAL
+        // Best effort when execution is available; ordinary Stop supplies no
+        // custom wake handler. The physical trial therefore requires opening
+        // the app after Stop rather than promising an automatic next-dose wake.
+        if !removed.isEmpty { _ = await PatientAlarmEngine.shared.run(.reconcile) }
+        #endif
         self?.scheduleFlush()
       }
     }

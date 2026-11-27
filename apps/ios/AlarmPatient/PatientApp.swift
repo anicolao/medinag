@@ -120,7 +120,7 @@ struct PatientView: View {
     }
     #if ALARM_RELIABILITY_TRIAL
     .safeAreaInset(edge: .top) {
-      Text("Schedule reliability test: ordinary Stop, default sound. No snooze or repeat alerts.")
+      Text("Single-alarm test: only the next dose. After Stop, open MediNag to arm the next. No snooze or retries.")
         .font(.footnote).multilineTextAlignment(.center).padding(8)
         .accessibilityIdentifier("schedule-reliability-banner")
     }

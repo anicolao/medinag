@@ -14,7 +14,7 @@ actor PatientAlarmEngine {
   private var tail: Task<Void, Never>?
   private var configurationVersion: Int {
     #if ALARM_RELIABILITY_TRIAL
-    3
+    4
     #else
     2
     #endif
@@ -119,14 +119,13 @@ actor PatientAlarmEngine {
     guard manager.authorizationState == .authorized else {
       throw Failure("Alarms are disabled. Enable MediNag alarms in Settings.")
     }
+    #if ALARM_RELIABILITY_TRIAL
+    try await reconcileOneAlarm()
+    #else
     let now = Date()
     let latest = state.latestDue(at: now)
-    #if ALARM_RELIABILITY_TRIAL
-    let slots = AlarmKitPolicy.singleDosePlan(events: state.eligibleEvents, at: now)
-    #else
     let slots = AlarmKitPolicy.retryPlan(events: state.eligibleEvents, at: now,
       repeatInterval: Double(state.context!.plan.repeatIntervalMinutes * 60))
-    #endif
     var desired = Set<UUID>()
     var inventory = try manager.alarms
     // Free obsolete/far-future capacity, but keep each selected deadline until
@@ -204,7 +203,67 @@ actor PatientAlarmEngine {
     #else
     try trace("inventory_verified", detail: "\(final.count) actual alarms; \(Set(slots.map(\.eventID)).count) independent 30-minute dose blocks")
     #endif
+    #endif
   }
+
+  #if ALARM_RELIABILITY_TRIAL
+  /// A strict single-alarm experiment: never hold an active alarm plus a future
+  /// one, or briefly install a replacement before canceling the old identity.
+  private func reconcileOneAlarm() async throws {
+    let now = Date()
+    let inventory = try manager.alarms
+    let latest = state.latestDue(at: now)
+    let active = state.bindings.first { binding in
+      binding.configurationVersion == configurationVersion && binding.eventID == latest?.id
+        && inventory.contains { $0.id == binding.id }
+    }
+    let next = AlarmKitPolicy.singleDosePlan(events: state.eligibleEvents, at: now).first
+    let eventID = active?.eventID ?? next?.eventID
+    let deadline = active?.deadline ?? next?.deadline
+    let existing = active ?? state.bindings.first { binding in
+      binding.eventID == eventID && binding.deadline == deadline
+        && binding.configurationVersion == configurationVersion
+        && inventory.contains { $0.id == binding.id && $0.schedule == .fixed(binding.deadline) }
+    }
+    for alarm in inventory where alarm.id != existing?.id {
+      try manager.cancel(id: alarm.id)
+    }
+    let before = try manager.alarms
+    guard before.count <= 1, before.allSatisfy({ $0.id == existing?.id }) else {
+      throw Failure("The previous OS alarm inventory could not be cleared to one or zero alarms.")
+    }
+    try trace("single_alarm_inventory_pruned", eventID: eventID ?? "",
+      detail: "\(before.count) OS alarms before registration; no overlapping replacement")
+    var selected = existing
+    if selected == nil, let eventID, let deadline,
+      let event = state.eligibleEvents.first(where: { $0.id == eventID }) {
+      let binding = PatientAlarmState.Binding(id: UUID(), eventID: eventID, deadline: deadline,
+        followup: false, snoozeSeconds: 0, configurationVersion: configurationVersion)
+      try await install(binding, event: event)
+      selected = state.bindings.first { $0.id == binding.id }
+    }
+    let final = try manager.alarms
+    let expected = selected.map { Set([$0.id]) } ?? Set<UUID>()
+    guard final.count <= 1, Set(final.map(\.id)) == expected else {
+      throw Failure("Single-alarm invariant failed: the OS inventory is not exactly the selected alarm.")
+    }
+    state.bindings = selected.map { [$0] } ?? []
+    state.verifiedAlarmIDs = final.map(\.id)
+    state.verifiedThrough = selected?.deadline
+    state.verificationObservedAt = Date()
+    state.responseEventID = nil
+    let center = UNUserNotificationCenter.current()
+    center.removeAllPendingNotificationRequests()
+    center.removeAllDeliveredNotifications()
+    guard await center.pendingNotificationRequests().isEmpty else {
+      throw Failure("Legacy phone notifications remain during the single-alarm trial.")
+    }
+    state.migrated = true
+    state.lastFailure = nil
+    try trace("inventory_verified", eventID: selected?.eventID ?? "",
+      detail: "Exactly \(final.count) OS alarm; only next alert; default system alarm sound and ordinary Stop")
+  }
+  #endif
 
   private func install(_ binding: PatientAlarmState.Binding, event: MedicationEvent) async throws {
     state.bindings.removeAll { $0.id == binding.id }

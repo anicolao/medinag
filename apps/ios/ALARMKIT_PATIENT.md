@@ -1,5 +1,53 @@
 # Connected iPhone AlarmKit trial
 
+## Strict next-alert-only trial (build 25)
+
+This supersedes build 24's 18-dose queue. All counts here concern alarms owned
+by MediNag; Clock and the separate Lab are not modified. The reliability target now
+registers **exactly one OS alarm total when a next/current alert exists**, not
+one per dose and not one pending plus one ringing. Only the earliest future
+uncompleted occurrence is selected from the real schedule. If that occurrence
+has become due and remains in OS inventory, it stays the sole selected alarm
+until Stop/completion/retirement; a refresh must not cancel it just because its
+deadline passed or add a future backup alongside it.
+
+Before replacement registration, every unselected OS identifier is canceled
+and the inventory is read back to confirm at most one remains. Migration from
+build 24 retires the old configuration-version-3 registrations before creating
+version 4. A selected existing version-4 alarm is reused without moving its
+deadline. The final OS inventory must be exactly the selected ID, or empty when
+no eligible occurrence exists. SDK readback, not just the planned list, enforces
+the invariant. There is no temporary second replacement alarm. Legacy local
+notification queues are also cleared and verified. Server clinical data is not
+rewritten by migration.
+
+Urgency is the normal AlarmKit system-alarm path that Apple documents as breaking
+through Focus and silent mode, using the default alarm sound. There is no extra
+AlarmKit urgency level selected here, invented Critical Alerts entitlement, or
+claim that volume/user permissions can be overridden. Sound and presentation
+still require physical verification; the previous failed delivery is not
+declared fixed just because this one alarm registers.
+
+Install/open online once. **After ordinary Stop, open MediNag to ensure the next
+dose is armed.** If the OS inventory stream supplies an execution opportunity
+after removal, the app also tries immediately, but ordinary Stop does not
+guarantee a background run and daily background refresh remains best effort.
+Do not claim autonomous multi-dose protection while forbidding future alarms.
+There is deliberately no hidden reserve queue, snooze or repeats in this trial.
+Manual Yes, I did reporting remains, and correctly advances to the next alarm.
+
+The existing server's 48-hour coverage policy does not match this single-alarm
+experiment and may emit coverage-warning SMS. Scheduled-through remains the
+actual sole alarm deadline: the client must not fabricate days of coverage to
+silence that watchdog. Overdue-dose SMS also remains active when Stop is not
+followed by actual medication completion. No server policy was disabled.
+
+Connected verification now requires exactly one OS registration after setup,
+exactly one replacement after early completion/relaunch, original server dose
+times only, cancellation evidence and returned real server response. It does
+not assert audible delivery. Physical testing should include an alarm hours
+ahead with no app activity just before its due time, not only a short countdown.
+
 ## Schedule reliability trial (build 24)
 
 Use `MediNagAlarmReliability` / `npm run ios:testflight:alarm-reliability` for

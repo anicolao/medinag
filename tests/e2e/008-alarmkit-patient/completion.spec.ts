@@ -27,7 +27,7 @@ test('the early completion and actual alarm evidence return to the administrator
   const coverage = (await getDocs(collection(db, 'administrators', state.administratorId, 'deviceCoverage')))
     .docs.map(doc => doc.data());
   expect(coverage).toHaveLength(1);
-  expect(coverage[0].actualPendingCount).toBe(reliability ? 18 : 62);
+  expect(coverage[0].actualPendingCount).toBe(reliability ? 1 : 62);
   expect(coverage[0].reconciliationStatus).toBe('ready');
   expect((await getDocs(collection(db, 'administrators', state.administratorId, 'systemIncidents'))).size).toBe(0);
   const eventDocs = (await getDocs(collection(db, 'administrators', state.administratorId, 'medicationEvents'))).docs;
@@ -49,7 +49,12 @@ test('the early completion and actual alarm evidence return to the administrator
       expect(Date.parse(registration.detail.split('deadline=')[1])).toBe(actualTimes.get(registration.eventId));
     }
     expect(evidence.some(event => event.kind === 'inventory_verified'
-      && event.detail.includes('one per original dose time'))).toBeTruthy();
+      && event.detail.includes('Exactly 1 OS alarm; only next alert'))).toBeTruthy();
+    const inventoryChecks = evidence.filter(event => event.kind === 'inventory_verified');
+    expect(inventoryChecks.every(event => /^Exactly [01] OS alarm;/.test(event.detail))).toBeTruthy();
+    const beforeRegistration = evidence.filter(event => event.kind === 'single_alarm_inventory_pruned');
+    expect(beforeRegistration.length).toBeGreaterThan(0);
+    expect(beforeRegistration.every(event => /^[01] OS alarms before registration;/.test(event.detail))).toBeTruthy();
   }
   await info.attach('actual-returned-completion', { body: await page.screenshot(), contentType: 'image/png' });
 });
