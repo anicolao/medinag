@@ -38,6 +38,8 @@ jobs:
       - run: npm ci && npm ci --prefix functions
       - run: npx playwright install chromium
       - run: npm run check && npm run ios:core:check && npm run functions:test
+      - name: Alarm Lab registration smoke check (not audible-delivery proof)
+        run: bash apps/ios/scripts/check-alarm-lab.sh
       - name: Validate production Firestore rules in isolation
         run: npx firebase emulators:exec --project demo-medinag --only firestore 'npm run test:rules'
       - name: Real dashboard to phone to Firestore completion
@@ -50,5 +52,6 @@ jobs:
           retention-days: 7
           path: |
             apps/ios/DerivedData/AlarmPatientConnected-*.xcresult/
+            apps/ios/DerivedData/AlarmLab-*.xcresult/
             apps/ios/DerivedData/AlarmPatientLastState.json
             test-results/
