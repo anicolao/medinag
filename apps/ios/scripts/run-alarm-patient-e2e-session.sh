@@ -23,9 +23,9 @@ export TEST_RUNNER_MEDINAG_PATIENT_LAUNCH_ARGUMENTS="$(node --input-type=module 
   ]));')"
 export DEVELOPER_DIR="${MEDINAG_XCODE_DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 export MEDINAG_PATIENT_RESULT_BUNDLE="${MEDINAG_PATIENT_RESULT_BUNDLE:-apps/ios/DerivedData/AlarmPatientConnected-$(date +%Y%m%d-%H%M%S).xcresult}"
-xcodebuild test-without-building -project apps/ios/MediNag.xcodeproj -scheme MediNagAlarmPatient \
+xcodebuild test-without-building -project apps/ios/MediNag.xcodeproj -scheme "$MEDINAG_PATIENT_SCHEME" \
   -configuration E2E -destination "platform=iOS Simulator,id=$MEDINAG_SIMULATOR_ID" \
-  -derivedDataPath apps/ios/DerivedData/AlarmPatient \
+  -derivedDataPath "apps/ios/DerivedData/$MEDINAG_PATIENT_SCHEME" \
   -resultBundlePath "$MEDINAG_PATIENT_RESULT_BUNDLE" -quiet
 xcrun xcresulttool get test-results summary \
   --path "$MEDINAG_PATIENT_RESULT_BUNDLE" --format json \

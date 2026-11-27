@@ -12,6 +12,13 @@ actor PatientAlarmEngine {
   private let manager = AlarmManager.shared
   private var state: PatientAlarmState
   private var tail: Task<Void, Never>?
+  private var configurationVersion: Int {
+    #if ALARM_RELIABILITY_TRIAL
+    3
+    #else
+    2
+    #endif
+  }
   private let logger = Logger(subsystem: "org.boardgamescafe.medinag", category: "PatientAlarmKit")
 
   enum Command: Sendable {
@@ -114,8 +121,12 @@ actor PatientAlarmEngine {
     }
     let now = Date()
     let latest = state.latestDue(at: now)
+    #if ALARM_RELIABILITY_TRIAL
+    let slots = AlarmKitPolicy.singleDosePlan(events: state.eligibleEvents, at: now)
+    #else
     let slots = AlarmKitPolicy.retryPlan(events: state.eligibleEvents, at: now,
       repeatInterval: Double(state.context!.plan.repeatIntervalMinutes * 60))
+    #endif
     var desired = Set<UUID>()
     var inventory = try manager.alarms
     // Free obsolete/far-future capacity, but keep each selected deadline until
@@ -123,7 +134,8 @@ actor PatientAlarmEngine {
     // just because its initial fixed deadline is now in the past.
     let ringing = inventory.filter { $0.state == .alerting }.filter { alarm in
       guard let latest, (latest.snoozedUntil ?? .distantPast) <= now else { return false }
-      return state.bindings.contains { $0.id == alarm.id && $0.eventID == latest.id }
+      return state.bindings.contains { $0.id == alarm.id && $0.eventID == latest.id
+        && $0.configurationVersion == configurationVersion }
     }.max { left, right in
       (state.bindings.first { $0.id == left.id }?.deadline ?? .distantPast)
         < (state.bindings.first { $0.id == right.id }?.deadline ?? .distantPast)
@@ -144,16 +156,20 @@ actor PatientAlarmEngine {
     inventory = try manager.alarms
     for slot in slots {
       guard let event = state.eligibleEvents.first(where: { $0.id == slot.eventID }) else { continue }
+      #if ALARM_RELIABILITY_TRIAL
+      let snooze: TimeInterval = 0 // Disabled: changing server S must not churn these test alarms.
+      #else
       let snooze = Double(state.context!.plan.snoozeIntervalMinutes * 60)
+      #endif
       if let binding = state.bindings.first(where: { $0.eventID == event.id
-        && $0.deadline == slot.deadline && $0.snoozeSeconds == snooze && $0.configurationVersion == 2 }),
+        && $0.deadline == slot.deadline && $0.snoozeSeconds == snooze && $0.configurationVersion == configurationVersion }),
         inventory.contains(where: { $0.id == binding.id && $0.schedule == .fixed(binding.deadline) }) {
         desired.insert(binding.id)
         continue
       }
       let binding = PatientAlarmState.Binding(id: UUID(), eventID: event.id,
         deadline: slot.deadline, followup: slot.deadline != event.scheduledTime,
-        snoozeSeconds: snooze, configurationVersion: 2)
+        snoozeSeconds: snooze, configurationVersion: configurationVersion)
       try await install(binding, event: event)
       desired.insert(binding.id)
       // An old configuration for this exact deadline is no longer needed.
@@ -183,7 +199,11 @@ actor PatientAlarmEngine {
     state.verifiedAlarmIDs = final.map(\.id)
     state.verificationObservedAt = Date()
     state.lastFailure = nil
+    #if ALARM_RELIABILITY_TRIAL
+    try trace("inventory_verified", detail: "Reliability trial: \(final.count) actual alarms; one per original dose time; default sound and ordinary Stop; no retries/snooze/custom intents")
+    #else
     try trace("inventory_verified", detail: "\(final.count) actual alarms; \(Set(slots.map(\.eventID)).count) independent 30-minute dose blocks")
+    #endif
   }
 
   private func install(_ binding: PatientAlarmState.Binding, event: MedicationEvent) async throws {
@@ -191,6 +211,15 @@ actor PatientAlarmEngine {
     state.bindings.append(binding)
     try trace("registration_requested", eventID: event.id,
       detail: "\(binding.id) deadline=\(binding.deadline.ISO8601Format())")
+    #if ALARM_RELIABILITY_TRIAL
+    // Same minimal public configuration as the physically successful baseline.
+    // Shared generic metadata type is required by AlarmKit, but carries no data.
+    let attributes = AlarmAttributes<PrototypeMetadata>(
+      presentation: AlarmPresentation(alert: AlarmPresentation.Alert(title: "Time for medication")),
+      metadata: nil, tintColor: .blue)
+    let configuration = AlarmManager.AlarmConfiguration(
+      schedule: .fixed(binding.deadline), attributes: attributes, sound: .default)
+    #else
     let attributes = AlarmAttributes(presentation: AlarmPresentation(
       alert: AlarmPresentation.Alert(title: "Time for medication",
         secondaryButton: AlarmButton(text: "Snooze", textColor: .white, systemImageName: "zzz"),
@@ -204,6 +233,7 @@ actor PatientAlarmEngine {
         postAlert: binding.snoozeSeconds), schedule: .fixed(binding.deadline), attributes: attributes,
       stopIntent: PatientStopIntent(alarmID: binding.id),
       secondaryIntent: PatientSnoozeIntent(alarmID: binding.id), sound: .named("MediNagAlarm.caf"))
+    #endif
     _ = try await manager.schedule(id: binding.id, configuration: configuration)
     guard try manager.alarms.contains(where: { $0.id == binding.id && $0.schedule == .fixed(binding.deadline) }) else {
       throw Failure("AlarmKit did not confirm the requested dose deadline.")
@@ -246,6 +276,9 @@ actor PatientAlarmEngine {
   }
 
   private func respond(eventID: String, response: DoseResponse) async throws {
+    #if ALARM_RELIABILITY_TRIAL
+    guard response == .yesIDid else { throw Failure("Snooze is deliberately disabled in the reliability trial.") }
+    #endif
     guard let context = state.context, let index = state.events.firstIndex(where: { $0.id == eventID }) else { return }
     let event = state.events[index]
     let now = Date()

@@ -118,6 +118,13 @@ struct PatientView: View {
       .background(Color(red: 0.96, green: 0.98, blue: 0.98))
       .tint(.teal)
     }
+    #if ALARM_RELIABILITY_TRIAL
+    .safeAreaInset(edge: .top) {
+      Text("Schedule reliability test: ordinary Stop, default sound. No snooze or repeat alerts.")
+        .font(.footnote).multilineTextAlignment(.center).padding(8)
+        .accessibilityIdentifier("schedule-reliability-banner")
+    }
+    #endif
   }
 
   @ViewBuilder
@@ -149,7 +156,9 @@ struct PatientView: View {
         || AlertTiming.reminder(for: due, snoozeInterval: snoozeSeconds) <= now {
       VStack(spacing: 24) {
         responseButton("Yes, I did", response: .yesIDid, event: due)
+        #if !ALARM_RELIABILITY_TRIAL
         responseButton("Yes, I will", response: .yesIWill, event: due)
+        #endif
       }
       .buttonStyle(.bordered)
       .controlSize(.large)

@@ -58,6 +58,16 @@ struct MediNagCoreChecks {
     let overlap = AlarmKitPolicy.retryPlan(events: [event, close], at: dose.addingTimeInterval(-60), repeatInterval: 180)
     try await expect(overlap.filter { $0.eventID == event.id }.allSatisfy { $0.deadline < close.scheduledTime },
       "No old-dose retries can be registered at or beyond the successor")
+    let sparse = AlarmKitPolicy.singleDosePlan(events: [event, next], at: dose.addingTimeInterval(-60))
+    try await expect(sparse.count == 2 && sparse.map(\.deadline) == [dose, next.scheduledTime],
+      "Reliability trial has exactly one alarm at each original dose time, no dense retries")
+    let late = AlarmKitPolicy.singleDosePlan(events: [event, next], at: dose.addingTimeInterval(600))
+    try await expect(late.map(\.deadline) == [next.scheduledTime],
+      "Reliability trial must not replay missed doses or register catch-up alerts")
+    try await expect(AlarmKitPolicy.singleDosePlan(events: [completed, next], at: dose.addingTimeInterval(-60))
+      .map(\.eventID) == [next.id], "Completed occurrences must not be rearmed in the trial")
+    try await expect(AlarmKitPolicy.singleDosePlan(events: [event, next], at: dose.addingTimeInterval(-60), limit: 1)
+      .map(\.eventID) == [event.id], "Trial capacity must reserve earliest actual dose first")
   }
 
   private static func checkResponseIdentifiers() async throws {

@@ -15,9 +15,16 @@ marketing_version="${MEDINAG_MARKETING_VERSION:-0.1.0}"
 alarm_prototype="${MEDINAG_ALARM_PROTOTYPE:-0}"
 alarm_patient="${MEDINAG_ALARM_PATIENT:-0}"
 alarm_baseline="${MEDINAG_ALARM_BASELINE:-0}"
+alarm_reliability="${MEDINAG_ALARM_RELIABILITY:-0}"
 phone_only=0
 release_scheme="MediNag"
-if [[ "$alarm_baseline" == "1" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
+if [[ "$alarm_reliability" == "1" && "$alarm_baseline" == "0" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
+  release_scheme="MediNagAlarmReliability"
+  phone_only=1
+elif [[ "$alarm_reliability" != "0" ]]; then
+  printf 'Select only MEDINAG_ALARM_RELIABILITY=1 for the schedule reliability trial.\n' >&2
+  exit 1
+elif [[ "$alarm_baseline" == "1" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
   release_scheme="MediNagAlarmBaseline"
   phone_only=1
 elif [[ "$alarm_baseline" != "0" ]]; then
@@ -202,10 +209,12 @@ fi
 codesign --verify --deep --strict "$application_path"
 if [[ "$phone_only" == "1" ]]; then
   [[ ! -d "$application_path/Watch" ]] || fail "The phone-only prototype unexpectedly embeds a Watch app"
-  if [[ "$alarm_baseline" == "1" ]]; then
+  if [[ "$alarm_baseline" == "1" || "$alarm_reliability" == "1" ]]; then
     [[ ! -d "$application_path/PlugIns" ]] || fail "The baseline unexpectedly embeds an extension"
     [[ ! -f "$application_path/MediNagAlarm.caf" ]] || fail "The baseline unexpectedly contains a custom sound"
-    [[ ! -f "$application_path/GoogleService-Info.plist" ]] || fail "The baseline unexpectedly contains Firebase configuration"
+    if [[ "$alarm_baseline" == "1" ]]; then
+      [[ ! -f "$application_path/GoogleService-Info.plist" ]] || fail "The baseline unexpectedly contains Firebase configuration"
+    fi
   else
   activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
   [[ -d "$activity_application" ]] || fail "The prototype is missing its AlarmKit Live Activity extension"

@@ -283,6 +283,63 @@ targets:
         product: GoogleSignInSwift
     postBuildScripts: *embedFirebase
 
+  MediNagAlarmReliability:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatient
+        excludes: [Info.plist, ReliabilityInfo.plist]
+      - path: AlarmPrototypeShared
+      - path: MediNag/FirebaseBootstrap.swift
+      - path: MediNag/FirebaseSubjectRepository.swift
+      - path: MediNag/GoogleSubjectAuthenticator.swift
+      - path: MediNag/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPatient/ReliabilityInfo.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL"
+      configs:
+        E2E:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL E2E"
+    dependencies:
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts: *embedFirebase
+  MediNagAlarmReliabilityUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmreliability.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmReliability
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmReliability
   MediNagAlarmPatientUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -376,6 +433,20 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagAlarmReliability:
+    build:
+      targets:
+        MediNagAlarmReliability: all
+        MediNagAlarmReliabilityUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagAlarmReliabilityUITests
+    archive:
+      config: Release
   MediNagAlarmBaseline:
     build:
       targets:

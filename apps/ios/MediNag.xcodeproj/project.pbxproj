@@ -8,11 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		00BF20E1E4C15677C229AFF8 /* 006-watch-companion-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E9DED6AAD6DF6EF68F32E1C /* 006-watch-companion-claims.json */; };
+		01AB5DBCDFC5BE46457E7FEA /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 28E26B9ABBA8362182015346 /* MediNagCore */; };
 		020D59360F6B7F342C6BD8B9 /* MediNagAlarmDiagnosticActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		055D10593F293D8624BA65B7 /* LocalAlertJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EACE948CF0DCB6FE603FD2 /* LocalAlertJournal.swift */; };
+		07EBECEA87E94CCED5D923CB /* PatientAlarmState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443DD9814F925E65FD3379B /* PatientAlarmState.swift */; };
 		09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */; };
 		11EEA380A490DF0358A2A8E2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		121F0F2704A37FD4377A17D2 /* 004-ios-respond-to-dose-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */; };
+		16F9005039C38C4C4E940F78 /* PatientConnectedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */; };
 		18813EDBADEA939F200D330F /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
 		1C5D78AE1E03E83850C244EF /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
@@ -29,6 +32,7 @@
 		2EF3171D42CBB859DBAD9437 /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
 		32C5E1768DF86B2A7DC175A9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		34FF1EE43E41384902DD2930 /* DiagnosticApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B422BB4C7F30C011330215C /* DiagnosticApp.swift */; };
+		35476AC89E81AC6001FE1873 /* PatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E7334A79689E552AA2528A /* PatientApp.swift */; };
 		372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD40690383616CF75360A1A /* MediNagApp.swift */; };
 		3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
 		3DBD33EFF777A06751058117 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A5AC9567CC364E6F9A59ED1 /* Assets.xcassets */; };
@@ -39,19 +43,25 @@
 		48E9C401C5D1A4E6E1F2E58A /* BaselineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD073D0ABCAC4A2CE870A1CF /* BaselineApp.swift */; };
 		49E1D4596AD78D275D2EAFA8 /* PatientSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D08782DF1E5929FC04F29A6 /* PatientSession.swift */; };
 		55F8E3D3D7BD4825E3BAAC46 /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		58EBD7211CBC6A9E14202841 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B5892A530B10858FF0D39A1F /* GoogleSignIn */; };
 		5C0C1DB930C7B3443EFD9A93 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 89C226ACAEC59BFF0FE82B34 /* MediNagCore */; };
 		5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F2D0A0FBA33DECBAAAC014 /* README.md */; };
 		5DAEC636212B07C699C7C889 /* BaselineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CC75C055D9A6013F4F9356 /* BaselineUITests.swift */; };
 		60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		6143A11E1E2A7F6BFEE34EFC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B75C9F54F2050719457F3CDD /* GoogleSignIn */; };
+		6185908D15B8C54F60600DF4 /* PatientAlarmEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */; };
+		61BD107F4D29FCA1A48035BC /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A73CCC1462E2A29772B294CD /* FirebaseCore */; };
 		644D14AB90C0CF06C2B25CFF /* AlertTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B5F5765D9EF59F18A9D548 /* AlertTimingTests.swift */; };
 		64565837CA61B72B53996E80 /* StopAndRespondIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86E4D427FA0B527D1B9FACC /* StopAndRespondIntent.swift */; };
 		64B9AF82FC68050FE18FA43C /* PrototypeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60807FF7A6DEB42A5574BE1 /* PrototypeApp.swift */; };
+		66C98E7592E40FF63715950F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */; };
 		66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
 		678D696D826CF06B8119A71A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C1D51807EA1E89772D2C1705 /* FirebaseAuth */; };
 		6A5676D70BD088B62E4D9636 /* PhoneNotificationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532CC6107AE4964E739FB594 /* PhoneNotificationResponse.swift */; };
 		6B8E740175B6BA5E50952212 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A35C5F490D783A4224F82302 /* FirebaseCore */; };
+		72B0531087FA24678F53B171 /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
+		74EDB10800506708B0DAAEE6 /* ReliabilityInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */; };
 		7791348DBFE8D02F3A58B9D4 /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7D991235E598EBA73F04C765 /* TestStepHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827A83DB040E02286EA2824 /* TestStepHelper.swift */; };
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
@@ -68,17 +78,23 @@
 		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
 		AA227CC2FE58C16EA23CDDDB /* CompanionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D43564C5D864FA222067FC /* CompanionTransport.swift */; };
 		AC2EB3B0D11B7BFA6DD3F548 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6AF4D9D963A502539C320830 /* FirebaseCore */; };
+		B114E3F06BFA7C3309BF0F23 /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
+		B2E2C4460573FA212D422D94 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */; };
+		B77B17E2EFAA99CDADBA0198 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		BAE5B5C0B62BB110A3385423 /* LocalAlertJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EACE948CF0DCB6FE603FD2 /* LocalAlertJournal.swift */; };
 		BBBC0B18BB6364794EFB134C /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
 		BBCF6B5545F73297AA034738 /* PrototypeLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8528BAD0FF98ADECECA1D44E /* PrototypeLiveActivity.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		BEB399C421F1E7501615DB67 /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
 		C07D6F3001CD658C697C7615 /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		C127E79D3BCBBF2B8F3179E3 /* PatientAlarmIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */; };
 		C1B6FB2505268BC98D555F8E /* MediNagWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5D20FBA5ABB23984225C8135 /* MediNagWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C4D3D9000CC2319ADEFBC79E /* PrototypeLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8528BAD0FF98ADECECA1D44E /* PrototypeLiveActivity.swift */; };
 		CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */; };
 		D0E73CEDE65F6BBA67C5FD9F /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		D269530A0AAC025B76661F8A /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		D63AFF02AB8948CFCD687486 /* DiagnosticUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C18430E8599B61843563F96 /* DiagnosticUITests.swift */; };
 		D79B881859925D93F2E1926B /* PatientAlarmState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443DD9814F925E65FD3379B /* PatientAlarmState.swift */; };
 		DF740D52CC9703A67D24F41C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
@@ -86,6 +102,8 @@
 		E28224FE8A4B50DE1A5DE5E6 /* NotificationFailureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */; };
 		E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */; };
 		E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8EDA23C6B76FF5E6490770D /* ContentView.swift */; };
+		EA38A42453EF9C924C798909 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		EAFD7E7354CD5DECD8F0E3E3 /* PatientSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D08782DF1E5929FC04F29A6 /* PatientSession.swift */; };
 		EBC910BD72F1E79FB3D049D2 /* PatientAlarmIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */; };
 		ECF684623440DCACC79A26D8 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 891F89D16D8D0D01FCEB1516 /* MediNagCore */; };
 		EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8187B68655A62CA3923A2B4 /* NotificationServices.swift */; };
@@ -119,6 +137,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 018FBB9611539AE8D9A45EAA;
 			remoteInfo = MediNagAlarmPrototypeLiveActivity;
+		};
+		7E5BD75F70B3AA4F98EC52F0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FDA93A7292D184207B4156F9;
+			remoteInfo = MediNagAlarmReliability;
 		};
 		895745E575491DAD5CE2F82E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -232,6 +257,7 @@
 		1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFailureUITests.swift; sourceTree = "<group>"; };
 		122A61DD05C036D5C6EF1A41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderRefreshCoordinator.swift; sourceTree = "<group>"; };
+		17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = ReliabilityInfo.plist; sourceTree = "<group>"; };
 		1C4984FB11665ABC22BE0FC3 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		29F2D0A0FBA33DECBAAAC014 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		2EDDFBEF0047774D7999312C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -259,6 +285,7 @@
 		6D08782DF1E5929FC04F29A6 /* PatientSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientSession.swift; sourceTree = "<group>"; };
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmReliabilityUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		760F763D311BA399CE701AF3 /* 006-watch-companion-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "006-watch-companion-claims.json"; sourceTree = "<group>"; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
 		7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MediNagAlarmDiagnosticActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -275,6 +302,7 @@
 		9F372249ED3E0C1160FAEC8B /* MediNagAlarmDiagnostic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmDiagnostic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0D5968B67C3A32EAE04FAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A3E7334A79689E552AA2528A /* PatientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientApp.swift; sourceTree = "<group>"; };
+		A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmReliability.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
 		A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagWatchApp.swift; sourceTree = "<group>"; };
 		AA81EF092FE9DCE888E99E27 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -347,6 +375,19 @@
 				95E311D2758534D583393DF9 /* FirebaseFirestore in Frameworks */,
 				6143A11E1E2A7F6BFEE34EFC /* GoogleSignIn in Frameworks */,
 				99C6420CC58E9E5D1A75FD35 /* GoogleSignInSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1E2D31B7356909F1CCE943E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01AB5DBCDFC5BE46457E7FEA /* MediNagCore in Frameworks */,
+				B77B17E2EFAA99CDADBA0198 /* FirebaseAuth in Frameworks */,
+				61BD107F4D29FCA1A48035BC /* FirebaseCore in Frameworks */,
+				B2E2C4460573FA212D422D94 /* FirebaseFirestore in Frameworks */,
+				58EBD7211CBC6A9E14202841 /* GoogleSignIn in Frameworks */,
+				66C98E7592E40FF63715950F /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -441,6 +482,7 @@
 				6443DD9814F925E65FD3379B /* PatientAlarmState.swift */,
 				A3E7334A79689E552AA2528A /* PatientApp.swift */,
 				6D08782DF1E5929FC04F29A6 /* PatientSession.swift */,
+				17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */,
 			);
 			path = AlarmPatient;
 			sourceTree = "<group>";
@@ -564,6 +606,8 @@
 				AAC0AC2B1DA8CCDEED573BC8 /* MediNagAlarmPrototype.app */,
 				5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */,
 				E6BD7F0E21681617AC4619AD /* MediNagAlarmPrototypeUITests.xctest */,
+				A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */,
+				75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */,
 				75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */,
 				B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */,
 				5D20FBA5ABB23984225C8135 /* MediNagWatch.app */,
@@ -651,6 +695,24 @@
 			);
 			productName = MediNagUITests;
 			productReference = B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		15210E73310C2952C94D12CF /* MediNagAlarmReliabilityUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB168325D482E40B886D8FAD /* Build configuration list for PBXNativeTarget "MediNagAlarmReliabilityUITests" */;
+			buildPhases = (
+				7A7EDC7DDCCEADABA1813F15 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A2AA24E06D2E59362A9C81D7 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmReliabilityUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmReliabilityUITests;
+			productReference = 75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		452E5934CFA1C7AF236F6DFF /* MediNagAlarmDiagnosticActivity */ = {
@@ -915,6 +977,32 @@
 			productReference = B861744383BCCCE1A28043D0 /* MediNagAlarmBaseline.app */;
 			productType = "com.apple.product-type.application";
 		};
+		FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC5AF8F35723C42AC12D3034 /* Build configuration list for PBXNativeTarget "MediNagAlarmReliability" */;
+			buildPhases = (
+				C435D8075280142286E41FC0 /* Sources */,
+				4F6C65FCC48AE8FCA476EC56 /* Resources */,
+				E1E2D31B7356909F1CCE943E /* Frameworks */,
+				B9B5531F4F16B1F1E1A7032A /* Embed local Firebase configuration */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MediNagAlarmReliability;
+			packageProductDependencies = (
+				28E26B9ABBA8362182015346 /* MediNagCore */,
+				F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */,
+				A73CCC1462E2A29772B294CD /* FirebaseCore */,
+				4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */,
+				B5892A530B10858FF0D39A1F /* GoogleSignIn */,
+				A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */,
+			);
+			productName = MediNagAlarmReliability;
+			productReference = A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -930,6 +1018,9 @@
 					0F6C4385F6E0304F3320D1F1 = {
 						ProvisioningStyle = Automatic;
 						TestTargetID = 89D87283161B3E50F48CC991;
+					};
+					15210E73310C2952C94D12CF = {
+						TestTargetID = FDA93A7292D184207B4156F9;
 					};
 					452E5934CFA1C7AF236F6DFF = {
 						ProvisioningStyle = Automatic;
@@ -970,6 +1061,9 @@
 					F37B9A724F1392900BA3C0A5 = {
 						ProvisioningStyle = Automatic;
 					};
+					FDA93A7292D184207B4156F9 = {
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = E4215D7FB7B4B516E6E8AFCF /* Build configuration list for PBXProject "MediNag" */;
@@ -1001,6 +1095,8 @@
 				6FB66FC69ABBEA460319178D /* MediNagAlarmPrototypeUITests */,
 				89D87283161B3E50F48CC991 /* MediNag */,
 				CB06751495B9DCE7C4D4B47E /* MediNagAlarmPatient */,
+				FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */,
+				15210E73310C2952C94D12CF /* MediNagAlarmReliabilityUITests */,
 				E9C151E6E05A4F936D768CAB /* MediNagAlarmPatientUITests */,
 				7247F8FA530661D6CF9DE05D /* MediNagWatch */,
 				75F246297F8E3289E61F6D5B /* MediNagWatchUITests */,
@@ -1027,6 +1123,14 @@
 				BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */,
 				C07D6F3001CD658C697C7615 /* MediNagAlarm.caf in Resources */,
 				BED3126F79F402470EC3C662 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4F6C65FCC48AE8FCA476EC56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EA38A42453EF9C924C798909 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1070,6 +1174,7 @@
 			files = (
 				32C5E1768DF86B2A7DC175A9 /* Assets.xcassets in Resources */,
 				55F8E3D3D7BD4825E3BAAC46 /* MediNagAlarm.caf in Resources */,
+				74EDB10800506708B0DAAEE6 /* ReliabilityInfo.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1106,6 +1211,25 @@
 			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
 		};
 		A6E1D3BCCABD044206329AC8 /* Embed local Firebase configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed local Firebase configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
+		};
+		B9B5531F4F16B1F1E1A7032A /* Embed local Firebase configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -1193,6 +1317,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A7EDC7DDCCEADABA1813F15 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16F9005039C38C4C4E940F78 /* PatientConnectedUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		866B51167C5A272E110EBC97 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1228,6 +1360,22 @@
 				60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */,
 				BAE5B5C0B62BB110A3385423 /* LocalAlertJournal.swift in Sources */,
 				430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C435D8075280142286E41FC0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B114E3F06BFA7C3309BF0F23 /* FirebaseBootstrap.swift in Sources */,
+				D269530A0AAC025B76661F8A /* FirebaseSubjectRepository.swift in Sources */,
+				72B0531087FA24678F53B171 /* GoogleSubjectAuthenticator.swift in Sources */,
+				6185908D15B8C54F60600DF4 /* PatientAlarmEngine.swift in Sources */,
+				C127E79D3BCBBF2B8F3179E3 /* PatientAlarmIntents.swift in Sources */,
+				07EBECEA87E94CCED5D923CB /* PatientAlarmState.swift in Sources */,
+				35476AC89E81AC6001FE1873 /* PatientApp.swift in Sources */,
+				EAFD7E7354CD5DECD8F0E3E3 /* PatientSession.swift in Sources */,
+				BEB399C421F1E7501615DB67 /* PrototypeMetadata.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1335,6 +1483,11 @@
 			target = 7247F8FA530661D6CF9DE05D /* MediNagWatch */;
 			targetProxy = D6CD5B2A4024BCA51DA36675 /* PBXContainerItemProxy */;
 		};
+		A2AA24E06D2E59362A9C81D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */;
+			targetProxy = 7E5BD75F70B3AA4F98EC52F0 /* PBXContainerItemProxy */;
+		};
 		CD5BBCACBE7AF3D4429AEFF6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 9782D8508977305AF80865CB /* MediNagAlarmPrototype */;
@@ -1348,6 +1501,50 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0310945E16E5DF1613BE4F62 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
+			};
+			name = E2E;
+		};
+		059B4E0C234A258E33B15ACB /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL E2E";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
 		08BD978E85C20C6C0F5A07A8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1716,6 +1913,56 @@
 			};
 			name = E2E;
 		};
+		601C159BC4B4E786813CB3C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		620F1A8A3D0CA07AF763F432 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		747F0440C8189BDF12389BCB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1818,6 +2065,25 @@
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		8FD7C09F25DDB12D7ED80077 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
 			};
 			name = Release;
 		};
@@ -2226,6 +2492,25 @@
 			};
 			name = Release;
 		};
+		D156DEFDD2F4E3300834BC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
+			};
+			name = Debug;
+		};
 		DB9022F4B36FD66758164183 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2629,6 +2914,26 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		BC5AF8F35723C42AC12D3034 /* Build configuration list for PBXNativeTarget "MediNagAlarmReliability" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				601C159BC4B4E786813CB3C5 /* Debug */,
+				059B4E0C234A258E33B15ACB /* E2E */,
+				620F1A8A3D0CA07AF763F432 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DB168325D482E40B886D8FAD /* Build configuration list for PBXNativeTarget "MediNagAlarmReliabilityUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D156DEFDD2F4E3300834BC95 /* Debug */,
+				0310945E16E5DF1613BE4F62 /* E2E */,
+				8FD7C09F25DDB12D7ED80077 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		E4215D7FB7B4B516E6E8AFCF /* Build configuration list for PBXProject "MediNag" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2668,9 +2973,18 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		28E26B9ABBA8362182015346 /* MediNagCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MediNagCore;
+		};
 		3C74746627D6BF26ECF6DCC1 /* MediNagCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
+		};
+		4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 		602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -2695,7 +3009,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
 		};
+		A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		A35C5F490D783A4224F82302 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A73CCC1462E2A29772B294CD /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
@@ -2704,6 +3028,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		B5892A530B10858FF0D39A1F /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 		B75C9F54F2050719457F3CDD /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -2718,6 +3047,11 @@
 		F16159FF6F437046BB1C6A4A /* MediNagCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
+		};
+		F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
 		F6561222C7C2A7EE907CE8A6 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -5,6 +5,7 @@ extension Notification.Name {
   static let patientAlarmChanged = Notification.Name("medinag.patient-alarm-changed")
 }
 
+#if !ALARM_RELIABILITY_TRIAL
 struct PatientStopIntent: LiveActivityIntent {
   static let title: LocalizedStringResource = "Respond to medication reminder"
   static var supportedModes: IntentModes { [.foreground(.deferred)] }
@@ -38,3 +39,4 @@ struct PatientSnoozeIntent: LiveActivityIntent {
     return .result()
   }
 }
+#endif

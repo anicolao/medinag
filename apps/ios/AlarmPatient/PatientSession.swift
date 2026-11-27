@@ -48,6 +48,9 @@ final class PatientSession: ObservableObject {
         for alarm in alarms where previous[alarm.id] != alarm.state {
           _ = await PatientAlarmEngine.shared.run(.observeOS(alarm.id, String(describing: alarm.state)))
         }
+        for id in previous.keys where !alarms.contains(where: { $0.id == id }) {
+          _ = await PatientAlarmEngine.shared.run(.observeOS(id, "absent from OS inventory; not proof of a medication response"))
+        }
         previous = Dictionary(uniqueKeysWithValues: alarms.map { ($0.id, $0.state) })
         self?.scheduleFlush()
       }

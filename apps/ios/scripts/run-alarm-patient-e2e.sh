@@ -4,6 +4,11 @@ script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd "$script_directory/../../.." && pwd)"
 cd "$repository_root"
 export DEVELOPER_DIR="${MEDINAG_XCODE_DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+export MEDINAG_PATIENT_SCHEME="${MEDINAG_PATIENT_SCHEME:-MediNagAlarmPatient}"
+case "$MEDINAG_PATIENT_SCHEME" in
+  MediNagAlarmPatient|MediNagAlarmReliability) ;;
+  *) echo 'Unsupported connected phone scheme.' >&2; exit 1 ;;
+esac
 if ! java -version >/dev/null 2>&1; then
   echo 'Java 21 is required; run this script in nix develop.' >&2
   exit 1
@@ -23,9 +28,9 @@ xcrun simctl bootstatus "$MEDINAG_SIMULATOR_ID" -b
 npm run ios:generate
 # Build before choosing a near-future user-entered dose time. A cold SDK build
 # must not make the actual test dose expire during infrastructure setup.
-xcodebuild build-for-testing -project apps/ios/MediNag.xcodeproj -scheme MediNagAlarmPatient \
+xcodebuild build-for-testing -project apps/ios/MediNag.xcodeproj -scheme "$MEDINAG_PATIENT_SCHEME" \
   -configuration E2E -destination "platform=iOS Simulator,id=$MEDINAG_SIMULATOR_ID" \
-  -derivedDataPath apps/ios/DerivedData/AlarmPatient -quiet
+  -derivedDataPath "apps/ios/DerivedData/$MEDINAG_PATIENT_SCHEME" -quiet
 export MEDINAG_E2E_PROJECT_ID=demo-medinag
 export MEDINAG_E2E_AUTH_HOST=127.0.0.1:9099
 export MEDINAG_E2E_FIRESTORE_HOST=127.0.0.1:8080

@@ -1,5 +1,58 @@
 # Connected iPhone AlarmKit trial
 
+## Schedule reliability trial (build 24)
+
+Use `MediNagAlarmReliability` / `npm run ios:testflight:alarm-reliability` for
+this deliberately reduced server-connected experiment. It restores Google
+authentication/following and reads the administrator's actual materialized dose
+times. The scheduler installs at most **18 future occurrences**, one fixed-date
+alarm at each original time, plus at most one already-alerting current dose.
+It does not add late catch-up alarms for missed doses. There are no three-minute
+clusters, Snooze, retry blocks, countdowns, custom sound, widget extension or
+custom Stop/secondary App Intents in this executable. Alarm configuration is the
+minimal baseline path: system alert template, nil metadata, default sound,
+ordinary Stop. R/S settings do not affect these test alarms or churn their IDs.
+
+The hypothesis is that added configuration/lifecycle/dense queues caused the
+missing presentations. Dense queues are **not an established cause**: the 4 PM
+failure on build 21 preceded retry blocks. This broad reduced baseline first
+tests practical reliability on the usual schedule; it does not isolate one
+specific cause among the removed features. The successful 09:37 single-alarm
+baseline established only one short-run delivery, not long-idle reliability.
+
+Install/open online once, with the Watch off and any separate Alarm Lab run
+finished. Existing Firebase identity and patient evidence persist; old retry
+registrations and the manual baseline alarm are retired by SDK reconciliation.
+New bindings use configuration version 3 so an old alarm at the same deadline
+cannot silently retain its previous sound/actions. No extra Arm button is needed.
+The app reports failure rather than claiming successful SDK registration if
+migration does not verify. It does not rewrite clinical responses or dose times.
+
+Observe at least every usual dose time across two days, including the overnight
+7 AM alarm, before adding features. Record expected time, actual first sound/UI,
+phone lock/Focus/Watch state, and Stop time. Leave the phone normally idle rather
+than opening it just before each alarm. A Clock control two minutes later is
+useful: a MediNag alert first heard when Clock or interaction wakes the phone is
+late, not a pass. Preserve USB logs after failures, plus real `deviceEvents`.
+Registration/`alerting` observations remain explicitly not sound receipts.
+
+Ordinary Stop does **not** open the app or complete a medication event. To report
+actual medication taken, open MediNag manually and tap Yes, I did (including the
+existing 15-minute early window). Avoid early completion if testing that dose's
+on-time alert, since completion correctly cancels it. Yes, I will is absent.
+The existing server overdue-dose and system-failure SMS policies remain active,
+so a Stop without actual completion may still escalate. No server policy has
+been silently disabled for this experiment.
+
+The approximately three-day installed horizon is finite. Activation, real
+Firestore changes and best-effort daily background refresh extend it; daily
+execution is not guaranteed. The connected emulator story checks real web
+setup/auth, 18 SDK registrations at actual server occurrence times, early
+completion/cancellation and returned server evidence. CI tests this target and
+the retry target separately. None of these checks claims physical delivery.
+
+## Earlier full-response/retry experiment
+
 This is the iOS 26.1 phone client for Alex's first server-connected trial. Use
 the `MediNagAlarmPatient` scheme, not the legacy `MediNag` executable or the timer
 PoC. There is no WatchConnectivity, APNs delivery, or UserNotifications repeat

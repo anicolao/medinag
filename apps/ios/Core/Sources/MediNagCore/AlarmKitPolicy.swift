@@ -13,6 +13,14 @@ public enum AlarmKitPolicy {
   public static let alarmBudget = 62
   public static let retryWindow: TimeInterval = 30 * 60
 
+  /// Reliability experiment: original future dose times only. No catch-up,
+  /// snooze transformation, or dense retry blocks, even for pending old doses.
+  public static func singleDosePlan(events: [MedicationEvent], at now: Date, limit: Int = 18) -> [Slot] {
+    Array(events.filter { $0.status != .completed && $0.scheduledTime > now }
+      .sorted { $0.scheduledTime < $1.scheduledTime }.prefix(max(0, limit)))
+      .map { Slot(eventID: $0.id, deadline: $0.scheduledTime) }
+  }
+
   public static func retryPlan(events: [MedicationEvent], at now: Date,
                                repeatInterval: TimeInterval, budget: Int = alarmBudget) -> [Slot] {
     let ordered = events.sorted { $0.scheduledTime < $1.scheduledTime }
