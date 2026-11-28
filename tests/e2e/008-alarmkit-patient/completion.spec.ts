@@ -6,10 +6,11 @@ import { collection, connectFirestoreEmulator, getDocs, getFirestore } from 'fir
 
 test('the early completion and actual alarm evidence return to the administrator', async ({ page }, info) => {
   const scheme = process.env.MEDINAG_PATIENT_SCHEME;
-  if (!['MediNagAlarmPatient', 'MediNagAlarmReliability', 'MediNagAlarmPresentation'].includes(scheme ?? '')) {
+  if (!['MediNagAlarmPatient', 'MediNagAlarmReliability', 'MediNagAlarmPresentation', 'MediNagNotificationPatient'].includes(scheme ?? '')) {
     throw new Error('Explicit supported connected phone scheme required.');
   }
-  const reliability = scheme !== 'MediNagAlarmPatient';
+  const notifications = scheme === 'MediNagNotificationPatient';
+  const reliability = scheme !== 'MediNagAlarmPatient' && !notifications;
   const file = process.env.MEDINAG_E2E_STATE_FILE;
   if (!file) throw new Error('Connected environment required.');
   await page.goto('/#/today', { waitUntil: 'domcontentloaded' });
@@ -31,7 +32,7 @@ test('the early completion and actual alarm evidence return to the administrator
   const coverage = (await getDocs(collection(db, 'administrators', state.administratorId, 'deviceCoverage')))
     .docs.map(doc => doc.data());
   expect(coverage).toHaveLength(1);
-  expect(coverage[0].actualPendingCount).toBe(reliability ? 1 : 62);
+  expect(coverage[0].actualPendingCount).toBe(notifications ? 48 : reliability ? 1 : 62);
   expect(coverage[0].reconciliationStatus).toBe('ready');
   expect((await getDocs(collection(db, 'administrators', state.administratorId, 'systemIncidents'))).size).toBe(0);
   const eventDocs = (await getDocs(collection(db, 'administrators', state.administratorId, 'medicationEvents'))).docs;
@@ -46,7 +47,13 @@ test('the early completion and actual alarm evidence return to the administrator
     && event.eventId === completedDocs[0].id).map(event => Date.parse(event.detail.split('deadline=')[1]));
   const origin = completed[0].scheduledTime.toMillis();
   expect([...new Set(deadlines)].sort((a, b) => a - b))
-    .toEqual(reliability ? [origin] : Array.from({ length: 31 }, (_, index) => origin + index * 60_000));
+    .toEqual(reliability ? [origin] : Array.from({ length: notifications ? 16 : 31 }, (_, index) => origin + index * (notifications ? 120_000 : 60_000)));
+  if (notifications) {
+    const checks = evidence.filter(event => event.kind === 'inventory_verified');
+    expect(checks.length).toBeGreaterThan(0);
+    expect(checks.every(event => event.detail.includes('mode=ordinary-pending-entitlement')
+      && event.detail.includes('coverageComplete=true'))).toBeTruthy();
+  }
   if (reliability) {
     const actualTimes = new Map(eventDocs.map(doc => [doc.id, doc.data().scheduledTime.toMillis()]));
     for (const registration of evidence.filter(event => event.kind === 'registration_requested')) {

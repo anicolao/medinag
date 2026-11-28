@@ -26,6 +26,7 @@ const applicationAndTestFiles = [
   ...filesUnder('apps/ios/MediNagWatchUITests'),
   ...filesUnder('apps/ios/Shared'),
   ...filesUnder('apps/ios/AlarmPatient'),
+  ...filesUnder('apps/ios/LocalNotifications'),
   ...filesUnder('apps/ios/AlarmPatientUITests'),
   ...filesUnder('apps/ios/AlarmDiagnostic'),
   ...filesUnder('apps/ios/AlarmDiagnosticUITests'),

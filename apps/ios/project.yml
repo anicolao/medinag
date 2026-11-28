@@ -364,6 +364,51 @@ targets:
         SWIFT_VERSION: 6.0
     dependencies:
       - target: MediNagAlarmPresentation
+  MediNagNotificationPatient: &notificationPatient
+    <<: *alarmReliability
+    sources:
+      - path: AlarmPatient
+        excludes: [Info.plist, ReliabilityInfo.plist, PresentationInfo.plist, PatientAlarmEngine.swift, PatientAlarmIntents.swift]
+      - path: LocalNotifications
+        excludes: [Critical.entitlements]
+      - path: MediNag/FirebaseBootstrap.swift
+      - path: MediNag/FirebaseSubjectRepository.swift
+      - path: MediNag/GoogleSubjectAuthenticator.swift
+      - path: MediNag/Assets.xcassets
+    settings:
+      base: &notificationPatientSettings
+        <<: *alarmReliabilitySettings
+        INFOPLIST_FILE: LocalNotifications/Info.plist
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) LOCAL_NOTIFICATION_PATIENT"
+      configs:
+        E2E:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) LOCAL_NOTIFICATION_PATIENT E2E"
+  # Signing this target requires Apple's approved Critical Alerts entitlement.
+  # Do not publish an unsigned/ordinary build as Critical Alerts verification.
+  MediNagCriticalPatient:
+    <<: *notificationPatient
+    settings:
+      base:
+        <<: *notificationPatientSettings
+        CODE_SIGN_ENTITLEMENTS: LocalNotifications/Critical.entitlements
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) LOCAL_NOTIFICATION_PATIENT MEDINAG_CRITICAL_ALERTS"
+      configs:
+        E2E:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) LOCAL_NOTIFICATION_PATIENT MEDINAG_CRITICAL_ALERTS E2E"
+  MediNagNotificationPatientUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.notificationpatient.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagNotificationPatient
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagNotificationPatient
   MediNagAlarmReliabilityUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -471,6 +516,28 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagNotificationPatient:
+    build:
+      targets:
+        MediNagNotificationPatient: all
+        MediNagNotificationPatientUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagNotificationPatientUITests
+    archive:
+      config: Release
+  MediNagCriticalPatient:
+    build:
+      targets:
+        MediNagCriticalPatient: all
+    run:
+      config: Debug
+    archive:
+      config: Release
   MediNagAlarmPresentation:
     build:
       targets:

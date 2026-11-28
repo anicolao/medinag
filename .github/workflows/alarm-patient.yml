@@ -3,7 +3,7 @@ name: Connected phone AlarmKit trial
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main, agent/alarmkit-phone-poc]
+    branches: [main, agent/alarmkit-phone-poc, agent/alarmkit-connected-phone]
     paths:
       - apps/ios/**
       - functions/**
@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scheme: [MediNagAlarmPatient, MediNagAlarmReliability, MediNagAlarmPresentation]
+        scheme: [MediNagAlarmPatient, MediNagAlarmReliability, MediNagAlarmPresentation, MediNagNotificationPatient]
     env:
       MEDINAG_PATIENT_SCHEME: ${{ matrix.scheme }}
     runs-on: macos-26
