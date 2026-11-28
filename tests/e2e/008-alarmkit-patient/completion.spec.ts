@@ -5,7 +5,11 @@ import { connectAuthEmulator, getAuth, GoogleAuthProvider, signInWithCredential 
 import { collection, connectFirestoreEmulator, getDocs, getFirestore } from 'firebase/firestore';
 
 test('the early completion and actual alarm evidence return to the administrator', async ({ page }, info) => {
-  const reliability = process.env.MEDINAG_PATIENT_SCHEME === 'MediNagAlarmReliability';
+  const scheme = process.env.MEDINAG_PATIENT_SCHEME;
+  if (!['MediNagAlarmPatient', 'MediNagAlarmReliability', 'MediNagAlarmPresentation'].includes(scheme ?? '')) {
+    throw new Error('Explicit supported connected phone scheme required.');
+  }
+  const reliability = scheme !== 'MediNagAlarmPatient';
   const file = process.env.MEDINAG_E2E_STATE_FILE;
   if (!file) throw new Error('Connected environment required.');
   await page.goto('/#/today', { waitUntil: 'domcontentloaded' });
@@ -52,6 +56,9 @@ test('the early completion and actual alarm evidence return to the administrator
       && event.detail.includes('Exactly 1 OS alarm; only next alert'))).toBeTruthy();
     const inventoryChecks = evidence.filter(event => event.kind === 'inventory_verified');
     expect(inventoryChecks.every(event => /^Exactly [01] OS alarm;/.test(event.detail))).toBeTruthy();
+    const packaging = scheme === 'MediNagAlarmPresentation' ? 'B-widget' : 'A-no-widget';
+    expect(inventoryChecks.length).toBeGreaterThan(0);
+    expect(inventoryChecks.every(event => event.detail.includes(`presentation packaging=${packaging}`))).toBeTruthy();
     const beforeRegistration = evidence.filter(event => event.kind === 'single_alarm_inventory_pruned');
     expect(beforeRegistration.length).toBeGreaterThan(0);
     expect(beforeRegistration.every(event => /^[01] OS alarms before registration;/.test(event.detail))).toBeTruthy();
