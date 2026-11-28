@@ -1,4 +1,3 @@
-import FirebaseAuth
 import Foundation
 import UserNotifications
 
@@ -66,7 +65,9 @@ extension PatientAppDelegate: UNUserNotificationCenterDelegate {
     let completion = LocalNotificationCompletion(finish: completionHandler)
     Task { @MainActor in
       defer { completion.finish() }
-      guard Auth.auth().currentUser?.uid == patientID else { return }
+      // The engine validates the durable account/schedule/occurrence. Saving a
+      // local tap must not depend on Firebase Auth/keychain restoration or a
+      // network opportunity. The existing outbox uploader requires real Auth.
       _ = await PatientAlarmEngine.shared.run(.notificationAction(tap))
       await PatientSession.shared.reload()
       PatientSession.shared.scheduleFlush()

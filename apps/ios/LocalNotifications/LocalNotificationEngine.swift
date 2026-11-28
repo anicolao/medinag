@@ -29,7 +29,8 @@ actor PatientAlarmEngine {
       state.lastFailure = "Local notification data could not be restored: \(error.localizedDescription)"
     }
     if state.bindings.contains(where: { $0.configurationVersion != 100 }) {
-      state.verifiedAlarmIDs = []; state.verifiedThrough = nil; state.verificationObservedAt = nil
+      state.verifiedAlarmIDs = []; state.verifiedThrough = nil; state.verificationObservedAt = Date()
+      state.lastFailure = "Local notification setup must replace the previous AlarmKit inventory."
     }
   }
   func snapshot() -> PatientAlarmState { state }
@@ -118,7 +119,7 @@ actor PatientAlarmEngine {
     if settings.authorizationStatus == .notDetermined {
       state.lastFailure = "Notification permission has not been granted."
       state.verifiedAlarmIDs = []; state.verifiedThrough = nil
-      state.verificationObservedAt = Date()
+      if !state.bindings.isEmpty { state.verificationObservedAt = Date() }
       try PatientAlarmDisk.save(state)
       return
     }

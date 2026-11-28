@@ -245,7 +245,10 @@ final class PatientSession: ObservableObject {
         snapshot = await PatientAlarmEngine.shared.run(.acknowledgedEvidence(evidence.map(\.id)))
       }
       #if LOCAL_NOTIFICATION_PATIENT
-      let coverage: (Date, Date)? = (snapshot.verifiedThrough ?? Date(), snapshot.verificationObservedAt ?? Date())
+      // No coverage report exists on a fresh install while the permission
+      // prompt is unanswered. A migrated old inventory or an actual denied/
+      // failed reconciliation has an observation and must invalidate readiness.
+      let coverage = snapshot.verificationObservedAt.map { (snapshot.verifiedThrough ?? $0, $0) }
       #else
       let coverage = snapshot.verifiedThrough.flatMap { through in snapshot.verificationObservedAt.map { (through, $0) } }
       #endif
