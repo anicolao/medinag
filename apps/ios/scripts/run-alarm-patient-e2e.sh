@@ -6,7 +6,7 @@ cd "$repository_root"
 export DEVELOPER_DIR="${MEDINAG_XCODE_DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 export MEDINAG_PATIENT_SCHEME="${MEDINAG_PATIENT_SCHEME:-MediNagAlarmPatient}"
 case "$MEDINAG_PATIENT_SCHEME" in
-  MediNagAlarmPatient|MediNagAlarmReliability) ;;
+  MediNagAlarmPatient|MediNagAlarmReliability|MediNagAlarmPresentation) ;;
   *) echo 'Unsupported connected phone scheme.' >&2; exit 1 ;;
 esac
 if ! java -version >/dev/null 2>&1; then

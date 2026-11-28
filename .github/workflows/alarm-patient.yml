@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scheme: [MediNagAlarmPatient, MediNagAlarmReliability]
+        scheme: [MediNagAlarmPatient, MediNagAlarmReliability, MediNagAlarmPresentation]
     env:
       MEDINAG_PATIENT_SCHEME: ${{ matrix.scheme }}
     runs-on: macos-26
@@ -44,6 +44,8 @@ jobs:
       - run: npm ci && npm ci --prefix functions
       - run: npx playwright install chromium
       - run: npm run check && npm run ios:core:check && npm run functions:test
+      - name: Verify presentation experiment differs only in widget packaging
+        run: ruby apps/ios/scripts/check-presentation-pair.rb
       - name: Alarm Lab registration smoke check (not audible-delivery proof)
         if: matrix.scheme == 'MediNagAlarmPatient'
         run: bash apps/ios/scripts/check-alarm-lab.sh

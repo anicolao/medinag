@@ -1,5 +1,8 @@
 # Physical Stop/retry comparison
 
+Current controlled A/B experiment: [Presentation-path test](PRESENTATION_PATH_TEST.md).
+The older comparisons below are historical and are not the current procedure.
+
 ## Minimal TestFlight baseline — test this first
 
 The `MediNagAlarmBaseline` executable replaces the patient app through the

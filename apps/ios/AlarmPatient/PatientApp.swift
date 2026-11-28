@@ -120,7 +120,7 @@ struct PatientView: View {
     }
     #if ALARM_RELIABILITY_TRIAL
     .safeAreaInset(edge: .top) {
-      Text("Single-alarm test: only the next dose. After Stop, open MediNag to arm the next. No snooze or retries.")
+      Text("Presentation test \(Bundle.main.object(forInfoDictionaryKey: "NSSupportsLiveActivities") as? Bool == true ? "B (widget)" : "A (no widget)"): only the next dose. After Stop, open MediNag to arm the next. No snooze or retries.")
         .font(.footnote).multilineTextAlignment(.center).padding(8)
         .accessibilityIdentifier("schedule-reliability-banner")
     }

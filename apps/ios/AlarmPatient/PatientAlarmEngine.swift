@@ -14,7 +14,7 @@ actor PatientAlarmEngine {
   private var tail: Task<Void, Never>?
   private var configurationVersion: Int {
     #if ALARM_RELIABILITY_TRIAL
-    4
+    5
     #else
     2
     #endif
@@ -260,8 +260,9 @@ actor PatientAlarmEngine {
     }
     state.migrated = true
     state.lastFailure = nil
+    let widgetEnabled = Bundle.main.object(forInfoDictionaryKey: "NSSupportsLiveActivities") as? Bool == true
     try trace("inventory_verified", eventID: selected?.eventID ?? "",
-      detail: "Exactly \(final.count) OS alarm; only next alert; default system alarm sound and ordinary Stop")
+      detail: "Exactly \(final.count) OS alarm; only next alert; default system alarm sound and ordinary Stop; presentation packaging=\(widgetEnabled ? "B-widget" : "A-no-widget")")
   }
   #endif
 

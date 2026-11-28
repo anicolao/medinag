@@ -283,20 +283,20 @@ targets:
         product: GoogleSignInSwift
     postBuildScripts: *embedFirebase
 
-  MediNagAlarmReliability:
+  MediNagAlarmReliability: &alarmReliability
     type: application
     platform: iOS
     deploymentTarget: "26.1"
     sources:
       - path: AlarmPatient
-        excludes: [Info.plist, ReliabilityInfo.plist]
+        excludes: [Info.plist, ReliabilityInfo.plist, PresentationInfo.plist]
       - path: AlarmPrototypeShared
       - path: MediNag/FirebaseBootstrap.swift
       - path: MediNag/FirebaseSubjectRepository.swift
       - path: MediNag/GoogleSubjectAuthenticator.swift
       - path: MediNag/Assets.xcassets
     settings:
-      base:
+      base: &alarmReliabilitySettings
         PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
         PRODUCT_NAME: MediNag
         GENERATE_INFOPLIST_FILE: false
@@ -309,7 +309,7 @@ targets:
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL"
-      configs:
+      configs: &alarmReliabilityConfigs
         E2E:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL E2E"
     dependencies:
@@ -326,6 +326,44 @@ targets:
       - package: GoogleSignIn
         product: GoogleSignInSwift
     postBuildScripts: *embedFirebase
+  # Matched presentation-path experiment: identical executable sources/settings,
+  # with only Live Activity packaging enabled. No countdown or custom actions.
+  MediNagAlarmPresentation:
+    <<: *alarmReliability
+    settings:
+      base:
+        <<: *alarmReliabilitySettings
+        INFOPLIST_FILE: AlarmPatient/PresentationInfo.plist
+      configs: *alarmReliabilityConfigs
+    dependencies:
+      - target: MediNagAlarmPrototypeLiveActivity
+        embed: true
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+  MediNagAlarmPresentationUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmpresentation.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmPresentation
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmPresentation
   MediNagAlarmReliabilityUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -433,6 +471,20 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagAlarmPresentation:
+    build:
+      targets:
+        MediNagAlarmPresentation: all
+        MediNagAlarmPresentationUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagAlarmPresentationUITests
+    archive:
+      config: Release
   MediNagAlarmReliability:
     build:
       targets:

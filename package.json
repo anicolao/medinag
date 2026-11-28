@@ -26,6 +26,7 @@
     "ios:testflight:alarm-prototype": "MEDINAG_ALARM_PROTOTYPE=1 apps/ios/scripts/release-testflight.sh",
     "ios:testflight:alarm-baseline": "MEDINAG_ALARM_BASELINE=1 apps/ios/scripts/release-testflight.sh",
     "ios:testflight:alarm-reliability": "MEDINAG_ALARM_RELIABILITY=1 apps/ios/scripts/release-testflight.sh",
+    "ios:testflight:alarm-presentation": "MEDINAG_ALARM_RELIABILITY=1 MEDINAG_PRESENTATION_WIDGET=1 apps/ios/scripts/release-testflight.sh",
     "ios:testflight:alarm-patient": "MEDINAG_ALARM_PATIENT=1 apps/ios/scripts/release-testflight.sh",
     "ios:e2e:alarm-patient": "bash apps/ios/scripts/run-alarm-patient-e2e.sh",
     "ios:e2e:connected": "apps/ios/scripts/run-connected-e2e.sh",
