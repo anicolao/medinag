@@ -5,7 +5,10 @@ require 'json'
 require 'open3'
 
 root = File.expand_path('..', __dir__)
-project = YAML.load_file(File.join(root, 'project.yml'))
+spec = File.join(root, 'project.yml')
+# This trusted repository spec intentionally uses YAML aliases. Psych 4+
+# disables aliases in load_file by default; older system Ruby uses Psych 3.
+project = YAML.respond_to?(:unsafe_load_file) ? YAML.unsafe_load_file(spec) : YAML.load_file(spec)
 a = project.fetch('targets').fetch('MediNagAlarmReliability')
 b = project.fetch('targets').fetch('MediNagAlarmPresentation')
 widget = { 'target' => 'MediNagAlarmPrototypeLiveActivity', 'embed' => true }
