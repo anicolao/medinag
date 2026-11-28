@@ -29,7 +29,7 @@ actor PatientAlarmEngine {
       state.lastFailure = "Local notification data could not be restored: \(error.localizedDescription)"
     }
     if state.bindings.contains(where: { $0.configurationVersion != 100 }) {
-      state.verifiedAlarmIDs = []; state.verifiedThrough = nil; state.verificationObservedAt = Date()
+      state.verifiedAlarmIDs = []; state.verifiedThrough = nil; state.verificationObservedAt = nil
       state.lastFailure = "Local notification setup must replace the previous AlarmKit inventory."
     }
   }

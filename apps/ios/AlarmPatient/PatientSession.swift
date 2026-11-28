@@ -70,6 +70,15 @@ final class PatientSession: ObservableObject {
     #endif
     defer { starting = false }
     await reload()
+    #if LOCAL_NOTIFICATION_PATIENT
+    // Repair/register from the durable schedule before any network fetch. A
+    // cached session must work offline, and migration-in-progress is not itself
+    // a failed OS reconciliation. Only a real SDK result reports coverage.
+    if local.context != nil {
+      local = await PatientAlarmEngine.shared.run(.reconcile)
+      await reload()
+    }
+    #endif
     guard FirebaseBootstrap.configure() else { message = "Firebase configuration is missing."; return }
     if let user = Auth.auth().currentUser { await connect(user) }
   }
