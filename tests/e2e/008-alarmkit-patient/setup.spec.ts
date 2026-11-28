@@ -11,7 +11,7 @@ test('publish the medication and server timing settings through the real dashboa
   await expect(page.getByText('No doses in this plan yet')).toBeVisible();
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Snooze interval').selectOption('5');
-  await page.getByLabel('Repeat interval').selectOption('1');
+  await page.getByLabel('Repeat interval').selectOption(process.env.MEDINAG_PATIENT_SCHEME === 'MediNagNotificationPatient' ? '2' : '1');
   await page.getByLabel('SMS number').fill('+15555550199');
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('status')).toHaveText('Settings saved.');

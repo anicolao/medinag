@@ -6,6 +6,7 @@ import Foundation
 import MediNagCore
 import Network
 import UIKit
+import UserNotifications
 
 @MainActor
 final class PatientSession: ObservableObject {
@@ -16,6 +17,9 @@ final class PatientSession: ObservableObject {
   @Published private(set) var starting = true
   @Published private(set) var message = ""
   @Published private(set) var busy = false
+  #if LOCAL_NOTIFICATION_PATIENT
+  @Published private(set) var notificationAuthorized = false
+  #endif
   private var listeners: [ListenerRegistration] = []
   private let network = NWPathMonitor()
   private var started = false
@@ -42,6 +46,7 @@ final class PatientSession: ObservableObject {
   func start() async {
     guard !started else { await reload(); scheduleFlush(); return }
     started = true
+    #if !LOCAL_NOTIFICATION_PATIENT
     alarmObserver = Task { [weak self] in
       var previous: [UUID: Alarm.State] = [:]
       for await alarms in AlarmManager.shared.alarmUpdates {
@@ -62,6 +67,7 @@ final class PatientSession: ObservableObject {
         self?.scheduleFlush()
       }
     }
+    #endif
     defer { starting = false }
     await reload()
     guard FirebaseBootstrap.configure() else { message = "Firebase configuration is missing."; return }
@@ -161,10 +167,21 @@ final class PatientSession: ObservableObject {
     do {
       _ = try await PatientAlarmAuthorization.request()
       await importLatest()
+      await reload()
     } catch { message = error.localizedDescription }
   }
 
-  func reload() async { local = await PatientAlarmEngine.shared.snapshot() }
+  func reload() async {
+    local = await PatientAlarmEngine.shared.snapshot()
+    #if LOCAL_NOTIFICATION_PATIENT
+    let settings = await UNUserNotificationCenter.current().notificationSettings()
+    notificationAuthorized = settings.authorizationStatus == .authorized
+      && settings.alertSetting == .enabled && settings.soundSetting == .enabled
+    #if MEDINAG_CRITICAL_ALERTS
+    notificationAuthorized = notificationAuthorized && settings.criticalAlertSetting == .enabled
+    #endif
+    #endif
+  }
 
   func respond(_ response: DoseResponse, eventID: String) async {
     busy = true
@@ -227,7 +244,12 @@ final class PatientSession: ObservableObject {
           patientID: user.uid, build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown")
         snapshot = await PatientAlarmEngine.shared.run(.acknowledgedEvidence(evidence.map(\.id)))
       }
-      if let through = snapshot.verifiedThrough, let observed = snapshot.verificationObservedAt {
+      #if LOCAL_NOTIFICATION_PATIENT
+      let coverage: (Date, Date)? = (snapshot.verifiedThrough ?? Date(), snapshot.verificationObservedAt ?? Date())
+      #else
+      let coverage = snapshot.verifiedThrough.flatMap { through in snapshot.verificationObservedAt.map { (through, $0) } }
+      #endif
+      if let (through, observed) = coverage {
         let count = snapshot.verifiedAlarmIDs.count
         try await db.document("administrators/\(context.plan.id)/deviceCoverage/\(user.uid)").setData([
           "patientUid": user.uid, "deviceId": snapshot.deviceID,
@@ -258,13 +280,20 @@ final class PatientSession: ObservableObject {
 enum PatientEvidenceRepository {
   static func upload(_ evidence: [PatientAlarmState.Evidence], administratorID: String,
     patientID: String, build: String) async throws {
+    #if LOCAL_NOTIFICATION_PATIENT
+    let engineName = "LocalNotifications"
+    let prefix = "local-notifications"
+    #else
+    let engineName = "AlarmKit"
+    let prefix = "alarmkit"
+    #endif
     let db = Firestore.firestore()
     _ = try await db.runTransaction { transaction, errorPointer in
       do {
         let refs = evidence.map { db.document("administrators/\(administratorID)/deviceEvents/\($0.id)") }
         let existing = try refs.map { try transaction.getDocument($0) }
         let failures = evidence.filter { $0.kind == "client_failure" }
-        let incidentRefs = failures.map { db.document("administrators/\(administratorID)/systemIncidents/alarmkit-\($0.id)") }
+        let incidentRefs = failures.map { db.document("administrators/\(administratorID)/systemIncidents/\(prefix)-\($0.id)") }
         let incidents = try incidentRefs.map { try transaction.getDocument($0) }
         for (index, event) in evidence.enumerated() where !existing[index].exists {
           transaction.setData([
@@ -278,12 +307,12 @@ enum PatientEvidenceRepository {
           // Retries use the same UUID and cannot generate another SMS episode.
           transaction.setData([
             "administratorUid": administratorID, "patientUid": patientID,
-            "deviceId": "iphone-alarmkit", "code": "alarmkit_protection_failed",
+            "deviceId": "iphone-\(prefix)", "code": "\(prefix)_protection_failed",
             "message": String(failure.detail.prefix(500)), "severity": "critical", "source": "ios",
             "status": "open", "firstOccurredAt": FieldValue.serverTimestamp(),
             "lastOccurredAt": FieldValue.serverTimestamp(), "occurrenceCount": 1,
             "alertSequence": 1, "smsState": "queued", "smsAttempts": 0,
-            "context": ["engine": "AlarmKit", "evidenceId": failure.id], "updatedAt": FieldValue.serverTimestamp(),
+            "context": ["engine": engineName, "evidenceId": failure.id], "updatedAt": FieldValue.serverTimestamp(),
           ], forDocument: incidentRefs[index])
         }
         return nil
@@ -295,7 +324,15 @@ enum PatientEvidenceRepository {
 @MainActor
 enum PatientAlarmAuthorization {
   static func request() async throws -> Bool {
+    #if LOCAL_NOTIFICATION_PATIENT
+    var options: UNAuthorizationOptions = [.alert, .sound]
+    #if MEDINAG_CRITICAL_ALERTS
+    options.insert(.criticalAlert)
+    #endif
+    return try await UNUserNotificationCenter.current().requestAuthorization(options: options)
+    #else
     try await AlarmManager.shared.requestAuthorization() == .authorized
+    #endif
   }
 }
 

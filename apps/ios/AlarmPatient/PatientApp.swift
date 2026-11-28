@@ -5,6 +5,7 @@ import GoogleSignIn
 import MediNagCore
 import SwiftUI
 import UIKit
+import UserNotifications
 
 @MainActor
 final class PatientAppDelegate: NSObject, UIApplicationDelegate {
@@ -13,6 +14,10 @@ final class PatientAppDelegate: NSObject, UIApplicationDelegate {
   func application(_ application: UIApplication,
     didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
     FirebaseBootstrap.configure()
+    #if LOCAL_NOTIFICATION_PATIENT
+    LocalNotificationActions.register()
+    UNUserNotificationCenter.current().delegate = self
+    #endif
     BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.refreshID, using: .main) { task in
       Self.refresh(task)
     }
@@ -22,7 +27,13 @@ final class PatientAppDelegate: NSObject, UIApplicationDelegate {
 
   static func requestRefresh() {
     let request = BGAppRefreshTaskRequest(identifier: refreshID)
+    #if LOCAL_NOTIFICATION_PATIENT
+    // Request an early opportunity; iOS decides whether/when it actually runs.
+    // The preloaded queue must never depend on this request being honored.
+    request.earliestBeginDate = Date().addingTimeInterval(15 * 60)
+    #else
     request.earliestBeginDate = Date().addingTimeInterval(24 * 60 * 60)
+    #endif
     try? BGTaskScheduler.shared.submit(request)
   }
 
@@ -125,11 +136,18 @@ struct PatientView: View {
         .accessibilityIdentifier("schedule-reliability-banner")
     }
     #endif
+    #if LOCAL_NOTIFICATION_PATIENT && !MEDINAG_CRITICAL_ALERTS
+    .safeAreaInset(edge: .top) {
+      Text("Ordinary notification test. Critical Alerts approval pending. Silent mode and Focus can suppress sound.")
+        .font(.footnote).multilineTextAlignment(.center).padding(8)
+        .accessibilityIdentifier("ordinary-notification-banner")
+    }
+    #endif
   }
 
   @ViewBuilder
   private func doseView(at now: Date) -> some View {
-    if AlarmManager.shared.authorizationState != .authorized {
+    if !notificationPermissionReady {
       VStack(spacing: 20) {
         Text("Allow medication alarms to continue.")
         Button("Enable alarms") { Task { await session.enableAlarms() } }
@@ -170,6 +188,14 @@ struct PatientView: View {
     } else {
       Text("No upcoming dose").accessibilityIdentifier("no-upcoming-dose")
     }
+  }
+
+  private var notificationPermissionReady: Bool {
+    #if LOCAL_NOTIFICATION_PATIENT
+    session.notificationAuthorized
+    #else
+    AlarmManager.shared.authorizationState == .authorized
+    #endif
   }
 
   private func nextDoseView(_ next: MedicationEvent, at now: Date) -> some View {

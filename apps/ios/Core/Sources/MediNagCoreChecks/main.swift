@@ -15,7 +15,40 @@ struct MediNagCoreChecks {
     try await checkNotificationReadiness()
     try await checkReminderPlan()
     try await checkAlarmKitPolicy()
-    print("MediNagCoreChecks: 9 passed")
+    try await checkLocalNotificationPlan()
+    print("MediNagCoreChecks: 10 passed")
+  }
+
+  private static func checkLocalNotificationPlan() async throws {
+    let dose = pendingEvent()
+    let next = MedicationEvent(id: "next", scheduleID: "next", medicationName: "Next",
+      scheduledTime: now.addingTimeInterval(3600), status: .pending, snoozeCount: 0)
+    let before = now.addingTimeInterval(-60)
+    let plan = LocalNotificationPlan.make(events: [dose, next], at: before, repeatInterval: 180)
+    try await expect(plan.complete && plan.slots.count == 22,
+      "Two actual dose windows reserve T through T+30 at three-minute intervals")
+    try await expect(plan.slots.filter { $0.eventID == dose.id }.map(\.deadline)
+      == (0...10).map { now.addingTimeInterval(Double($0) * 180) }, "Ignored reminders are pre-registered")
+    let overflow = LocalNotificationPlan.make(events: [dose, next], at: before, repeatInterval: 60)
+    try await expect(!overflow.complete && overflow.slots.count == 60, "One-minute settings visibly exceed the reserved capacity")
+    var done = next; done.status = .completed
+    let retired = LocalNotificationPlan.make(events: [dose, done], at: next.scheduledTime, repeatInterval: 180)
+    try await expect(retired.slots.isEmpty, "Completion of latest dose never uncovers yesterday's pending dose")
+    let close = MedicationEvent(id: "close", scheduleID: "close", medicationName: "Close",
+      scheduledTime: now.addingTimeInterval(300), status: .pending, snoozeCount: 0)
+    let truncated = LocalNotificationPlan.make(events: [dose, close], at: before, repeatInterval: 180)
+    try await expect(truncated.slots.filter { $0.eventID == dose.id }.allSatisfy { $0.deadline < close.scheduledTime },
+      "Old reminders are cut off at the next occurrence even without execution")
+    let tap = LocalDoseResponse(patientID: "unit-patient", administratorID: "unit-admin", event: dose,
+      response: .yesIWill, respondedAt: now.addingTimeInterval(720), snoozeInterval: 600)
+    let snoozed = LocalNotificationPlan.make(events: [tap.updatedEvent, next], at: tap.respondedAt, repeatInterval: 180)
+    try await expect(snoozed.slots.first?.deadline == now.addingTimeInterval(1200),
+      "08:12 Snooze targets 08:20, not a tap-relative deadline")
+    let laterSnooze = LocalDoseResponse(patientID: "unit-patient", administratorID: "unit-admin", event: dose,
+      response: .yesIWill, respondedAt: now.addingTimeInterval(180), snoozeInterval: 600)
+    try await expect(laterSnooze.snoozeDeadline == now.addingTimeInterval(600), "08:03 Snooze leaves seven minutes")
+    let rebuilt = LocalNotificationPlan.make(events: [tap.updatedEvent, next], at: tap.respondedAt, repeatInterval: 180)
+    try await expect(rebuilt.slots == snoozed.slots, "The durable response rebuilds the same deadlines after restart")
   }
 
   private static func checkAlarmKitPolicy() async throws {

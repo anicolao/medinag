@@ -17,6 +17,8 @@ alarm_patient="${MEDINAG_ALARM_PATIENT:-0}"
 alarm_baseline="${MEDINAG_ALARM_BASELINE:-0}"
 alarm_reliability="${MEDINAG_ALARM_RELIABILITY:-0}"
 presentation_widget="${MEDINAG_PRESENTATION_WIDGET:-0}"
+notification_patient="${MEDINAG_NOTIFICATION_PATIENT:-0}"
+critical_notifications="${MEDINAG_CRITICAL_NOTIFICATIONS:-0}"
 phone_only=0
 release_scheme="MediNag"
 if [[ "$alarm_reliability" == "1" && "$alarm_baseline" == "0" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
@@ -40,6 +42,20 @@ elif [[ "$alarm_prototype" == "1" && "$alarm_patient" == "0" ]]; then
   phone_only=1
 elif [[ "$alarm_prototype" != "0" || "$alarm_patient" != "0" ]]; then
   printf 'Select exactly one valid AlarmKit variant (0 or 1).\n' >&2
+  exit 1
+fi
+
+if [[ "$notification_patient" == "1" && "$release_scheme" == "MediNag" ]]; then
+  release_scheme="MediNagNotificationPatient"
+  phone_only=1
+elif [[ "$notification_patient" != "0" ]]; then
+  printf 'The notification executable cannot be combined with AlarmKit variants.\n' >&2
+  exit 1
+fi
+if [[ "$critical_notifications" == "1" && "$release_scheme" == "MediNagNotificationPatient" ]]; then
+  release_scheme="MediNagCriticalPatient"
+elif [[ "$critical_notifications" != "0" ]]; then
+  printf 'Critical Alerts requires the notification executable and Apple-approved signing.\n' >&2
   exit 1
 fi
 
@@ -217,7 +233,7 @@ fi
 codesign --verify --deep --strict "$application_path"
 if [[ "$phone_only" == "1" ]]; then
   [[ ! -d "$application_path/Watch" ]] || fail "The phone-only prototype unexpectedly embeds a Watch app"
-  if [[ "$alarm_baseline" == "1" || "$alarm_reliability" == "1" ]]; then
+  if [[ "$alarm_baseline" == "1" || "$alarm_reliability" == "1" || "$notification_patient" == "1" ]]; then
     if [[ "$presentation_widget" == "1" ]]; then
       activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
       [[ -d "$activity_application" ]] || fail "Presentation B is missing its matching widget extension"
@@ -232,6 +248,15 @@ if [[ "$phone_only" == "1" ]]; then
         || fail "Presentation A unexpectedly declares Live Activities"
     fi
     [[ ! -f "$application_path/MediNagAlarm.caf" ]] || fail "The baseline unexpectedly contains a custom sound"
+    if [[ "$notification_patient" == "1" ]]; then
+      entitlement_xml="$(codesign -d --entitlements :- "$application_path" 2>/dev/null)"
+      has_critical="$(plutil -convert json -o - - <<< "$entitlement_xml" | jq -r '."com.apple.developer.usernotifications.critical-alerts" // false')"
+      if [[ "$critical_notifications" == "1" ]]; then
+        [[ "$has_critical" == "true" ]] || fail "The signed app is missing approved Critical Alerts entitlement"
+      else
+        [[ "$has_critical" == "false" ]] || fail "Ordinary trial unexpectedly has Critical Alerts entitlement"
+      fi
+    fi
     if [[ "$alarm_baseline" == "1" ]]; then
       [[ ! -f "$application_path/GoogleService-Info.plist" ]] || fail "The baseline unexpectedly contains Firebase configuration"
     fi
