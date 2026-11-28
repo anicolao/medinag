@@ -8,55 +8,122 @@
 
 /* Begin PBXBuildFile section */
 		00BF20E1E4C15677C229AFF8 /* 006-watch-companion-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E9DED6AAD6DF6EF68F32E1C /* 006-watch-companion-claims.json */; };
+		01AB5DBCDFC5BE46457E7FEA /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 28E26B9ABBA8362182015346 /* MediNagCore */; };
+		020D59360F6B7F342C6BD8B9 /* MediNagAlarmDiagnosticActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		04D0EE1B7A2ADC3D5EFAED87 /* PatientConnectedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */; };
 		055D10593F293D8624BA65B7 /* LocalAlertJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EACE948CF0DCB6FE603FD2 /* LocalAlertJournal.swift */; };
+		07EBECEA87E94CCED5D923CB /* PatientAlarmState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443DD9814F925E65FD3379B /* PatientAlarmState.swift */; };
 		09B27E7CFE5DF445B8C7B79B /* ReminderRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */; };
+		0D25C98834B748743E894A27 /* PatientAlarmIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */; };
+		11EEA380A490DF0358A2A8E2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		121F0F2704A37FD4377A17D2 /* 004-ios-respond-to-dose-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */; };
+		16F9005039C38C4C4E940F78 /* PatientConnectedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */; };
 		18813EDBADEA939F200D330F /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
 		1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */; };
+		1C5D78AE1E03E83850C244EF /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
 		1C9B2DEA9A595B0C0611ECE7 /* 005-notification-failure-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = FD596B006C90A01FDBE4E579 /* 005-notification-failure-claims.json */; };
+		1E754A6CDEB56AE175C81F25 /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
 		2119AAE55EFA6B65A7D612F8 /* WatchPairingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6BBFC88A0C012B4B571B799 /* WatchPairingUITests.swift */; };
 		21B6ED7D404AAFC97B9A3E09 /* CompanionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D43564C5D864FA222067FC /* CompanionTransport.swift */; };
+		246D06DAFB041307B9DB0D07 /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
 		24A21D07900E2ED201AD3715 /* MedicationModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D73EBEEEEB491666C8998A /* MedicationModelsTests.swift */; };
+		25AFC78E42C863579F3EB01A /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
 		26CD94E9B0290AC4A0637F7B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */; };
 		27A78E9A46059CCD8B28D3EE /* 006-watch-companion-claims.json in Resources */ = {isa = PBXBuildFile; fileRef = 760F763D311BA399CE701AF3 /* 006-watch-companion-claims.json */; };
 		2D40B6B0CFADA25D6B18A835 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F844B57121A61C2FD25698E6 /* GoogleSignIn */; };
 		2EF3171D42CBB859DBAD9437 /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
+		32C5E1768DF86B2A7DC175A9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		345C3D282160A2AC53C5EBE8 /* PatientSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D08782DF1E5929FC04F29A6 /* PatientSession.swift */; };
+		34FF1EE43E41384902DD2930 /* DiagnosticApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B422BB4C7F30C011330215C /* DiagnosticApp.swift */; };
+		35476AC89E81AC6001FE1873 /* PatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E7334A79689E552AA2528A /* PatientApp.swift */; };
 		372CB0AE309FBC3E0902E3BD /* MediNagApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD40690383616CF75360A1A /* MediNagApp.swift */; };
+		38871EDCF5A62128F7ED0A45 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
 		3900F19F367B0F5EAA2552CD /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
 		3DBD33EFF777A06751058117 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A5AC9567CC364E6F9A59ED1 /* Assets.xcassets */; };
+		418ABCE6F1A45FEC28AC0CA8 /* PatientAlarmEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */; };
 		41C592C4C67FB54821E49D56 /* DoseWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9130650146B03C78F7244550 /* DoseWindowTests.swift */; };
 		430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */; };
+		46A803FE99102CE1A0B3F6B9 /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
+		46DA42C0688F419B993E77F3 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDE6AFA5BAC2A19DBD56C21 /* GoogleSignInSwift */; };
 		470882BFE2E693C7EF0A374F /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3C74746627D6BF26ECF6DCC1 /* MediNagCore */; };
+		48E9C401C5D1A4E6E1F2E58A /* BaselineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD073D0ABCAC4A2CE870A1CF /* BaselineApp.swift */; };
+		49E1D4596AD78D275D2EAFA8 /* PatientSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D08782DF1E5929FC04F29A6 /* PatientSession.swift */; };
+		55F8E3D3D7BD4825E3BAAC46 /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		58EBD7211CBC6A9E14202841 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B5892A530B10858FF0D39A1F /* GoogleSignIn */; };
+		5C0C1DB930C7B3443EFD9A93 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 89C226ACAEC59BFF0FE82B34 /* MediNagCore */; };
 		5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F2D0A0FBA33DECBAAAC014 /* README.md */; };
+		5DAEC636212B07C699C7C889 /* BaselineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CC75C055D9A6013F4F9356 /* BaselineUITests.swift */; };
 		60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */; };
+		6143A11E1E2A7F6BFEE34EFC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B75C9F54F2050719457F3CDD /* GoogleSignIn */; };
+		6185908D15B8C54F60600DF4 /* PatientAlarmEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */; };
+		61BD107F4D29FCA1A48035BC /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A73CCC1462E2A29772B294CD /* FirebaseCore */; };
 		644D14AB90C0CF06C2B25CFF /* AlertTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B5F5765D9EF59F18A9D548 /* AlertTimingTests.swift */; };
 		64565837CA61B72B53996E80 /* StopAndRespondIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86E4D427FA0B527D1B9FACC /* StopAndRespondIntent.swift */; };
 		64B9AF82FC68050FE18FA43C /* PrototypeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60807FF7A6DEB42A5574BE1 /* PrototypeApp.swift */; };
+		66B96468B6B1748893DD7A74 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FBAB6F2C361AF83D625D232C /* FirebaseAuth */; };
+		66C98E7592E40FF63715950F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */; };
 		66D2F224F6D3175EF1CEAC0C /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */; };
+		678D696D826CF06B8119A71A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C1D51807EA1E89772D2C1705 /* FirebaseAuth */; };
 		6A5676D70BD088B62E4D9636 /* PhoneNotificationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532CC6107AE4964E739FB594 /* PhoneNotificationResponse.swift */; };
+		6B8E740175B6BA5E50952212 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		6C2B662F946DE8850EF13DF3 /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
+		6D099FC60FD665EF528F33DA /* PresentationInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = CBCEC0C9397C4240732AA934 /* PresentationInfo.plist */; };
+		7188ED9CB911AFC013B4F743 /* PatientAlarmState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443DD9814F925E65FD3379B /* PatientAlarmState.swift */; };
 		726C7D9DD2863EE471F3BDC0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A35C5F490D783A4224F82302 /* FirebaseCore */; };
+		72B0531087FA24678F53B171 /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
+		7497970A5C6F8DDF7B1F2AC1 /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		74EDB10800506708B0DAAEE6 /* ReliabilityInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */; };
+		7791348DBFE8D02F3A58B9D4 /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		79C6811DF5B869B75C524E07 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		7D991235E598EBA73F04C765 /* TestStepHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827A83DB040E02286EA2824 /* TestStepHelper.swift */; };
 		828881C3EF20B4660EAD447A /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
+		849DFC40A4AD259312CCCF64 /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
+		882F03EFF054ED6A877A1327 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 292AF1323EE6708790F271A9 /* FirebaseCore */; };
+		8FC0E6EAEDA0961125434A70 /* PatientConnectedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */; };
 		9579A356F7897CFAF2BFD146 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A88928DEDC4C5380C0772599 /* FirebaseFirestore */; };
+		95E311D2758534D583393DF9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F6561222C7C2A7EE907CE8A6 /* FirebaseFirestore */; };
 		98D2C5272C3851AE631EA207 /* ReminderPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */; };
+		99C6420CC58E9E5D1A75FD35 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FEA1E018FC4915F90E45CF0E /* GoogleSignInSwift */; };
+		9AD9497A2FA4DFC33C59ADD9 /* PatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E7334A79689E552AA2528A /* PatientApp.swift */; };
 		9F0D5242AA773DB2C1BC00F6 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = F16159FF6F437046BB1C6A4A /* MediNagCore */; };
 		A6AF89FF22349F3851926A6C /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A7F834F2CC01371860D6A5D4 /* WatchCompanionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0B0C5EC339DAA7FD9F11A16 /* WatchCompanionUITests.swift */; };
 		A8347510D7D1BD1F636567A0 /* CompanionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 558BC0DDA5AACDF627B80897 /* CompanionModelsTests.swift */; };
 		A9EB0BF6AAC502F31536852C /* SystemHealthReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */; };
 		AA227CC2FE58C16EA23CDDDB /* CompanionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D43564C5D864FA222067FC /* CompanionTransport.swift */; };
+		AC2EB3B0D11B7BFA6DD3F548 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6AF4D9D963A502539C320830 /* FirebaseCore */; };
+		AEAE43AA20B843B37A07C9A9 /* PatientAlarmEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */; };
+		B114E3F06BFA7C3309BF0F23 /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE63F3D77E6FF0E69E10D90 /* FirebaseBootstrap.swift */; };
+		B2E2C4460573FA212D422D94 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */; };
+		B77B17E2EFAA99CDADBA0198 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */; };
+		B7FEA234E79518606E4218D1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0E3DD25B7F40295968191567 /* FirebaseFirestore */; };
 		B86A79E8CB1CB1246969A0A2 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
+		BA1DA06ED059F89786C68819 /* PatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E7334A79689E552AA2528A /* PatientApp.swift */; };
 		BAE5B5C0B62BB110A3385423 /* LocalAlertJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EACE948CF0DCB6FE603FD2 /* LocalAlertJournal.swift */; };
+		BBBC0B18BB6364794EFB134C /* GoogleSubjectAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */; };
+		BBCF6B5545F73297AA034738 /* PrototypeLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8528BAD0FF98ADECECA1D44E /* PrototypeLiveActivity.swift */; };
 		BC4D5A2F43E7C0C5825111F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		BEB399C421F1E7501615DB67 /* PrototypeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E0843E634AFA878218D81F /* PrototypeMetadata.swift */; };
 		BED3126F79F402470EC3C662 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1C4984FB11665ABC22BE0FC3 /* README.md */; };
 		C07D6F3001CD658C697C7615 /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		C127E79D3BCBBF2B8F3179E3 /* PatientAlarmIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */; };
 		C1B6FB2505268BC98D555F8E /* MediNagWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5D20FBA5ABB23984225C8135 /* MediNagWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C4D3D9000CC2319ADEFBC79E /* PrototypeLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8528BAD0FF98ADECECA1D44E /* PrototypeLiveActivity.swift */; };
 		CCB7D891F303908DD87DBDD0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */; };
+		D05E96D94E8832CA1BD064D3 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 7AC5C0E872DF25FF73DC57BF /* GoogleSignIn */; };
+		D0E73CEDE65F6BBA67C5FD9F /* MediNagAlarm.caf in Resources */ = {isa = PBXBuildFile; fileRef = EFB0F64C855F819E91CEF42A /* MediNagAlarm.caf */; };
+		D269530A0AAC025B76661F8A /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
+		D4FCCE1E74B3B53DA54770FC /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 46A88DBDB0DE478E9055491F /* MediNagCore */; };
+		D63AFF02AB8948CFCD687486 /* DiagnosticUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C18430E8599B61843563F96 /* DiagnosticUITests.swift */; };
+		D79B881859925D93F2E1926B /* PatientAlarmState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443DD9814F925E65FD3379B /* PatientAlarmState.swift */; };
 		DF740D52CC9703A67D24F41C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		E0C566D8F2483F5E76C48752 /* FirebaseSubjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */; };
 		E28224FE8A4B50DE1A5DE5E6 /* NotificationFailureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */; };
 		E7F14767916366C218B8CFAF /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */; };
 		E9041DC660DF32D39F8F1D0E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8EDA23C6B76FF5E6490770D /* ContentView.swift */; };
+		EA38A42453EF9C924C798909 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2273A57654E11B25A99C6EB /* Assets.xcassets */; };
+		EAFD7E7354CD5DECD8F0E3E3 /* PatientSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D08782DF1E5929FC04F29A6 /* PatientSession.swift */; };
+		EBC910BD72F1E79FB3D049D2 /* PatientAlarmIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */; };
 		ECF684623440DCACC79A26D8 /* MediNagCore in Frameworks */ = {isa = PBXBuildFile; productRef = 891F89D16D8D0D01FCEB1516 /* MediNagCore */; };
 		EE7BC9CB60420046C1F2B6E4 /* NotificationServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8187B68655A62CA3923A2B4 /* NotificationServices.swift */; };
 		EF1058B47FD34620B2900096 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */; };
@@ -69,6 +136,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		01F622FEC00F53DB203660D1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F37B9A724F1392900BA3C0A5;
+			remoteInfo = MediNagAlarmBaseline;
+		};
 		236DC608934D0E8BD7C4FA34 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
@@ -83,12 +157,40 @@
 			remoteGlobalIDString = 018FBB9611539AE8D9A45EAA;
 			remoteInfo = MediNagAlarmPrototypeLiveActivity;
 		};
+		74E1C170E0D8D079B6BD5642 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 018FBB9611539AE8D9A45EAA;
+			remoteInfo = MediNagAlarmPrototypeLiveActivity;
+		};
+		7E5BD75F70B3AA4F98EC52F0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FDA93A7292D184207B4156F9;
+			remoteInfo = MediNagAlarmReliability;
+		};
+		895745E575491DAD5CE2F82E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB06751495B9DCE7C4D4B47E;
+			remoteInfo = MediNagAlarmPatient;
+		};
 		92E521C585C9835BBA70AE4B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 89D87283161B3E50F48CC991;
 			remoteInfo = MediNag;
+		};
+		B807F3715100FF2E4AC8634F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 452E5934CFA1C7AF236F6DFF;
+			remoteInfo = MediNagAlarmDiagnosticActivity;
 		};
 		C1B101FE909945549B168CC3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -104,12 +206,33 @@
 			remoteGlobalIDString = 7247F8FA530661D6CF9DE05D;
 			remoteInfo = MediNagWatch;
 		};
+		E73CE56D48AE5C03EA454B0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 971665BAC003289B028B43B1;
+			remoteInfo = MediNagAlarmDiagnostic;
+		};
 		F2E586AC559EAB912A3AEA73 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 7247F8FA530661D6CF9DE05D;
 			remoteInfo = MediNagWatch;
+		};
+		F66A0B88E43B82BD9C11D965 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B268D9D9C12E41ED55F3E85A;
+			remoteInfo = MediNagAlarmPresentation;
+		};
+		F781CDA8EF05DA54764E3C13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D72D32BEF98C0E6AEA88BD3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 018FBB9611539AE8D9A45EAA;
+			remoteInfo = MediNagAlarmPrototypeLiveActivity;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -136,6 +259,39 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		81D6591EDFF857509F38DC0E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				020D59360F6B7F342C6BD8B9 /* MediNagAlarmDiagnosticActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0ED2C828406A1C25E1C55FB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7497970A5C6F8DDF7B1F2AC1 /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B59F9E8B6039888055BFE4B7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7791348DBFE8D02F3A58B9D4 /* MediNagAlarmPrototypeLiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -145,11 +301,16 @@
 		1065745DA289248E1DF5D3E2 /* NotificationFailureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFailureUITests.swift; sourceTree = "<group>"; };
 		122A61DD05C036D5C6EF1A41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		14A28B788BC626A5A5910CB1 /* ReminderRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderRefreshCoordinator.swift; sourceTree = "<group>"; };
+		17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = ReliabilityInfo.plist; sourceTree = "<group>"; };
 		1C4984FB11665ABC22BE0FC3 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		29F2D0A0FBA33DECBAAAC014 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		2EDDFBEF0047774D7999312C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		308089DAB1637436AB191692 /* MediNag.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNag.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientConnectedUITests.swift; sourceTree = "<group>"; };
 		3A5AC9567CC364E6F9A59ED1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		40CEA95857E46BC3BCB442C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientAlarmEngine.swift; sourceTree = "<group>"; };
+		4AD67BACB1CFF3C841897B4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4C2E252649E3AF386F9CB68E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		4E9DED6AAD6DF6EF68F32E1C /* 006-watch-companion-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "006-watch-companion-claims.json"; sourceTree = "<group>"; };
 		532CC6107AE4964E739FB594 /* PhoneNotificationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneNotificationResponse.swift; sourceTree = "<group>"; };
@@ -157,12 +318,22 @@
 		5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MediNagAlarmPrototypeLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A114A877A11FEE3282726CC /* CompanionRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionRecoveryTests.swift; sourceTree = "<group>"; };
 		5D20FBA5ABB23984225C8135 /* MediNagWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MediNagWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		61CC75C055D9A6013F4F9356 /* BaselineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineUITests.swift; sourceTree = "<group>"; };
+		6364195047A7D2CF760E37A4 /* MediNagAlarmDiagnosticUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmDiagnosticUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		63734D75886CEEE7338E5324 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6443DD9814F925E65FD3379B /* PatientAlarmState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientAlarmState.swift; sourceTree = "<group>"; };
+		64D2455330AAEC683DD04DCE /* MediNagAlarmPatient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmPatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67FE5C609176F4C64E8C0DDE /* SystemHealthReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemHealthReporter.swift; sourceTree = "<group>"; };
+		6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientAlarmIntents.swift; sourceTree = "<group>"; };
+		6B422BB4C7F30C011330215C /* DiagnosticApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticApp.swift; sourceTree = "<group>"; };
+		6D08782DF1E5929FC04F29A6 /* PatientSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientSession.swift; sourceTree = "<group>"; };
 		701CE0E96D19F81B0C3A1860 /* GoogleSubjectAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSubjectAuthenticator.swift; sourceTree = "<group>"; };
+		72CB2CC0511E7FAECF51077E /* MediNagAlarmPresentationUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmPresentationUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmReliabilityUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		760F763D311BA399CE701AF3 /* 006-watch-companion-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "006-watch-companion-claims.json"; sourceTree = "<group>"; };
 		797198C5A5C5ECE18FD313BE /* E2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = E2E.xcconfig; sourceTree = "<group>"; };
+		7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MediNagAlarmDiagnosticActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		826894021FDC8D70F0BC68AD /* 004-ios-respond-to-dose-claims.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "004-ios-respond-to-dose-claims.json"; sourceTree = "<group>"; };
 		84D43564C5D864FA222067FC /* CompanionTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionTransport.swift; sourceTree = "<group>"; };
 		8528BAD0FF98ADECECA1D44E /* PrototypeLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrototypeLiveActivity.swift; sourceTree = "<group>"; };
@@ -171,24 +342,35 @@
 		8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9130650146B03C78F7244550 /* DoseWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWindowTests.swift; sourceTree = "<group>"; };
 		97142A1643777AB3BD0521AB /* ReminderPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPlanTests.swift; sourceTree = "<group>"; };
+		98E9FF1E8422CAC50A51AE4D /* MediNagAlarmPatientUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmPatientUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C18430E8599B61843563F96 /* DiagnosticUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticUITests.swift; sourceTree = "<group>"; };
+		9F372249ED3E0C1160FAEC8B /* MediNagAlarmDiagnostic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmDiagnostic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0D5968B67C3A32EAE04FAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A3E7334A79689E552AA2528A /* PatientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientApp.swift; sourceTree = "<group>"; };
+		A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmReliability.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8187B68655A62CA3923A2B4 /* NotificationServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServices.swift; sourceTree = "<group>"; };
 		A9AAAA138A5FB93C20DEF06B /* MediNagWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediNagWatchApp.swift; sourceTree = "<group>"; };
 		AA81EF092FE9DCE888E99E27 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AAC0AC2B1DA8CCDEED573BC8 /* MediNagAlarmPrototype.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmPrototype.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD073D0ABCAC4A2CE870A1CF /* BaselineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineApp.swift; sourceTree = "<group>"; };
+		AD37192C3356D507D77B526C /* MediNagAlarmPresentation.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmPresentation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5B452F67ABA32D142543D91 /* MediNagWatchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MediNagWatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B861744383BCCCE1A28043D0 /* MediNagAlarmBaseline.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MediNagAlarmBaseline.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BD4F6A5D9756ECDF3E16BCF5 /* CompanionSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionSession.swift; sourceTree = "<group>"; };
 		C2273A57654E11B25A99C6EB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C4EACE948CF0DCB6FE603FD2 /* LocalAlertJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAlertJournal.swift; sourceTree = "<group>"; };
 		C5CA925FF2F858AE24943839 /* FirebaseSubjectRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseSubjectRepository.swift; sourceTree = "<group>"; };
+		CBCEC0C9397C4240732AA934 /* PresentationInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = PresentationInfo.plist; sourceTree = "<group>"; };
 		D395DDA4C65C718B3E6634C0 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
+		D5CE42E9B4983A500EE0AAE7 /* MediNagAlarmBaselineUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmBaselineUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D656BA9AA939DF66BCDFBB5B /* RespondToDoseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespondToDoseUITests.swift; sourceTree = "<group>"; };
 		D84D3ED11E3629FD0FC1A856 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D8EDA23C6B76FF5E6490770D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		DA8AE92D6C639434FE879A93 /* DeviceReminderNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceReminderNotifications.swift; sourceTree = "<group>"; };
 		E0B0C5EC339DAA7FD9F11A16 /* WatchCompanionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanionUITests.swift; sourceTree = "<group>"; };
 		E3E2E2547EB0DF8E862CC961 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		E6970F009391F85F525C4B77 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E6BBFC88A0C012B4B571B799 /* WatchPairingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPairingUITests.swift; sourceTree = "<group>"; };
 		E6BD7F0E21681617AC4619AD /* MediNagAlarmPrototypeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MediNagAlarmPrototypeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E827A83DB040E02286EA2824 /* TestStepHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStepHelper.swift; sourceTree = "<group>"; };
@@ -214,6 +396,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2E31025B0B194BE0C49DEA05 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4FCCE1E74B3B53DA54770FC /* MediNagCore in Frameworks */,
+				66B96468B6B1748893DD7A74 /* FirebaseAuth in Frameworks */,
+				882F03EFF054ED6A877A1327 /* FirebaseCore in Frameworks */,
+				B7FEA234E79518606E4218D1 /* FirebaseFirestore in Frameworks */,
+				D05E96D94E8832CA1BD064D3 /* GoogleSignIn in Frameworks */,
+				46DA42C0688F419B993E77F3 /* GoogleSignInSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5D418D4D324C238989405B47 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -227,6 +422,32 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECF684623440DCACC79A26D8 /* MediNagCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C85297418C2AF687C952D5CA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C0C1DB930C7B3443EFD9A93 /* MediNagCore in Frameworks */,
+				678D696D826CF06B8119A71A /* FirebaseAuth in Frameworks */,
+				AC2EB3B0D11B7BFA6DD3F548 /* FirebaseCore in Frameworks */,
+				95E311D2758534D583393DF9 /* FirebaseFirestore in Frameworks */,
+				6143A11E1E2A7F6BFEE34EFC /* GoogleSignIn in Frameworks */,
+				99C6420CC58E9E5D1A75FD35 /* GoogleSignInSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1E2D31B7356909F1CCE943E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01AB5DBCDFC5BE46457E7FEA /* MediNagCore in Frameworks */,
+				B77B17E2EFAA99CDADBA0198 /* FirebaseAuth in Frameworks */,
+				61BD107F4D29FCA1A48035BC /* FirebaseCore in Frameworks */,
+				B2E2C4460573FA212D422D94 /* FirebaseFirestore in Frameworks */,
+				58EBD7211CBC6A9E14202841 /* GoogleSignIn in Frameworks */,
+				66C98E7592E40FF63715950F /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +480,14 @@
 			path = AlarmPrototypeLiveActivity;
 			sourceTree = "<group>";
 		};
+		241B798AD93DB1F27B4F1361 /* AlarmPatientUITests */ = {
+			isa = PBXGroup;
+			children = (
+				31F157C7C8DEC66F0A40854A /* PatientConnectedUITests.swift */,
+			);
+			path = AlarmPatientUITests;
+			sourceTree = "<group>";
+		};
 		28D058E8C2014A0511ECA06E /* MediNagUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -288,9 +517,55 @@
 			path = AlarmPrototypeUITests;
 			sourceTree = "<group>";
 		};
+		45BE09E9467B4A55676BC08A /* AlarmBaselineUITests */ = {
+			isa = PBXGroup;
+			children = (
+				61CC75C055D9A6013F4F9356 /* BaselineUITests.swift */,
+			);
+			path = AlarmBaselineUITests;
+			sourceTree = "<group>";
+		};
+		486A114E6C183EE0046CFD59 /* AlarmDiagnosticUITests */ = {
+			isa = PBXGroup;
+			children = (
+				9C18430E8599B61843563F96 /* DiagnosticUITests.swift */,
+			);
+			path = AlarmDiagnosticUITests;
+			sourceTree = "<group>";
+		};
+		4E6321382461B253CA76B69D /* AlarmPatient */ = {
+			isa = PBXGroup;
+			children = (
+				2EDDFBEF0047774D7999312C /* Info.plist */,
+				42290E74319642B5AC3D4508 /* PatientAlarmEngine.swift */,
+				6A256706D86422AB8A06F347 /* PatientAlarmIntents.swift */,
+				6443DD9814F925E65FD3379B /* PatientAlarmState.swift */,
+				A3E7334A79689E552AA2528A /* PatientApp.swift */,
+				6D08782DF1E5929FC04F29A6 /* PatientSession.swift */,
+				CBCEC0C9397C4240732AA934 /* PresentationInfo.plist */,
+				17FBDC8AFB9BD883CB83CC5D /* ReliabilityInfo.plist */,
+			);
+			path = AlarmPatient;
+			sourceTree = "<group>";
+		};
+		5906423123B64F9D153AA931 /* AlarmBaseline */ = {
+			isa = PBXGroup;
+			children = (
+				AD073D0ABCAC4A2CE870A1CF /* BaselineApp.swift */,
+				E6970F009391F85F525C4B77 /* Info.plist */,
+			);
+			path = AlarmBaseline;
+			sourceTree = "<group>";
+		};
 		5FA0D372217BDD24DAFD8E55 = {
 			isa = PBXGroup;
 			children = (
+				5906423123B64F9D153AA931 /* AlarmBaseline */,
+				45BE09E9467B4A55676BC08A /* AlarmBaselineUITests */,
+				C58518F90C99B26CFB9A2951 /* AlarmDiagnostic */,
+				486A114E6C183EE0046CFD59 /* AlarmDiagnosticUITests */,
+				4E6321382461B253CA76B69D /* AlarmPatient */,
+				241B798AD93DB1F27B4F1361 /* AlarmPatientUITests */,
 				8772F0C61D9D665D54E1310F /* AlarmPrototype */,
 				1BB0720AC4A45F338AC1E0FD /* AlarmPrototypeLiveActivity */,
 				2CD1CAB491EBD89C73AF20F6 /* AlarmPrototypeShared */,
@@ -369,13 +644,33 @@
 			path = MediNag;
 			sourceTree = "<group>";
 		};
+		C58518F90C99B26CFB9A2951 /* AlarmDiagnostic */ = {
+			isa = PBXGroup;
+			children = (
+				6B422BB4C7F30C011330215C /* DiagnosticApp.swift */,
+				4AD67BACB1CFF3C841897B4B /* Info.plist */,
+			);
+			path = AlarmDiagnostic;
+			sourceTree = "<group>";
+		};
 		C965100F96BDA12935AD3316 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				308089DAB1637436AB191692 /* MediNag.app */,
+				B861744383BCCCE1A28043D0 /* MediNagAlarmBaseline.app */,
+				D5CE42E9B4983A500EE0AAE7 /* MediNagAlarmBaselineUITests.xctest */,
+				9F372249ED3E0C1160FAEC8B /* MediNagAlarmDiagnostic.app */,
+				7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */,
+				6364195047A7D2CF760E37A4 /* MediNagAlarmDiagnosticUITests.xctest */,
+				64D2455330AAEC683DD04DCE /* MediNagAlarmPatient.app */,
+				98E9FF1E8422CAC50A51AE4D /* MediNagAlarmPatientUITests.xctest */,
+				AD37192C3356D507D77B526C /* MediNagAlarmPresentation.app */,
+				72CB2CC0511E7FAECF51077E /* MediNagAlarmPresentationUITests.xctest */,
 				AAC0AC2B1DA8CCDEED573BC8 /* MediNagAlarmPrototype.app */,
 				5756444328AFA25A7F4F8688 /* MediNagAlarmPrototypeLiveActivity.appex */,
 				E6BD7F0E21681617AC4619AD /* MediNagAlarmPrototypeUITests.xctest */,
+				A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */,
+				75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */,
 				75EBB5B6328FEBA7D61FE712 /* MediNagTests.xctest */,
 				B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */,
 				5D20FBA5ABB23984225C8135 /* MediNagWatch.app */,
@@ -465,6 +760,59 @@
 			productReference = B02C733AC43B6DEE8C8CF877 /* MediNagUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		15210E73310C2952C94D12CF /* MediNagAlarmReliabilityUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB168325D482E40B886D8FAD /* Build configuration list for PBXNativeTarget "MediNagAlarmReliabilityUITests" */;
+			buildPhases = (
+				7A7EDC7DDCCEADABA1813F15 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A2AA24E06D2E59362A9C81D7 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmReliabilityUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmReliabilityUITests;
+			productReference = 75FF2DF96C7F32CEE1F7F2DF /* MediNagAlarmReliabilityUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		452E5934CFA1C7AF236F6DFF /* MediNagAlarmDiagnosticActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4848D056F8FDF56F41F76B16 /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnosticActivity" */;
+			buildPhases = (
+				EEC119CFA033DCAC9B15B3FC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MediNagAlarmDiagnosticActivity;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmDiagnosticActivity;
+			productReference = 7FDA6FA008D0A9E78E972491 /* MediNagAlarmDiagnosticActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		5756AE69CCD3B8C8A317113B /* MediNagAlarmDiagnosticUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8FFFA12D9BF56027A9F0198C /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnosticUITests" */;
+			buildPhases = (
+				E464DA487827DCB3F23D1893 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5ED048A5DD43EBA03BDEDC03 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmDiagnosticUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmDiagnosticUITests;
+			productReference = 6364195047A7D2CF760E37A4 /* MediNagAlarmDiagnosticUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		59EE16E1954C0C0FEB5B2FBF /* MediNagTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0E2B800ECD650A03C680668F /* Build configuration list for PBXNativeTarget "MediNagTests" */;
@@ -542,6 +890,24 @@
 			productReference = B5B452F67ABA32D142543D91 /* MediNagWatchUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		81E62F22F7F5562BF8FB9F1C /* MediNagAlarmPresentationUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 332B571862E69D394326B31B /* Build configuration list for PBXNativeTarget "MediNagAlarmPresentationUITests" */;
+			buildPhases = (
+				02FBA916D990E497F715A601 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0FA3E26D4C80485F7EA8AA6A /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmPresentationUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmPresentationUITests;
+			productReference = 72CB2CC0511E7FAECF51077E /* MediNagAlarmPresentationUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		89D87283161B3E50F48CC991 /* MediNag */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AD7FC44023BEBD8824CBEEE6 /* Build configuration list for PBXNativeTarget "MediNag" */;
@@ -570,6 +936,26 @@
 			productReference = 308089DAB1637436AB191692 /* MediNag.app */;
 			productType = "com.apple.product-type.application";
 		};
+		971665BAC003289B028B43B1 /* MediNagAlarmDiagnostic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7040B5476BC6102E23D1F76D /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnostic" */;
+			buildPhases = (
+				1A8EA9CD4414B841186E3AE3 /* Sources */,
+				B9AD77F891DCE6ADD7CE54D7 /* Resources */,
+				81D6591EDFF857509F38DC0E /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				17E7277AFA710AEE5B5AF366 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmDiagnostic;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmDiagnostic;
+			productReference = 9F372249ED3E0C1160FAEC8B /* MediNagAlarmDiagnostic.app */;
+			productType = "com.apple.product-type.application";
+		};
 		9782D8508977305AF80865CB /* MediNagAlarmPrototype */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 78F7F8A704BBE5F6E95EC9AF /* Build configuration list for PBXNativeTarget "MediNagAlarmPrototype" */;
@@ -590,6 +976,142 @@
 			productReference = AAC0AC2B1DA8CCDEED573BC8 /* MediNagAlarmPrototype.app */;
 			productType = "com.apple.product-type.application";
 		};
+		ACFC3C68F8B7AD095BFEB256 /* MediNagAlarmBaselineUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 04CBF0660C0B88ECB9AF9734 /* Build configuration list for PBXNativeTarget "MediNagAlarmBaselineUITests" */;
+			buildPhases = (
+				2F2A3B6BFF7E6CC20B8155CD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				22ACB83848BD6332B0DF7CC3 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmBaselineUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmBaselineUITests;
+			productReference = D5CE42E9B4983A500EE0AAE7 /* MediNagAlarmBaselineUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B268D9D9C12E41ED55F3E85A /* MediNagAlarmPresentation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7629A9B5475BF5CDFAE270A2 /* Build configuration list for PBXNativeTarget "MediNagAlarmPresentation" */;
+			buildPhases = (
+				B159E5110E61EDC0D774DAA4 /* Sources */,
+				660A510A5E2B28D3B99F542D /* Resources */,
+				2E31025B0B194BE0C49DEA05 /* Frameworks */,
+				A0ED2C828406A1C25E1C55FB /* Embed Foundation Extensions */,
+				63311A146572D4CC952FDC20 /* Embed local Firebase configuration */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				76EDDB7889EE19E438F66194 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmPresentation;
+			packageProductDependencies = (
+				46A88DBDB0DE478E9055491F /* MediNagCore */,
+				FBAB6F2C361AF83D625D232C /* FirebaseAuth */,
+				292AF1323EE6708790F271A9 /* FirebaseCore */,
+				0E3DD25B7F40295968191567 /* FirebaseFirestore */,
+				7AC5C0E872DF25FF73DC57BF /* GoogleSignIn */,
+				2CDE6AFA5BAC2A19DBD56C21 /* GoogleSignInSwift */,
+			);
+			productName = MediNagAlarmPresentation;
+			productReference = AD37192C3356D507D77B526C /* MediNagAlarmPresentation.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CB06751495B9DCE7C4D4B47E /* MediNagAlarmPatient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 17072FB70AEC4AC5A4B0C08E /* Build configuration list for PBXNativeTarget "MediNagAlarmPatient" */;
+			buildPhases = (
+				16CE834E358B2DCF5A057D85 /* Sources */,
+				C9665AB447F81D4BE3BD9B7A /* Resources */,
+				C85297418C2AF687C952D5CA /* Frameworks */,
+				B59F9E8B6039888055BFE4B7 /* Embed Foundation Extensions */,
+				A6E1D3BCCABD044206329AC8 /* Embed local Firebase configuration */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1536346EE353F85795A6ACF0 /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmPatient;
+			packageProductDependencies = (
+				89C226ACAEC59BFF0FE82B34 /* MediNagCore */,
+				C1D51807EA1E89772D2C1705 /* FirebaseAuth */,
+				6AF4D9D963A502539C320830 /* FirebaseCore */,
+				F6561222C7C2A7EE907CE8A6 /* FirebaseFirestore */,
+				B75C9F54F2050719457F3CDD /* GoogleSignIn */,
+				FEA1E018FC4915F90E45CF0E /* GoogleSignInSwift */,
+			);
+			productName = MediNagAlarmPatient;
+			productReference = 64D2455330AAEC683DD04DCE /* MediNagAlarmPatient.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E9C151E6E05A4F936D768CAB /* MediNagAlarmPatientUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86911B11A5E3568390EE935E /* Build configuration list for PBXNativeTarget "MediNagAlarmPatientUITests" */;
+			buildPhases = (
+				BA11386D839233C86BD24FF2 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				57C58B43114C647D2073D1CB /* PBXTargetDependency */,
+			);
+			name = MediNagAlarmPatientUITests;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmPatientUITests;
+			productReference = 98E9FF1E8422CAC50A51AE4D /* MediNagAlarmPatientUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		F37B9A724F1392900BA3C0A5 /* MediNagAlarmBaseline */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B8E26D008C2B0DEB3066B109 /* Build configuration list for PBXNativeTarget "MediNagAlarmBaseline" */;
+			buildPhases = (
+				866B51167C5A272E110EBC97 /* Sources */,
+				7FB094D5B0B88E81C2262CAF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MediNagAlarmBaseline;
+			packageProductDependencies = (
+			);
+			productName = MediNagAlarmBaseline;
+			productReference = B861744383BCCCE1A28043D0 /* MediNagAlarmBaseline.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC5AF8F35723C42AC12D3034 /* Build configuration list for PBXNativeTarget "MediNagAlarmReliability" */;
+			buildPhases = (
+				C435D8075280142286E41FC0 /* Sources */,
+				4F6C65FCC48AE8FCA476EC56 /* Resources */,
+				E1E2D31B7356909F1CCE943E /* Frameworks */,
+				B9B5531F4F16B1F1E1A7032A /* Embed local Firebase configuration */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MediNagAlarmReliability;
+			packageProductDependencies = (
+				28E26B9ABBA8362182015346 /* MediNagCore */,
+				F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */,
+				A73CCC1462E2A29772B294CD /* FirebaseCore */,
+				4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */,
+				B5892A530B10858FF0D39A1F /* GoogleSignIn */,
+				A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */,
+			);
+			productName = MediNagAlarmReliability;
+			productReference = A6822E16490ACEC28B97F453 /* MediNagAlarmReliability.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -606,6 +1128,15 @@
 						ProvisioningStyle = Automatic;
 						TestTargetID = 89D87283161B3E50F48CC991;
 					};
+					15210E73310C2952C94D12CF = {
+						TestTargetID = FDA93A7292D184207B4156F9;
+					};
+					452E5934CFA1C7AF236F6DFF = {
+						ProvisioningStyle = Automatic;
+					};
+					5756AE69CCD3B8C8A317113B = {
+						TestTargetID = 971665BAC003289B028B43B1;
+					};
 					59EE16E1954C0C0FEB5B2FBF = {
 						ProvisioningStyle = Automatic;
 					};
@@ -618,10 +1149,34 @@
 					75F246297F8E3289E61F6D5B = {
 						TestTargetID = 7247F8FA530661D6CF9DE05D;
 					};
+					81E62F22F7F5562BF8FB9F1C = {
+						TestTargetID = B268D9D9C12E41ED55F3E85A;
+					};
 					89D87283161B3E50F48CC991 = {
 						ProvisioningStyle = Automatic;
 					};
+					971665BAC003289B028B43B1 = {
+						ProvisioningStyle = Automatic;
+					};
 					9782D8508977305AF80865CB = {
+						ProvisioningStyle = Automatic;
+					};
+					ACFC3C68F8B7AD095BFEB256 = {
+						TestTargetID = F37B9A724F1392900BA3C0A5;
+					};
+					B268D9D9C12E41ED55F3E85A = {
+						ProvisioningStyle = Automatic;
+					};
+					CB06751495B9DCE7C4D4B47E = {
+						ProvisioningStyle = Automatic;
+					};
+					E9C151E6E05A4F936D768CAB = {
+						TestTargetID = CB06751495B9DCE7C4D4B47E;
+					};
+					F37B9A724F1392900BA3C0A5 = {
+						ProvisioningStyle = Automatic;
+					};
+					FDA93A7292D184207B4156F9 = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -645,10 +1200,21 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				F37B9A724F1392900BA3C0A5 /* MediNagAlarmBaseline */,
+				ACFC3C68F8B7AD095BFEB256 /* MediNagAlarmBaselineUITests */,
+				971665BAC003289B028B43B1 /* MediNagAlarmDiagnostic */,
+				5756AE69CCD3B8C8A317113B /* MediNagAlarmDiagnosticUITests */,
+				452E5934CFA1C7AF236F6DFF /* MediNagAlarmDiagnosticActivity */,
 				9782D8508977305AF80865CB /* MediNagAlarmPrototype */,
 				018FBB9611539AE8D9A45EAA /* MediNagAlarmPrototypeLiveActivity */,
 				6FB66FC69ABBEA460319178D /* MediNagAlarmPrototypeUITests */,
 				89D87283161B3E50F48CC991 /* MediNag */,
+				CB06751495B9DCE7C4D4B47E /* MediNagAlarmPatient */,
+				FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */,
+				B268D9D9C12E41ED55F3E85A /* MediNagAlarmPresentation */,
+				81E62F22F7F5562BF8FB9F1C /* MediNagAlarmPresentationUITests */,
+				15210E73310C2952C94D12CF /* MediNagAlarmReliabilityUITests */,
+				E9C151E6E05A4F936D768CAB /* MediNagAlarmPatientUITests */,
 				7247F8FA530661D6CF9DE05D /* MediNagWatch */,
 				75F246297F8E3289E61F6D5B /* MediNagWatchUITests */,
 				59EE16E1954C0C0FEB5B2FBF /* MediNagTests */,
@@ -677,6 +1243,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4F6C65FCC48AE8FCA476EC56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EA38A42453EF9C924C798909 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		58B41FF5B9508CEB77616D3A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -691,6 +1265,42 @@
 			files = (
 				3DBD33EFF777A06751058117 /* Assets.xcassets in Resources */,
 				5CCA3C99B4DC826EC0EC0E47 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		660A510A5E2B28D3B99F542D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				38871EDCF5A62128F7ED0A45 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7FB094D5B0B88E81C2262CAF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				11EEA380A490DF0358A2A8E2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B9AD77F891DCE6ADD7CE54D7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B8E740175B6BA5E50952212 /* Assets.xcassets in Resources */,
+				D0E73CEDE65F6BBA67C5FD9F /* MediNagAlarm.caf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9665AB447F81D4BE3BD9B7A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				32C5E1768DF86B2A7DC175A9 /* Assets.xcassets in Resources */,
+				55F8E3D3D7BD4825E3BAAC46 /* MediNagAlarm.caf in Resources */,
+				6D099FC60FD665EF528F33DA /* PresentationInfo.plist in Resources */,
+				74EDB10800506708B0DAAEE6 /* ReliabilityInfo.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -726,9 +1336,99 @@
 			shellPath = /bin/sh;
 			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
 		};
+		63311A146572D4CC952FDC20 /* Embed local Firebase configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed local Firebase configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
+		};
+		A6E1D3BCCABD044206329AC8 /* Embed local Firebase configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed local Firebase configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
+		};
+		B9B5531F4F16B1F1E1A7032A /* Embed local Firebase configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed local Firebase configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "configuration=\"$PROJECT_DIR/MediNag/Resources/GoogleService-Info.plist\"\nif [ -f \"$configuration\" ]; then\n  destination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  mkdir -p \"$destination\"\n  cp \"$configuration\" \"$destination/GoogleService-Info.plist\"\n\n  reversed_client_id=\"$(/usr/libexec/PlistBuddy -c 'Print :REVERSED_CLIENT_ID' \"$configuration\")\"\n  case \"$reversed_client_id\" in\n    *[!A-Za-z0-9.-]*|'')\n      echo \"GoogleService-Info.plist contains an invalid reversed client ID.\" >&2\n      exit 1\n      ;;\n  esac\n  product_info=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' \"$product_info\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0 dict' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor' \"$product_info\"\n  /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' \"$product_info\"\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id\" \"$product_info\"\nfi\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		02FBA916D990E497F715A601 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04D0EE1B7A2ADC3D5EFAED87 /* PatientConnectedUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		16CE834E358B2DCF5A057D85 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E754A6CDEB56AE175C81F25 /* FirebaseBootstrap.swift in Sources */,
+				E0C566D8F2483F5E76C48752 /* FirebaseSubjectRepository.swift in Sources */,
+				BBBC0B18BB6364794EFB134C /* GoogleSubjectAuthenticator.swift in Sources */,
+				418ABCE6F1A45FEC28AC0CA8 /* PatientAlarmEngine.swift in Sources */,
+				EBC910BD72F1E79FB3D049D2 /* PatientAlarmIntents.swift in Sources */,
+				D79B881859925D93F2E1926B /* PatientAlarmState.swift in Sources */,
+				9AD9497A2FA4DFC33C59ADD9 /* PatientApp.swift in Sources */,
+				49E1D4596AD78D275D2EAFA8 /* PatientSession.swift in Sources */,
+				25AFC78E42C863579F3EB01A /* PrototypeMetadata.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1A8EA9CD4414B841186E3AE3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				34FF1EE43E41384902DD2930 /* DiagnosticApp.swift in Sources */,
+				1C5D78AE1E03E83850C244EF /* PrototypeMetadata.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		22C41DAF71681CB352152FA9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -751,6 +1451,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2F2A3B6BFF7E6CC20B8155CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DAEC636212B07C699C7C889 /* BaselineUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6F6D375A8F3469E2F2871144 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -759,6 +1467,46 @@
 				1C58148D393C99C895D4A9E6 /* RespondToDoseUITests.swift in Sources */,
 				FAC147392401A2261952CCFC /* TestStepHelper.swift in Sources */,
 				2119AAE55EFA6B65A7D612F8 /* WatchPairingUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A7EDC7DDCCEADABA1813F15 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16F9005039C38C4C4E940F78 /* PatientConnectedUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		866B51167C5A272E110EBC97 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48E9C401C5D1A4E6E1F2E58A /* BaselineApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B159E5110E61EDC0D774DAA4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C2B662F946DE8850EF13DF3 /* FirebaseBootstrap.swift in Sources */,
+				79C6811DF5B869B75C524E07 /* FirebaseSubjectRepository.swift in Sources */,
+				46A803FE99102CE1A0B3F6B9 /* GoogleSubjectAuthenticator.swift in Sources */,
+				AEAE43AA20B843B37A07C9A9 /* PatientAlarmEngine.swift in Sources */,
+				0D25C98834B748743E894A27 /* PatientAlarmIntents.swift in Sources */,
+				7188ED9CB911AFC013B4F743 /* PatientAlarmState.swift in Sources */,
+				BA1DA06ED059F89786C68819 /* PatientApp.swift in Sources */,
+				345C3D282160A2AC53C5EBE8 /* PatientSession.swift in Sources */,
+				849DFC40A4AD259312CCCF64 /* PrototypeMetadata.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA11386D839233C86BD24FF2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FC0E6EAEDA0961125434A70 /* PatientConnectedUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -781,6 +1529,22 @@
 				60964E3C0B8583BDBE766D5D /* DeviceReminderNotifications.swift in Sources */,
 				BAE5B5C0B62BB110A3385423 /* LocalAlertJournal.swift in Sources */,
 				430DCD7332582EE1ACE6694C /* MediNagWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C435D8075280142286E41FC0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B114E3F06BFA7C3309BF0F23 /* FirebaseBootstrap.swift in Sources */,
+				D269530A0AAC025B76661F8A /* FirebaseSubjectRepository.swift in Sources */,
+				72B0531087FA24678F53B171 /* GoogleSubjectAuthenticator.swift in Sources */,
+				6185908D15B8C54F60600DF4 /* PatientAlarmEngine.swift in Sources */,
+				C127E79D3BCBBF2B8F3179E3 /* PatientAlarmIntents.swift in Sources */,
+				07EBECEA87E94CCED5D923CB /* PatientAlarmState.swift in Sources */,
+				35476AC89E81AC6001FE1873 /* PatientApp.swift in Sources */,
+				EAFD7E7354CD5DECD8F0E3E3 /* PatientSession.swift in Sources */,
+				BEB399C421F1E7501615DB67 /* PrototypeMetadata.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -814,6 +1578,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E464DA487827DCB3F23D1893 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D63AFF02AB8948CFCD687486 /* DiagnosticUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EEC119CFA033DCAC9B15B3FC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBCF6B5545F73297AA034738 /* PrototypeLiveActivity.swift in Sources */,
+				246D06DAFB041307B9DB0D07 /* PrototypeMetadata.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FDF7BB4407B0A4EE138A6351 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -826,6 +1607,26 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		0FA3E26D4C80485F7EA8AA6A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B268D9D9C12E41ED55F3E85A /* MediNagAlarmPresentation */;
+			targetProxy = F66A0B88E43B82BD9C11D965 /* PBXContainerItemProxy */;
+		};
+		1536346EE353F85795A6ACF0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 018FBB9611539AE8D9A45EAA /* MediNagAlarmPrototypeLiveActivity */;
+			targetProxy = F781CDA8EF05DA54764E3C13 /* PBXContainerItemProxy */;
+		};
+		17E7277AFA710AEE5B5AF366 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 452E5934CFA1C7AF236F6DFF /* MediNagAlarmDiagnosticActivity */;
+			targetProxy = B807F3715100FF2E4AC8634F /* PBXContainerItemProxy */;
+		};
+		22ACB83848BD6332B0DF7CC3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F37B9A724F1392900BA3C0A5 /* MediNagAlarmBaseline */;
+			targetProxy = 01F622FEC00F53DB203660D1 /* PBXContainerItemProxy */;
+		};
 		4FB4E7F951C271D8DCB447E8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 89D87283161B3E50F48CC991 /* MediNag */;
@@ -836,6 +1637,21 @@
 			target = 7247F8FA530661D6CF9DE05D /* MediNagWatch */;
 			targetProxy = F2E586AC559EAB912A3AEA73 /* PBXContainerItemProxy */;
 		};
+		57C58B43114C647D2073D1CB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB06751495B9DCE7C4D4B47E /* MediNagAlarmPatient */;
+			targetProxy = 895745E575491DAD5CE2F82E /* PBXContainerItemProxy */;
+		};
+		5ED048A5DD43EBA03BDEDC03 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 971665BAC003289B028B43B1 /* MediNagAlarmDiagnostic */;
+			targetProxy = E73CE56D48AE5C03EA454B0A /* PBXContainerItemProxy */;
+		};
+		76EDDB7889EE19E438F66194 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 018FBB9611539AE8D9A45EAA /* MediNagAlarmPrototypeLiveActivity */;
+			targetProxy = 74E1C170E0D8D079B6BD5642 /* PBXContainerItemProxy */;
+		};
 		8F44848AAA30296D4A62AC64 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 89D87283161B3E50F48CC991 /* MediNag */;
@@ -845,6 +1661,11 @@
 			isa = PBXTargetDependency;
 			target = 7247F8FA530661D6CF9DE05D /* MediNagWatch */;
 			targetProxy = D6CD5B2A4024BCA51DA36675 /* PBXContainerItemProxy */;
+		};
+		A2AA24E06D2E59362A9C81D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FDA93A7292D184207B4156F9 /* MediNagAlarmReliability */;
+			targetProxy = 7E5BD75F70B3AA4F98EC52F0 /* PBXContainerItemProxy */;
 		};
 		CD5BBCACBE7AF3D4429AEFF6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -859,6 +1680,75 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		006664BA5C94E152390A29DE /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/PresentationInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL E2E";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
+		0310945E16E5DF1613BE4F62 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
+			};
+			name = E2E;
+		};
+		059B4E0C234A258E33B15ACB /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL E2E";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
 		08BD978E85C20C6C0F5A07A8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -938,6 +1828,68 @@
 			};
 			name = E2E;
 		};
+		113D4556866BFFE49FFFE066 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmDiagnostic;
+			};
+			name = Debug;
+		};
+		200173AEBBF4C223B5AB13A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmbaseline.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmBaseline;
+			};
+			name = Release;
+		};
+		21EFE25106028EF81B0EF2BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmBaseline/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		28D50E062454CFE992DD6ED2 /* E2E */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 797198C5A5C5ECE18FD313BE /* E2E.xcconfig */;
@@ -998,6 +1950,31 @@
 			};
 			name = Debug;
 		};
+		3AB1147FAA4A7ED0E8F483C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/PresentationInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		3F945844B149C522A4D426A7 /* E2E */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1015,6 +1992,30 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = E2E;
+		};
+		3FEE4D62B2C6E8DED7BD9587 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPrototypeLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.activity;
+				PRODUCT_NAME = MediNagAlarmLabActivity;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = E2E;
 		};
@@ -1036,6 +2037,49 @@
 			};
 			name = Release;
 		};
+		4703730125EDA59D48285C38 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPrototypeLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.activity;
+				PRODUCT_NAME = MediNagAlarmLabActivity;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		48F98FA75E6DE75E0261F1A3 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmDiagnostic;
+			};
+			name = E2E;
+		};
 		49A8E41ECF1F449932EEEB19 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1055,6 +2099,180 @@
 			};
 			name = Release;
 		};
+		53095F7C4BACF1023598F860 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmbaseline.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmBaseline;
+			};
+			name = E2E;
+		};
+		549F1503D80E367F5982A8DE /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmDiagnostic/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab;
+				PRODUCT_NAME = MediNagAlarmLab;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
+		601C159BC4B4E786813CB3C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		620F1A8A3D0CA07AF763F432 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/ReliabilityInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		6AABA6AB5AAF2A97A7D4019B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpresentation.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPresentation;
+			};
+			name = Debug;
+		};
+		7421BD3A77E598DEBC49FBBF /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpresentation.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPresentation;
+			};
+			name = E2E;
+		};
+		747F0440C8189BDF12389BCB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmbaseline.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmBaseline;
+			};
+			name = Debug;
+		};
+		777BF2AD5ABAAD57C90D1FAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmDiagnostic/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab;
+				PRODUCT_NAME = MediNagAlarmLab;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		7D5170A413DF99D34E0129CB /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 8FF6B0A7F5D91EFD8A252391 /* Release.xcconfig */;
@@ -1073,6 +2291,25 @@
 				TEST_TARGET_NAME = MediNag;
 			};
 			name = Release;
+		};
+		860D9D7C26A5FDF04DCAB68E /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpatient.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPatient;
+			};
+			name = E2E;
 		};
 		8DDC3DF9ED9ED1882CF70290 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1097,6 +2334,74 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+		8FD7C09F25DDB12D7ED80077 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
+			};
+			name = Release;
+		};
+		920F05EE774B889BE4DF5E94 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmBaseline/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
+		932FE4F9FDF7016F1D4BDC68 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/PresentationInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ALARM_RELIABILITY_TRIAL";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		94D511D9AD0BD5A22CBE5E26 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1160,6 +2465,25 @@
 			};
 			name = Debug;
 		};
+		967AD451AC9D17C23523FA38 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpatient.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPatient;
+			};
+			name = Debug;
+		};
 		9A7037CF17A4A253E1812737 /* E2E */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 797198C5A5C5ECE18FD313BE /* E2E.xcconfig */;
@@ -1197,6 +2521,31 @@
 				PRODUCT_NAME = MediNagAlarmActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = E2E;
+		};
+		9F8E4C0372E53CF2A28A9C79 /* E2E */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) E2E";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1344,6 +2693,49 @@
 			};
 			name = E2E;
 		};
+		C9F781C77867C3798C4A5135 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmDiagnostic/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab;
+				PRODUCT_NAME = MediNagAlarmLab;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		CC8AA31ED7AC07000BC93A34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmDiagnostic;
+			};
+			name = Release;
+		};
 		CF2D643AA409ABD52417752A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1368,6 +2760,68 @@
 			};
 			name = Release;
 		};
+		CF7E6D31E65FEE1A17B32797 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPrototypeLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmlab.activity;
+				PRODUCT_NAME = MediNagAlarmLabActivity;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		D156DEFDD2F4E3300834BC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmreliability.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmReliability;
+			};
+			name = Debug;
+		};
+		DB9022F4B36FD66758164183 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpatient.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPatient;
+			};
+			name = Release;
+		};
 		DFD415D17551D477910E6CC7 /* E2E */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 797198C5A5C5ECE18FD313BE /* E2E.xcconfig */;
@@ -1386,6 +2840,30 @@
 			};
 			name = E2E;
 		};
+		E087C278A576A1B394CF8FB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		E164DF989B2ABFCE7C13A3AF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4C2E252649E3AF386F9CB68E /* Debug.xcconfig */;
@@ -1403,6 +2881,25 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		E25715FD003EEAC827F3F268 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag.alarmpresentation.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MediNagAlarmPresentation;
+			};
+			name = Release;
 		};
 		E25F559AABDF5398A062AED3 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1464,6 +2961,30 @@
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
+		};
+		F1F5DC93A87608C177CCDB70 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmPatient/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
 		};
 		F66AD2527D47E3E195290DD7 /* E2E */ = {
 			isa = XCBuildConfiguration;
@@ -1527,9 +3048,43 @@
 			};
 			name = E2E;
 		};
+		FF66900877074CA61F7D48C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AlarmBaseline/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.boardgamescafe.medinag;
+				PRODUCT_NAME = MediNag;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		04CBF0660C0B88ECB9AF9734 /* Build configuration list for PBXNativeTarget "MediNagAlarmBaselineUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				747F0440C8189BDF12389BCB /* Debug */,
+				53095F7C4BACF1023598F860 /* E2E */,
+				200173AEBBF4C223B5AB13A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		0E2B800ECD650A03C680668F /* Build configuration list for PBXNativeTarget "MediNagTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1540,12 +3095,42 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		17072FB70AEC4AC5A4B0C08E /* Build configuration list for PBXNativeTarget "MediNagAlarmPatient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E087C278A576A1B394CF8FB3 /* Debug */,
+				9F8E4C0372E53CF2A28A9C79 /* E2E */,
+				F1F5DC93A87608C177CCDB70 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		2F043E03A5AF7A89CDDA46E7 /* Build configuration list for PBXNativeTarget "MediNagAlarmPrototypeLiveActivity" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				373E1F0D785A684FF002D7A1 /* Debug */,
 				9DABCB89953768E80B7FA88E /* E2E */,
 				CF2D643AA409ABD52417752A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		332B571862E69D394326B31B /* Build configuration list for PBXNativeTarget "MediNagAlarmPresentationUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6AABA6AB5AAF2A97A7D4019B /* Debug */,
+				7421BD3A77E598DEBC49FBBF /* E2E */,
+				E25715FD003EEAC827F3F268 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4848D056F8FDF56F41F76B16 /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnosticActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4703730125EDA59D48285C38 /* Debug */,
+				3FEE4D62B2C6E8DED7BD9587 /* E2E */,
+				CF7E6D31E65FEE1A17B32797 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1570,12 +3155,52 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		7040B5476BC6102E23D1F76D /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnostic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				777BF2AD5ABAAD57C90D1FAD /* Debug */,
+				549F1503D80E367F5982A8DE /* E2E */,
+				C9F781C77867C3798C4A5135 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7629A9B5475BF5CDFAE270A2 /* Build configuration list for PBXNativeTarget "MediNagAlarmPresentation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				932FE4F9FDF7016F1D4BDC68 /* Debug */,
+				006664BA5C94E152390A29DE /* E2E */,
+				3AB1147FAA4A7ED0E8F483C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		78F7F8A704BBE5F6E95EC9AF /* Build configuration list for PBXNativeTarget "MediNagAlarmPrototype" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AE0290485090855F45929EF4 /* Debug */,
 				09B215280B44C47B9DB87E56 /* E2E */,
 				8DDC3DF9ED9ED1882CF70290 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		86911B11A5E3568390EE935E /* Build configuration list for PBXNativeTarget "MediNagAlarmPatientUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				967AD451AC9D17C23523FA38 /* Debug */,
+				860D9D7C26A5FDF04DCAB68E /* E2E */,
+				DB9022F4B36FD66758164183 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8FFFA12D9BF56027A9F0198C /* Build configuration list for PBXNativeTarget "MediNagAlarmDiagnosticUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				113D4556866BFFE49FFFE066 /* Debug */,
+				48F98FA75E6DE75E0261F1A3 /* E2E */,
+				CC8AA31ED7AC07000BC93A34 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1606,6 +3231,36 @@
 				EE3020C135A235D9F338CA5F /* Debug */,
 				3F945844B149C522A4D426A7 /* E2E */,
 				E25F559AABDF5398A062AED3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B8E26D008C2B0DEB3066B109 /* Build configuration list for PBXNativeTarget "MediNagAlarmBaseline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				21EFE25106028EF81B0EF2BA /* Debug */,
+				920F05EE774B889BE4DF5E94 /* E2E */,
+				FF66900877074CA61F7D48C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BC5AF8F35723C42AC12D3034 /* Build configuration list for PBXNativeTarget "MediNagAlarmReliability" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				601C159BC4B4E786813CB3C5 /* Debug */,
+				059B4E0C234A258E33B15ACB /* E2E */,
+				620F1A8A3D0CA07AF763F432 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DB168325D482E40B886D8FAD /* Build configuration list for PBXNativeTarget "MediNagAlarmReliabilityUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D156DEFDD2F4E3300834BC95 /* Debug */,
+				0310945E16E5DF1613BE4F62 /* E2E */,
+				8FD7C09F25DDB12D7ED80077 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1649,14 +3304,52 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0E3DD25B7F40295968191567 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		28E26B9ABBA8362182015346 /* MediNagCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MediNagCore;
+		};
+		292AF1323EE6708790F271A9 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		2CDE6AFA5BAC2A19DBD56C21 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		3C74746627D6BF26ECF6DCC1 /* MediNagCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
+		};
+		46A88DBDB0DE478E9055491F /* MediNagCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MediNagCore;
+		};
+		4F142D9DD7CD566AB8DF60FD /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 		602CEDCDBB1D6A8C6EAE6CC9 /* GoogleSignInSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		6AF4D9D963A502539C320830 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		7AC5C0E872DF25FF73DC57BF /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 		7C13F50D65CC6FAA4CB53079 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1667,7 +3360,21 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
 		};
+		89C226ACAEC59BFF0FE82B34 /* MediNagCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MediNagCore;
+		};
+		A0E0199C892F658E11B5C9C0 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		A35C5F490D783A4224F82302 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A73CCC1462E2A29772B294CD /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
@@ -1677,14 +3384,49 @@
 			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
 		};
+		B5892A530B10858FF0D39A1F /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		B75C9F54F2050719457F3CDD /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		C1D51807EA1E89772D2C1705 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
 		F16159FF6F437046BB1C6A4A /* MediNagCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MediNagCore;
+		};
+		F21C4F9B035C5E9AF5A38D96 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		F6561222C7C2A7EE907CE8A6 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 		F844B57121A61C2FD25698E6 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignIn;
+		};
+		FBAB6F2C361AF83D625D232C /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 688D46E33416EF1F47012E8D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		FEA1E018FC4915F90E45CF0E /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5BDF1853F47E275B297F4118 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

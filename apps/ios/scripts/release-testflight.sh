@@ -13,11 +13,40 @@ app_sku="medinag-ios"
 testflight_group="${MEDINAG_TESTFLIGHT_GROUP:-Internal}"
 marketing_version="${MEDINAG_MARKETING_VERSION:-0.1.0}"
 alarm_prototype="${MEDINAG_ALARM_PROTOTYPE:-0}"
+alarm_patient="${MEDINAG_ALARM_PATIENT:-0}"
+alarm_baseline="${MEDINAG_ALARM_BASELINE:-0}"
+alarm_reliability="${MEDINAG_ALARM_RELIABILITY:-0}"
+presentation_widget="${MEDINAG_PRESENTATION_WIDGET:-0}"
+phone_only=0
 release_scheme="MediNag"
-if [[ "$alarm_prototype" == "1" ]]; then
+if [[ "$alarm_reliability" == "1" && "$alarm_baseline" == "0" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
+  release_scheme="MediNagAlarmReliability"
+  phone_only=1
+elif [[ "$alarm_reliability" != "0" ]]; then
+  printf 'Select only MEDINAG_ALARM_RELIABILITY=1 for the schedule reliability trial.\n' >&2
+  exit 1
+elif [[ "$alarm_baseline" == "1" && "$alarm_patient" == "0" && "$alarm_prototype" == "0" ]]; then
+  release_scheme="MediNagAlarmBaseline"
+  phone_only=1
+elif [[ "$alarm_baseline" != "0" ]]; then
+  fail_baseline='Select only the baseline variant (MEDINAG_ALARM_BASELINE=1).'
+  printf '%s\n' "$fail_baseline" >&2
+  exit 1
+elif [[ "$alarm_patient" == "1" && "$alarm_prototype" == "0" ]]; then
+  release_scheme="MediNagAlarmPatient"
+  phone_only=1
+elif [[ "$alarm_prototype" == "1" && "$alarm_patient" == "0" ]]; then
   release_scheme="MediNagAlarmPrototype"
-elif [[ "$alarm_prototype" != "0" ]]; then
-  printf 'Invalid MEDINAG_ALARM_PROTOTYPE (expected 0 or 1).\n' >&2
+  phone_only=1
+elif [[ "$alarm_prototype" != "0" || "$alarm_patient" != "0" ]]; then
+  printf 'Select exactly one valid AlarmKit variant (0 or 1).\n' >&2
+  exit 1
+fi
+
+if [[ "$presentation_widget" == "1" && "$release_scheme" == "MediNagAlarmReliability" ]]; then
+  release_scheme="MediNagAlarmPresentation"
+elif [[ "$presentation_widget" != "0" ]]; then
+  printf 'MEDINAG_PRESENTATION_WIDGET=1 requires the reliability trial alone.\n' >&2
   exit 1
 fi
 
@@ -56,7 +85,7 @@ if [[ -f "$login_keychain" ]] && ! security show-keychain-info "$login_keychain"
   fail "The login keychain is locked; unlock it privately with: security unlock-keychain $login_keychain"
 fi
 
-if [[ "$alarm_prototype" != "1" ]]; then
+if [[ "$alarm_prototype" != "1" && "$alarm_baseline" != "1" ]]; then
   [[ -f "$firebase_configuration" ]] || fail "Production GoogleService-Info.plist is missing"
   plutil -lint "$firebase_configuration" >/dev/null
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :PROJECT_ID' "$firebase_configuration")" == "medinag" ]] \
@@ -174,7 +203,7 @@ xcodebuild archive \
 application_path="$archive_path/Products/Applications/MediNag.app"
 info_plist="$application_path/Info.plist"
 [[ -d "$application_path" && -f "$info_plist" ]] || fail "The archive does not contain MediNag.app"
-if [[ "$alarm_prototype" != "1" ]]; then
+if [[ "$alarm_prototype" != "1" && "$alarm_baseline" != "1" ]]; then
   [[ -f "$application_path/GoogleService-Info.plist" ]] || fail "The archive is missing production Firebase configuration"
 fi
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$info_plist")" == "$bundle_identifier" ]] \
@@ -186,8 +215,27 @@ fi
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$info_plist")" == "false" ]] \
   || fail "The archive is missing its encryption declaration"
 codesign --verify --deep --strict "$application_path"
-if [[ "$alarm_prototype" == "1" ]]; then
+if [[ "$phone_only" == "1" ]]; then
   [[ ! -d "$application_path/Watch" ]] || fail "The phone-only prototype unexpectedly embeds a Watch app"
+  if [[ "$alarm_baseline" == "1" || "$alarm_reliability" == "1" ]]; then
+    if [[ "$presentation_widget" == "1" ]]; then
+      activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
+      [[ -d "$activity_application" ]] || fail "Presentation B is missing its matching widget extension"
+      [[ "$(find "$application_path/PlugIns" -maxdepth 1 -name '*.appex' | wc -l | tr -d ' ')" == "1" ]] \
+        || fail "Presentation B must embed exactly one extension"
+      [[ "$(/usr/libexec/PlistBuddy -c 'Print :NSSupportsLiveActivities' "$info_plist")" == "true" ]] \
+        || fail "Presentation B must declare Live Activities"
+      codesign --verify --deep --strict "$activity_application"
+    else
+      [[ ! -d "$application_path/PlugIns" ]] || fail "The baseline unexpectedly embeds an extension"
+      [[ "$(/usr/libexec/PlistBuddy -c 'Print :NSSupportsLiveActivities' "$info_plist" 2>/dev/null || true)" != "true" ]] \
+        || fail "Presentation A unexpectedly declares Live Activities"
+    fi
+    [[ ! -f "$application_path/MediNagAlarm.caf" ]] || fail "The baseline unexpectedly contains a custom sound"
+    if [[ "$alarm_baseline" == "1" ]]; then
+      [[ ! -f "$application_path/GoogleService-Info.plist" ]] || fail "The baseline unexpectedly contains Firebase configuration"
+    fi
+  else
   activity_application="$application_path/PlugIns/MediNagAlarmActivity.appex"
   [[ -d "$activity_application" ]] || fail "The prototype is missing its AlarmKit Live Activity extension"
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :NSSupportsLiveActivities' "$info_plist")" == "true" ]] \
@@ -196,6 +244,7 @@ if [[ "$alarm_prototype" == "1" ]]; then
     || fail "AlarmKit authorization usage description is missing"
   [[ -f "$application_path/MediNagAlarm.caf" ]] || fail "The prototype alarm sound is missing"
   codesign --verify --deep --strict "$activity_application"
+  fi
 else
 watch_application="$application_path/Watch/MediNagWatch.app"
 watch_info="$watch_application/Info.plist"

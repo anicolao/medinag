@@ -14,7 +14,7 @@ struct PrototypeLiveActivity: Widget {
       HStack(spacing: 16) {
         Image(systemName: "alarm.fill").font(.largeTitle)
         VStack(alignment: .leading, spacing: 6) {
-          Text("MediNag alarm test").font(.headline)
+          Text(context.attributes.metadata?.title ?? "MediNag alarm test").font(.headline)
           countdown(context.state)
         }
         Spacer()
@@ -27,7 +27,7 @@ struct PrototypeLiveActivity: Widget {
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) { Image(systemName: "alarm.fill") }
         DynamicIslandExpandedRegion(.trailing) { countdown(context.state) }
-        DynamicIslandExpandedRegion(.bottom) { Text("MediNag alarm test") }
+        DynamicIslandExpandedRegion(.bottom) { Text(context.attributes.metadata?.title ?? "MediNag alarm test") }
       } compactLeading: {
         Image(systemName: "alarm.fill")
       } compactTrailing: {

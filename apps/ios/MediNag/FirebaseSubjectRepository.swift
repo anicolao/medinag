@@ -2,7 +2,7 @@ import FirebaseFirestore
 import Foundation
 import MediNagCore
 
-struct PublishedPlan: Identifiable, Equatable, Codable {
+struct PublishedPlan: Identifiable, Equatable, Codable, Sendable {
   let id: String
   let administratorName: String
   let planName: String
@@ -265,7 +265,7 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
       }
   }
 
-  func observeEvents(
+  func observeEvents(ignoreEmptyCache: Bool = false,
     _ handler: @escaping @Sendable (Result<[MedicationEvent], Error>) -> Void
   ) -> ListenerRegistration {
     database.collection("administrators/\(administratorID)/medicationEvents")
@@ -275,6 +275,8 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
           handler(.failure(error))
           return
         }
+        if ignoreEmptyCache, snapshot?.metadata.isFromCache == true,
+          snapshot?.documents.isEmpty == true { return }
         handler(.success(snapshot?.documents.compactMap(Self.event) ?? []))
       }
   }
@@ -331,6 +333,9 @@ final class FirebaseFollowedPlanRepository: MedicationEventStore, @unchecked Sen
         // A lost acknowledgement must resolve the original tap, not increment
         // snooze again or move its timestamp. Completion is terminal.
         func sameTap(_ stored: Date?) -> Bool { stored.map { abs($0.timeIntervalSince(date)) < 0.001 } ?? false }
+        if response == .yesIDid, event.status == .completed, event.hasSameOccurrence(as: expected) {
+          return try JSONEncoder().encode(event)
+        }
         if (response == .yesIDid && sameTap(event.completedAt))
           || (response == .yesIWill && sameTap(event.lastSnoozedAt)
               && event.snoozeCount == expected.snoozeCount + 1) {

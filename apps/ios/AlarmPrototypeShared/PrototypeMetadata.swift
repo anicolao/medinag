@@ -5,4 +5,5 @@ import Foundation
 struct PrototypeMetadata: AlarmMetadata {
   let requestedAt: Date
   let deadline: Date
+  let title: String?
 }

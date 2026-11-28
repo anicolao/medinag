@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleDisplayName</key><string>MediNag Schedule Test</string>
+  <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+  <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+  <key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+  <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+  <key>ITSAppUsesNonExemptEncryption</key><false/>
+  <key>NSAlarmKitUsageDescription</key><string>Test ordinary system alarms at your real medication schedule times, with default sound and no snooze or retries.</string>
+  <key>BGTaskSchedulerPermittedIdentifiers</key><array><string>org.boardgamescafe.medinag.alarmkit-refresh</string></array>
+  <key>UIBackgroundModes</key><array><string>fetch</string></array>
+  <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
+  <key>UILaunchScreen</key><dict/>
+</dict></plist>

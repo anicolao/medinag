@@ -22,6 +22,99 @@ packages:
     exactVersion: 9.2.0
 
 targets:
+  MediNagAlarmBaseline:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmBaseline
+      - path: MediNag/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmBaseline/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+  MediNagAlarmBaselineUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmBaselineUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmbaseline.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmBaseline
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmBaseline
+  MediNagAlarmDiagnostic:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmDiagnostic
+      - path: AlarmPrototypeShared
+      - path: MediNag/Assets.xcassets
+      - path: MediNag/Resources/MediNagAlarm.caf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmlab
+        PRODUCT_NAME: MediNagAlarmLab
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmDiagnostic/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+    dependencies:
+      - target: MediNagAlarmDiagnosticActivity
+        embed: true
+  MediNagAlarmDiagnosticUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmDiagnosticUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmlab.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmDiagnostic
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmDiagnostic
+  MediNagAlarmDiagnosticActivity:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPrototypeLiveActivity
+      - path: AlarmPrototypeShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmlab.activity
+        PRODUCT_NAME: MediNagAlarmLabActivity
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPrototypeLiveActivity/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SKIP_INSTALL: true
   # Deliberately separate binary: no Firebase, Watch, legacy queues or app delegate.
   # Same app identity allows the existing Internal TestFlight channel to evaluate it.
   MediNagAlarmPrototype:
@@ -119,7 +212,7 @@ targets:
         product: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
-    postBuildScripts:
+    postBuildScripts: &embedFirebase
       - name: Embed local Firebase configuration
         basedOnDependencyAnalysis: false
         script: |
@@ -144,6 +237,161 @@ targets:
             /usr/libexec/PlistBuddy -c 'Add :CFBundleURLTypes:0:CFBundleURLSchemes array' "$product_info"
             /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $reversed_client_id" "$product_info"
           fi
+
+  MediNagAlarmPatient:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatient
+      - path: AlarmPrototypeShared
+      - path: MediNag/FirebaseBootstrap.swift
+      - path: MediNag/FirebaseSubjectRepository.swift
+      - path: MediNag/GoogleSubjectAuthenticator.swift
+      - path: MediNag/Assets.xcassets
+      - path: MediNag/Resources/MediNagAlarm.caf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPatient/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+      configs:
+        E2E:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) E2E"
+    dependencies:
+      - target: MediNagAlarmPrototypeLiveActivity
+        embed: true
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts: *embedFirebase
+
+  MediNagAlarmReliability: &alarmReliability
+    type: application
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatient
+        excludes: [Info.plist, ReliabilityInfo.plist, PresentationInfo.plist]
+      - path: AlarmPrototypeShared
+      - path: MediNag/FirebaseBootstrap.swift
+      - path: MediNag/FirebaseSubjectRepository.swift
+      - path: MediNag/GoogleSubjectAuthenticator.swift
+      - path: MediNag/Assets.xcassets
+    settings:
+      base: &alarmReliabilitySettings
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag
+        PRODUCT_NAME: MediNag
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: AlarmPatient/ReliabilityInfo.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: 6.0
+        SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL"
+      configs: &alarmReliabilityConfigs
+        E2E:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ALARM_RELIABILITY_TRIAL E2E"
+    dependencies:
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts: *embedFirebase
+  # Matched presentation-path experiment: identical executable sources/settings,
+  # with only Live Activity packaging enabled. No countdown or custom actions.
+  MediNagAlarmPresentation:
+    <<: *alarmReliability
+    settings:
+      base:
+        <<: *alarmReliabilitySettings
+        INFOPLIST_FILE: AlarmPatient/PresentationInfo.plist
+      configs: *alarmReliabilityConfigs
+    dependencies:
+      - target: MediNagAlarmPrototypeLiveActivity
+        embed: true
+      - package: MediNagCore
+        product: MediNagCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+  MediNagAlarmPresentationUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmpresentation.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmPresentation
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmPresentation
+  MediNagAlarmReliabilityUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmreliability.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmReliability
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmReliability
+  MediNagAlarmPatientUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.1"
+    sources:
+      - path: AlarmPatientUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.boardgamescafe.medinag.alarmpatient.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MediNagAlarmPatient
+        SWIFT_VERSION: 6.0
+    dependencies:
+      - target: MediNagAlarmPatient
 
   MediNagWatch:
     type: application
@@ -223,6 +471,77 @@ targets:
       - target: MediNag
 
 schemes:
+  MediNagAlarmPresentation:
+    build:
+      targets:
+        MediNagAlarmPresentation: all
+        MediNagAlarmPresentationUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagAlarmPresentationUITests
+    archive:
+      config: Release
+  MediNagAlarmReliability:
+    build:
+      targets:
+        MediNagAlarmReliability: all
+        MediNagAlarmReliabilityUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagAlarmReliabilityUITests
+    archive:
+      config: Release
+  MediNagAlarmBaseline:
+    build:
+      targets:
+        MediNagAlarmBaseline: all
+        MediNagAlarmBaselineUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - MediNagAlarmBaselineUITests
+    archive:
+      config: Release
+  MediNagAlarmDiagnostic:
+    build:
+      targets:
+        MediNagAlarmDiagnostic: all
+        MediNagAlarmDiagnosticUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - MediNagAlarmDiagnosticUITests
+    archive:
+      config: Release
+  MediNagAlarmPatient:
+    build:
+      targets:
+        MediNagAlarmPatient: all
+        MediNagAlarmPatientUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: E2E
+      debugEnabled: false
+      targets:
+        - MediNagAlarmPatientUITests
+    archive:
+      config: Release
+
   MediNagAlarmPrototype:
     build:
       targets:
